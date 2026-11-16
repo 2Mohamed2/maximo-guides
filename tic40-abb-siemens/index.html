@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABB and Siemens to Monitor</title>
+<meta name="description" content="ABB and Siemens crane equipment publishing TiC 4.0 into IBM Maximo Monitor, end to end, with no adapter. Runs in your browser.">
+<style>
+:root{
+ --bg:#f4f4f4;--card:#fff;--ink:#161616;--ink2:#525252;--ink3:#6f6f6f;--line:#e0e0e0;--blue:#0f62fe;--blue2:#d0e2ff;
+ --abb:#ff000f;--sie:#009999;--red:#da1e28;--amber:#f1c21b;--green:#24a148;--code:#f2f4f8;--hdr:#161616;--hdrink:#f4f4f4;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#161616;--card:#262626;--ink:#f4f4f4;--ink2:#c6c6c6;--ink3:#a8a8a8;--line:#393939;--blue:#4589ff;--blue2:#002d9c;
+ --code:#1c1c1c;--hdr:#000;--hdrink:#f4f4f4}}
+:root[data-theme="dark"]{--bg:#161616;--card:#262626;--ink:#f4f4f4;--ink2:#c6c6c6;--ink3:#a8a8a8;--line:#393939;--blue:#4589ff;--blue2:#002d9c;--code:#1c1c1c;--hdr:#000;--hdrink:#f4f4f4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45}
+code,.mono{font-family:'IBM Plex Mono',Consolas,Menlo,monospace;font-size:12.5px}
+header{background:var(--hdr);color:var(--hdrink);height:48px;display:flex;align-items:center;padding:0 16px;gap:16px;position:sticky;top:0;z-index:5}
+header b{font-weight:600}header .sep{width:1px;height:20px;background:#525252}
+header .live{margin-left:auto;font-size:13px;color:#c6c6c6;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+main{max-width:1320px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:40px;font-weight:300;line-height:1.15}
+h1 b{font-weight:600}
+h2{font-size:24px;font-weight:400;margin:44px 0 6px}
+h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.lede{font-size:18px;color:var(--ink2);max-width:900px;margin-top:10px}
+.sub{color:var(--ink2);max-width:900px}
+.card{background:var(--card);border:1px solid var(--line);padding:16px}
+.grid{display:grid;gap:12px}
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:26px;position:relative}
+.stage{background:var(--card);border:1px solid var(--line);padding:14px 14px 16px;position:relative;min-height:190px}
+.stage+.stage{border-left:none}
+.stage .n{font-size:12px;color:var(--blue);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.stage h3{margin:6px 0}
+.stage p{font-size:13px;color:var(--ink2)}
+.stage .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:12px;margin:6px 4px 0 0;background:var(--code);border:1px solid var(--line)}
+.tag.abb{border-color:var(--abb);color:var(--abb)}.tag.sie{border-color:var(--sie);color:var(--sie)}
+.stage .count{position:absolute;right:12px;top:12px;font-size:12px;color:var(--ink3)}
+.flow{position:absolute;left:0;right:0;top:-6px;height:4px}
+.pkt{position:absolute;top:0;width:10px;height:4px;border-radius:2px;background:var(--blue);animation:go 3.2s linear forwards}
+.pkt.abb{background:var(--abb)}.pkt.sie{background:var(--sie)}.pkt.bad{background:var(--red);height:6px;top:-1px}
+@keyframes go{from{left:0%}to{left:99%}}
+/* fleet */
+.fleet{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.vendor{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--abb);padding:14px}
+.vendor.sie{border-top-color:var(--sie)}
+.vendor .vh{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
+.vendor .vh small{color:var(--ink3)}
+.machines{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:10px}
+.m{border:1px solid var(--line);padding:8px;cursor:pointer;background:var(--bg);text-align:left;color:var(--ink);font:inherit}
+.m:hover{border-color:var(--blue)}
+.m.sel{outline:2px solid var(--blue);outline-offset:-2px}
+.m .id{font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.m .ty{font-size:11px;color:var(--ink3)}
+.m .v{font-size:13px;margin-top:4px}
+.m.hot{background:color-mix(in srgb,var(--red) 14%,var(--bg))}
+.m.hot .dot{background:var(--red);animation:pulse 1s infinite}
+.m.warn .dot{background:var(--amber)}
+@keyframes pulse{50%{opacity:.25}}
+/* detail */
+.detail{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;margin-top:14px}
+.dh{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin-bottom:10px}
+.dh .big{font-size:22px}
+.pill{font-size:12px;padding:2px 10px;border-radius:12px;color:#fff;background:var(--abb)}
+.pill.sie{background:var(--sie)}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;text-align:left;color:var(--ink3);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+td.val{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td .mono{word-break:break-all}
+.arrow{color:var(--ink3)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:2px solid transparent;padding:8px 12px;font:inherit;color:var(--ink2);cursor:pointer}
+.tabs button.on{border-bottom-color:var(--blue);color:var(--ink);font-weight:600}
+pre{background:var(--code);border:1px solid var(--line);padding:10px;overflow:auto;max-height:420px;font-family:'IBM Plex Mono',Consolas,monospace;font-size:12px;line-height:1.5}
+/* monitor mock */
+.mon{border:1px solid var(--line);background:var(--card)}
+.mon .bar{background:#161616;color:#f4f4f4;font-size:13px;padding:8px 12px;display:flex;gap:10px}
+.mon .bar span{color:#c6c6c6}
+.mon .body{padding:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.kpi{border:1px solid var(--line);padding:8px}
+.kpi small{display:block;color:var(--ink3);font-size:12px}
+.kpi b{font-size:22px;font-weight:400}
+.kpi.bad b{color:var(--red)}
+svg text{fill:var(--ink3);font-size:11px;font-family:inherit}
+.alerts td{font-size:12px}
+.sev{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:6px}
+.sev.med{background:var(--amber)}
+.wo{border-left:4px solid var(--blue);background:var(--code);padding:10px;margin-top:10px;font-size:13px}
+.wo b{font-weight:600}
+.muted{color:var(--ink3);font-size:12px}
+.src{display:block;border-left:3px solid transparent;padding-left:8px}.src.abb{border-left-color:var(--abb)}.src.sie{border-left-color:var(--sie)}
+/* scenarios */
+.scen{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.scen button{font:inherit;font-size:14px;padding:10px 14px;border:1px solid var(--blue);background:var(--card);color:var(--blue);cursor:pointer}
+.scen button.on{background:var(--blue);color:#fff}
+.scen button:disabled{opacity:.4;cursor:not-allowed}
+/* gallery */
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.gal figure{background:var(--card);border:1px solid var(--line)}
+.gal img{width:100%;display:block;border-bottom:1px solid var(--line)}
+.gal figcaption{padding:10px 12px;font-size:13px;color:var(--ink2)}
+.gal figcaption b{color:var(--ink)}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+footer{margin-top:50px;color:var(--ink3);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+.theme{background:none;border:1px solid #525252;color:#f4f4f4;padding:2px 8px;cursor:pointer;font:inherit;font-size:12px}
+@media (max-width:980px){
+ .pipe{grid-template-columns:1fr}.stage+.stage{border-left:1px solid var(--line);border-top:none}.stage{min-height:0}
+ .fleet,.detail,.gal,.why{grid-template-columns:1fr} h1{font-size:30px}
+ .kpis{grid-template-columns:1fr 1fr}
+ header .ttl{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+ <span><b>IBM</b> Maximo Application Suite</span><span class="sep"></span><span class="ttl">ABB &amp; Siemens → TiC 4.0 → Monitor</span>
+ <span class="live"><span class="dot" id="liveDot"></span><span id="liveTxt">live</span>
+ <button class="theme" id="theme" title="Switch light / dark">◐</button></span>
+</header>
+<main>
+<h1>ABB and Siemens equipment, <b>straight into Maximo Monitor</b>, in TiC 4.0</h1>
+<p class="lede">A container terminal where the cranes run on ABB and Siemens drives and PLCs. Each machine publishes its readings in the
+TiC 4.0 standard, and Maximo Monitor stores every value under its TiC name. Monitor needs configuration only, no adapter.
+Everything below is generated live in this page, the same way the demo terminal does it.</p>
+
+<div class="pipe" id="pipe">
+ <div class="flow" id="flow"></div>
+ <div class="stage"><span class="count" id="c1"></span><div class="n">1 · Equipment</div><h3>Drives and PLCs on the cranes</h3>
+  <p>Motor current, temperature, energy and run hours come from the drive. Moves, twistlocks and load come from the PLC.</p>
+  <span class="tag abb">ABB ACS880 · AC500</span><span class="tag sie">Siemens SINAMICS S120 · S7-1500</span></div>
+ <div class="stage"><div class="n">2 · Edge</div><h3>Read once, name by TiC 4.0</h3>
+  <p>An edge gateway reads the drive and PLC over OPC UA and writes each value under its TiC 4.0 data point name. The vendor's own register number stays at the edge.</p>
+  <span class="tag">OPC UA</span><span class="tag">PROFINET</span><span class="tag">J1939</span></div>
+ <div class="stage"><span class="count" id="c3"></span><div class="n">3 · TiC 4.0</div><h3>One standard message</h3>
+  <p>The TiC 4.0 FLAT form, one key per data point, published over MQTT. ABB and Siemens cranes send the same names.</p>
+  <span class="tag">PAS 4000</span><span class="tag">MQTT</span></div>
+ <div class="stage"><span class="count" id="c4"></span><div class="n">4 · Maximo Monitor</div><h3>Metrics by TiC name</h3>
+  <p>One device type per equipment class. Each metric's JSON path is the TiC FLAT name. Alert rules, dashboards and anomaly models then work on it.</p>
+  <span class="tag">TIC_STS</span><span class="tag">TIC_RTG</span><span class="tag">TIC_SC</span></div>
+ <div class="stage"><span class="count" id="c5"></span><div class="n">5 · Maximo Manage</div><h3>Work on the right part</h3>
+  <p>An alert becomes a service request and a work order on the hoist motor, not on the crane in general. The same data also keeps the meters and PMs current.</p>
+  <span class="tag">SR → WO</span><span class="tag">Meters · PMs</span></div>
+</div>
+
+<h2>The terminal: ABB-equipped and Siemens-equipped cranes</h2>
+<p class="sub">20 machines: 6 ship-to-shore cranes, 8 RTGs and 6 straddle carriers. Select one to follow its data from the drive to Monitor.</p>
+<div class="fleet" id="fleet"></div>
+
+<h2>Make something happen</h2>
+<p class="sub">Each switch changes what the selected machine's drive and PLC report. The page shows the TiC message change, Monitor's alert fire and the work order Manage raises.</p>
+<div class="scen" id="scen"></div>
+
+<div class="detail">
+ <div class="card">
+  <div class="dh" id="dh"></div>
+  <div class="tabs" id="tabs1"><button data-t="map" class="on">Equipment → TiC 4.0 → Monitor</button><button data-t="flat">TiC 4.0 FLAT (as published)</button><button data-t="nested">TiC 4.0 JSON (PAS 4000)</button></div>
+  <div id="t-map"></div>
+  <pre id="t-flat" hidden></pre>
+  <pre id="t-nested" hidden></pre>
+ </div>
+ <div class="mon">
+  <div class="bar"><b>Maximo Monitor</b><span id="monPath"></span></div>
+  <div class="body">
+   <div class="kpis" id="kpis"></div>
+   <h3>Hoist motor temperature · alert limit 90 °C</h3>
+   <svg id="chart" viewBox="0 0 520 170" width="100%" role="img" aria-label="Hoist motor temperature trend"></svg>
+   <h3 style="margin-top:10px">Alerts</h3>
+   <table class="alerts"><thead><tr><th>Time</th><th>Alert</th><th>Source</th><th>Severity</th></tr></thead><tbody id="alerts"></tbody></table>
+   <div id="wo"></div>
+   <p class="muted" style="margin-top:8px">This panel is simulated in your browser. The real Monitor and Manage screens from the live system are below.</p>
+  </div>
+ </div>
+</div>
+
+<h2>The same flow on a real Maximo system</h2>
+<p class="sub">Captured from a running MAS 9 environment fed by the same simulator, so the names and limits match the page above.</p>
+<div class="gal">
+ <figure><img src="img/monitor-metric-jsonpath.jpg" alt="Monitor device type TIC_STS, metric hoist_motor_temperature with JSON path set to the TiC FLAT name" loading="lazy">
+  <figcaption><b>Monitor: one metric per TiC data point.</b> The metric is listed by its TiC name, and its JSON path is the TiC FLAT key. That is the whole adapter.</figcaption></figure>
+ <figure><img src="img/monitor-dashboard.jpg" alt="Monitor dashboard of the ship-to-shore cranes with hoist motor temperature over 24 hours" loading="lazy">
+  <figcaption><b>Monitor: crane dashboard.</b> Built on those metrics: hoist motor temperature, wind and faults per crane over time.</figcaption></figure>
+ <figure><img src="img/monitor-alerts.jpg" alt="Monitor alerts list with alert_hoist_motor_overtemp high and alert_tic_fault medium on STS03" loading="lazy">
+  <figcaption><b>Monitor: the alert fires.</b> alert_hoist_motor_overtemp (high) and the TiC fault alert on STS03. A service request can be raised from here.</figcaption></figure>
+ <figure><img src="img/manage-workorder.jpg" alt="Manage Work Order Tracking, work order on STS03-HMT hoist motor with evidence and recommended steps" loading="lazy">
+  <figcaption><b>Manage: the work order on the hoist motor.</b> Raised from the Monitor alert, with the evidence, the probable cause and the steps, waiting for approval.</figcaption></figure>
+</div>
+
+<h2>What to take away</h2>
+<div class="why">
+ <div class="card"><h3>Vendor neutral</h3><p class="sub">ABB and Siemens cranes publish the same TiC 4.0 names, so a crane from either vendor shows up in Monitor the same way. Adding another OEM changes the edge mapping, not Maximo.</p></div>
+ <div class="card"><h3>Configuration, not code</h3><p class="sub">Monitor maps each metric to its TiC FLAT key. There is no custom adapter, connector or translation service to build and keep running.</p></div>
+ <div class="card"><h3>From reading to work order</h3><p class="sub">Alerts, meters and PMs run on the same standard data, so a hot hoist motor turns into work on the right part with the evidence attached.</p></div>
+</div>
+
+<footer>Demo terminal and data are illustrative: which vendor sits in which crane is an assumption. ABB and Siemens parameter numbers are the vendors' documented signals.
+TiC 4.0 names follow the TiC CHE data model (PAS 4000). ABB, Siemens, SINAMICS, SIMOCRANE and SIMATIC are trademarks of their owners. Built by Mohamed Chihaoui, IBM.</footer>
+</main>
+
+<script>
+const DATA = {"terminal": {"site": "CTERM", "org": "EAGLENA", "code": "CT1", "name": "Container Terminal 1", "tz": "Asia/Dubai", "note": "Neutral demo terminal. TiC 4.0 names follow the recommended pattern <terminal>_<type>_<number>."}, "fleet": [{"id": "STS01", "class": "STS", "brand": "ZPMC", "model": "STS 65t twin-lift", "year": 2014, "loc": "CT1-BERTH1", "moves_h": 30, "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "STS02", "class": "STS", "brand": "ZPMC", "model": "STS 65t twin-lift", "year": 2014, "loc": "CT1-BERTH1", "moves_h": 29, "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "STS03", "class": "STS", "brand": "ZPMC", "model": "STS 65t twin-lift", "year": 2015, "loc": "CT1-BERTH1", "moves_h": 28, "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "STS04", "class": "STS", "brand": "LIEBHERR", "model": "STS 3500", "year": 2019, "loc": "CT1-BERTH2", "moves_h": 32, "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "STS05", "class": "STS", "brand": "LIEBHERR", "model": "STS 3500", "year": 2019, "loc": "CT1-BERTH2", "moves_h": 32, "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "STS06", "class": "STS", "brand": "KONECRANES", "model": "STS tandem 80t", "year": 2023, "loc": "CT1-BERTH2", "moves_h": 34, "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "RTG01", "class": "RTG", "brand": "KALMAR", "model": "RTG diesel-electric 6+1", "year": 2013, "loc": "CT1-YA", "moves_h": 18, "power": "diesel", "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "RTG02", "class": "RTG", "brand": "KALMAR", "model": "RTG diesel-electric 6+1", "year": 2013, "loc": "CT1-YA", "moves_h": 18, "power": "diesel", "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "RTG03", "class": "RTG", "brand": "KALMAR", "model": "RTG diesel-electric 6+1", "year": 2016, "loc": "CT1-YA", "moves_h": 17, "power": "diesel", "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "RTG04", "class": "RTG", "brand": "KALMAR", "model": "RTG diesel-electric 6+1", "year": 2016, "loc": "CT1-YA", "moves_h": 17, "power": "diesel", "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "RTG05", "class": "RTG", "brand": "KONECRANES", "model": "e-RTG cable reel 6+1", "year": 2021, "loc": "CT1-YB", "moves_h": 20, "power": "electric", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "RTG06", "class": "RTG", "brand": "KONECRANES", "model": "e-RTG cable reel 6+1", "year": 2021, "loc": "CT1-YB", "moves_h": 20, "power": "electric", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "RTG07", "class": "RTG", "brand": "KONECRANES", "model": "e-RTG cable reel 6+1", "year": 2022, "loc": "CT1-YB", "moves_h": 21, "power": "electric", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "RTG08", "class": "RTG", "brand": "KONECRANES", "model": "e-RTG cable reel 6+1", "year": 2022, "loc": "CT1-YB", "moves_h": 21, "power": "electric", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "SC01", "class": "SC", "brand": "KALMAR", "model": "Straddle carrier 1-over-3 diesel", "year": 2015, "loc": "CT1-HT", "moves_h": 14, "power": "diesel", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "SC02", "class": "SC", "brand": "KALMAR", "model": "Straddle carrier 1-over-3 diesel", "year": 2015, "loc": "CT1-HT", "moves_h": 14, "power": "diesel", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "SC03", "class": "SC", "brand": "KALMAR", "model": "Straddle carrier 1-over-3 diesel", "year": 2017, "loc": "CT1-HT", "moves_h": 15, "power": "diesel", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "SC04", "class": "SC", "brand": "KALMAR", "model": "Straddle carrier 1-over-3 diesel", "year": 2017, "loc": "CT1-HT", "moves_h": 15, "power": "diesel", "source": {"vendor": "Siemens", "drive": "Siemens SINAMICS S120 (SIMOCRANE)", "plc": "Siemens SIMATIC S7-1500", "link": "OPC UA (S7-1500 server)"}}, {"id": "SC05", "class": "SC", "brand": "KALMAR", "model": "Straddle carrier 1-over-3 hybrid", "year": 2021, "loc": "CT1-HT", "moves_h": 16, "power": "hybrid", "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}, {"id": "SC06", "class": "SC", "brand": "KALMAR", "model": "Straddle carrier 1-over-3 hybrid", "year": 2021, "loc": "CT1-HT", "moves_h": 16, "power": "hybrid", "source": {"vendor": "ABB", "drive": "ABB ACS880 multidrive", "plc": "ABB AC500 PLC", "link": "OPC UA (AC500 server)"}}], "signal_sources": {"ABB": {"hoist_motor_current": "ACS880 par. 01.07 Motor current", "hoist_motor_temperature": "ACS880 par. 35.02 Measured temperature 1", "energy_consumed": "ACS880 par. 01.55 Inverter GWh/MWh/kWh counter", "on_totaltimer": "ACS880 par. 05.02 Run-time counter"}, "Siemens": {"hoist_motor_current": "SINAMICS r0027 Absolute actual current", "hoist_motor_temperature": "SINAMICS r0035 Motor temperature", "energy_consumed": "SINAMICS r0039 Energy display", "on_totaltimer": "S7 DB_Crane.OperatingHours"}, "plc_tags": {"move_totalcounter": "PLC counter MovesTotal", "twistlock_totalcounter": "PLC counter TwistlockCycles", "spreader_weight_gross": "PLC load cell GrossWeight", "hoist_totaldistance": "PLC HoistDistance_km", "trolley_totaldistance": "PLC TrolleyDistance_km", "hoist_slackrope_totalcounter": "PLC SlackRopeCount", "working_status": "PLC Working", "wind": "Anemometer via PLC analog input", "fault_status": "PLC active alarm", "coolant_temperature": "Engine ECU J1939 SPN 110", "oil_pressure": "Engine ECU J1939 SPN 100"}, "note": "Illustrative: which vendor sits in which crane is a demo assumption. Parameter numbers are the vendors' documented signals."}, "classes": {"STS": "TIC_STS", "RTG": "TIC_RTG", "SC": "TIC_SC"}, "points": [["on_totaltimer", [], "on", "totaltimer", "ioutput", {"unit": "hour"}, "NUMBER", "STS RTG SC"], ["working_status", [], "working", "status", "input", {}, "NUMBER", "STS RTG SC"], ["move_totalcounter", ["cycle"], "move", "totalcounter", "output", {}, "NUMBER", "STS RTG SC"], ["energy_consumed", [], "energy", "consumed", "output", {"unit": "kwh"}, "NUMBER", "STS RTG SC"], ["wind", [], "ambient", "wind", "output", {"unit": "kilometer_per_hour"}, "NUMBER", "STS RTG"], ["hoist_motor_temperature", ["hoist", "motor"], "running", "temperature", "output", {"unit": "celsius"}, "NUMBER", "STS RTG"], ["hoist_motor_current", ["hoist", "motor"], "energy", "current", "output", {"name": "electric", "unit": "amp"}, "NUMBER", "STS RTG"], ["hoist_totaldistance", ["hoist"], "hoisting", "totaldistance", "output", {"unit": "kilometer"}, "NUMBER", "STS RTG SC"], ["hoist_slackrope_totalcounter", ["hoist"], "slackrope", "totalcounter", "output", {}, "NUMBER", "STS RTG"], ["twistlock_totalcounter", ["spreader", "lockingdevice"], "locked", "totalcounter", "ioutput", {}, "NUMBER", "STS RTG SC"], ["spreader_weight_gross", ["spreader"], "weight", "gross", "output", {"unit": "ton"}, "NUMBER", "STS RTG SC"], ["trolley_totaldistance", ["trolley"], "trolleying", "totaldistance", "output", {"unit": "kilometer"}, "NUMBER", "STS"], ["coolant_temperature", ["powersource"], "coolant", "temperature", "output", {"unit": "celsius"}, "NUMBER", "RTG SC"], ["oil_pressure", ["powersource"], "oil", "pressure", "output", {"unit": "bar"}, "NUMBER", "RTG SC"]], "fault_fields": [["fault_status", "value", "NUMBER"], ["fault_code", "tic40codeid", "LITERAL"], ["fault_name", "tic40codename", "LITERAL"], ["fault_spn", "spncode", "LITERAL"], ["fault_fmi", "fmicode", "LITERAL"], ["fault_severity", "severity", "LITERAL"], ["fault_description", "description", "LITERAL"]], "metrics": {"STS": [{"name": "on_totaltimer", "columnType": "NUMBER", "jsonPath": "che|@|on|totaltimer|ioutput|actual|#unit#hour|value", "tic": "che.on.totaltimer"}, {"name": "working_status", "columnType": "NUMBER", "jsonPath": "che|@|working|status|input|actual|value", "tic": "che.working.status"}, {"name": "move_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|cycle|@|move|totalcounter|output|actual|value", "tic": "che.cycle.move.totalcounter"}, {"name": "energy_consumed", "columnType": "NUMBER", "jsonPath": "che|@|energy|consumed|output|actual|#unit#kwh|value", "tic": "che.energy.consumed"}, {"name": "wind", "columnType": "NUMBER", "jsonPath": "che|@|ambient|wind|output|actual|#unit#kilometer_per_hour|value", "tic": "che.ambient.wind"}, {"name": "hoist_motor_temperature", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|motor|@|running|temperature|output|actual|#unit#celsius|value", "tic": "che.hoist.motor.running.temperature"}, {"name": "hoist_motor_current", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|motor|@|energy|current|output|actual|#name#electric|#unit#amp|value", "tic": "che.hoist.motor.energy.current"}, {"name": "hoist_totaldistance", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|hoisting|totaldistance|output|actual|#unit#kilometer|value", "tic": "che.hoist.hoisting.totaldistance"}, {"name": "hoist_slackrope_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|slackrope|totalcounter|output|actual|value", "tic": "che.hoist.slackrope.totalcounter"}, {"name": "twistlock_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|spreader|@|lockingdevice|@|locked|totalcounter|ioutput|actual|value", "tic": "che.spreader.lockingdevice.locked.totalcounter"}, {"name": "spreader_weight_gross", "columnType": "NUMBER", "jsonPath": "che|@|spreader|@|weight|gross|output|actual|#unit#ton|value", "tic": "che.spreader.weight.gross"}, {"name": "trolley_totaldistance", "columnType": "NUMBER", "jsonPath": "che|@|trolley|@|trolleying|totaldistance|output|actual|#unit#kilometer|value", "tic": "che.trolley.trolleying.totaldistance"}, {"name": "fault_status", "columnType": "NUMBER", "jsonPath": "che|@|fault|status|output|actual|value", "tic": "che.fault.status (value)"}, {"name": "fault_code", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|tic40codeid", "tic": "che.fault.status (tic40codeid)"}, {"name": "fault_name", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|tic40codename", "tic": "che.fault.status (tic40codename)"}, {"name": "fault_spn", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|spncode", "tic": "che.fault.status (spncode)"}, {"name": "fault_fmi", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|fmicode", "tic": "che.fault.status (fmicode)"}, {"name": "fault_severity", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|severity", "tic": "che.fault.status (severity)"}, {"name": "fault_description", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|description", "tic": "che.fault.status (description)"}], "RTG": [{"name": "on_totaltimer", "columnType": "NUMBER", "jsonPath": "che|@|on|totaltimer|ioutput|actual|#unit#hour|value", "tic": "che.on.totaltimer"}, {"name": "working_status", "columnType": "NUMBER", "jsonPath": "che|@|working|status|input|actual|value", "tic": "che.working.status"}, {"name": "move_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|cycle|@|move|totalcounter|output|actual|value", "tic": "che.cycle.move.totalcounter"}, {"name": "energy_consumed", "columnType": "NUMBER", "jsonPath": "che|@|energy|consumed|output|actual|#unit#kwh|value", "tic": "che.energy.consumed"}, {"name": "wind", "columnType": "NUMBER", "jsonPath": "che|@|ambient|wind|output|actual|#unit#kilometer_per_hour|value", "tic": "che.ambient.wind"}, {"name": "hoist_motor_temperature", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|motor|@|running|temperature|output|actual|#unit#celsius|value", "tic": "che.hoist.motor.running.temperature"}, {"name": "hoist_motor_current", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|motor|@|energy|current|output|actual|#name#electric|#unit#amp|value", "tic": "che.hoist.motor.energy.current"}, {"name": "hoist_totaldistance", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|hoisting|totaldistance|output|actual|#unit#kilometer|value", "tic": "che.hoist.hoisting.totaldistance"}, {"name": "hoist_slackrope_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|slackrope|totalcounter|output|actual|value", "tic": "che.hoist.slackrope.totalcounter"}, {"name": "twistlock_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|spreader|@|lockingdevice|@|locked|totalcounter|ioutput|actual|value", "tic": "che.spreader.lockingdevice.locked.totalcounter"}, {"name": "spreader_weight_gross", "columnType": "NUMBER", "jsonPath": "che|@|spreader|@|weight|gross|output|actual|#unit#ton|value", "tic": "che.spreader.weight.gross"}, {"name": "coolant_temperature", "columnType": "NUMBER", "jsonPath": "che|@|powersource|@|coolant|temperature|output|actual|#unit#celsius|value", "tic": "che.powersource.coolant.temperature"}, {"name": "oil_pressure", "columnType": "NUMBER", "jsonPath": "che|@|powersource|@|oil|pressure|output|actual|#unit#bar|value", "tic": "che.powersource.oil.pressure"}, {"name": "fault_status", "columnType": "NUMBER", "jsonPath": "che|@|fault|status|output|actual|value", "tic": "che.fault.status (value)"}, {"name": "fault_code", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|tic40codeid", "tic": "che.fault.status (tic40codeid)"}, {"name": "fault_name", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|tic40codename", "tic": "che.fault.status (tic40codename)"}, {"name": "fault_spn", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|spncode", "tic": "che.fault.status (spncode)"}, {"name": "fault_fmi", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|fmicode", "tic": "che.fault.status (fmicode)"}, {"name": "fault_severity", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|severity", "tic": "che.fault.status (severity)"}, {"name": "fault_description", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|description", "tic": "che.fault.status (description)"}], "SC": [{"name": "on_totaltimer", "columnType": "NUMBER", "jsonPath": "che|@|on|totaltimer|ioutput|actual|#unit#hour|value", "tic": "che.on.totaltimer"}, {"name": "working_status", "columnType": "NUMBER", "jsonPath": "che|@|working|status|input|actual|value", "tic": "che.working.status"}, {"name": "move_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|cycle|@|move|totalcounter|output|actual|value", "tic": "che.cycle.move.totalcounter"}, {"name": "energy_consumed", "columnType": "NUMBER", "jsonPath": "che|@|energy|consumed|output|actual|#unit#kwh|value", "tic": "che.energy.consumed"}, {"name": "hoist_totaldistance", "columnType": "NUMBER", "jsonPath": "che|@|hoist|@|hoisting|totaldistance|output|actual|#unit#kilometer|value", "tic": "che.hoist.hoisting.totaldistance"}, {"name": "twistlock_totalcounter", "columnType": "NUMBER", "jsonPath": "che|@|spreader|@|lockingdevice|@|locked|totalcounter|ioutput|actual|value", "tic": "che.spreader.lockingdevice.locked.totalcounter"}, {"name": "spreader_weight_gross", "columnType": "NUMBER", "jsonPath": "che|@|spreader|@|weight|gross|output|actual|#unit#ton|value", "tic": "che.spreader.weight.gross"}, {"name": "coolant_temperature", "columnType": "NUMBER", "jsonPath": "che|@|powersource|@|coolant|temperature|output|actual|#unit#celsius|value", "tic": "che.powersource.coolant.temperature"}, {"name": "oil_pressure", "columnType": "NUMBER", "jsonPath": "che|@|powersource|@|oil|pressure|output|actual|#unit#bar|value", "tic": "che.powersource.oil.pressure"}, {"name": "fault_status", "columnType": "NUMBER", "jsonPath": "che|@|fault|status|output|actual|value", "tic": "che.fault.status (value)"}, {"name": "fault_code", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|tic40codeid", "tic": "che.fault.status (tic40codeid)"}, {"name": "fault_name", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|tic40codename", "tic": "che.fault.status (tic40codename)"}, {"name": "fault_spn", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|spncode", "tic": "che.fault.status (spncode)"}, {"name": "fault_fmi", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|fmicode", "tic": "che.fault.status (fmicode)"}, {"name": "fault_severity", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|severity", "tic": "che.fault.status (severity)"}, {"name": "fault_description", "columnType": "LITERAL", "jsonPath": "che|@|fault|status|output|actual|description", "tic": "che.fault.status (description)"}]}};
+// ---------- md5 (to match the Python simulator's stable pseudo-random values) ----------
+function md5(s){function c(x,y){const l=(x&0xffff)+(y&0xffff);return((x>>16)+(y>>16)+(l>>16))<<16|l&0xffff}
+ function r(q,a,b,x,s,t){a=c(c(a,q),c(x,t));return c(a<<s|a>>>32-s,b)}
+ function ff(a,b,c_,d,x,s,t){return r(b&c_|~b&d,a,b,x,s,t)}function gg(a,b,c_,d,x,s,t){return r(b&d|c_&~d,a,b,x,s,t)}
+ function hh(a,b,c_,d,x,s,t){return r(b^c_^d,a,b,x,s,t)}function ii(a,b,c_,d,x,s,t){return r(c_^(b|~d),a,b,x,s,t)}
+ const u=unescape(encodeURIComponent(s)),n=u.length,x=new Array(((n+8>>6)+1)*16).fill(0);
+ for(let i=0;i<n;i++)x[i>>2]|=u.charCodeAt(i)<<(i%4*8);x[n>>2]|=0x80<<(n%4*8);x[x.length-2]=n*8;
+ let a=1732584193,b=-271733879,C=-1732584194,d=271733878;
+ for(let i=0;i<x.length;i+=16){const A=a,B=b,CC=C,D=d;
+  a=ff(a,b,C,d,x[i],7,-680876936);d=ff(d,a,b,C,x[i+1],12,-389564586);C=ff(C,d,a,b,x[i+2],17,606105819);b=ff(b,C,d,a,x[i+3],22,-1044525330);
+  a=ff(a,b,C,d,x[i+4],7,-176418897);d=ff(d,a,b,C,x[i+5],12,1200080426);C=ff(C,d,a,b,x[i+6],17,-1473231341);b=ff(b,C,d,a,x[i+7],22,-45705983);
+  a=ff(a,b,C,d,x[i+8],7,1770035416);d=ff(d,a,b,C,x[i+9],12,-1958414417);C=ff(C,d,a,b,x[i+10],17,-42063);b=ff(b,C,d,a,x[i+11],22,-1990404162);
+  a=ff(a,b,C,d,x[i+12],7,1804603682);d=ff(d,a,b,C,x[i+13],12,-40341101);C=ff(C,d,a,b,x[i+14],17,-1502002290);b=ff(b,C,d,a,x[i+15],22,1236535329);
+  a=gg(a,b,C,d,x[i+1],5,-165796510);d=gg(d,a,b,C,x[i+6],9,-1069501632);C=gg(C,d,a,b,x[i+11],14,643717713);b=gg(b,C,d,a,x[i],20,-373897302);
+  a=gg(a,b,C,d,x[i+5],5,-701558691);d=gg(d,a,b,C,x[i+10],9,38016083);C=gg(C,d,a,b,x[i+15],14,-660478335);b=gg(b,C,d,a,x[i+4],20,-405537848);
+  a=gg(a,b,C,d,x[i+9],5,568446438);d=gg(d,a,b,C,x[i+14],9,-1019803690);C=gg(C,d,a,b,x[i+3],14,-187363961);b=gg(b,C,d,a,x[i+8],20,1163531501);
+  a=gg(a,b,C,d,x[i+13],5,-1444681467);d=gg(d,a,b,C,x[i+2],9,-51403784);C=gg(C,d,a,b,x[i+7],14,1735328473);b=gg(b,C,d,a,x[i+12],20,-1926607734);
+  a=hh(a,b,C,d,x[i+5],4,-378558);d=hh(d,a,b,C,x[i+8],11,-2022574463);C=hh(C,d,a,b,x[i+11],16,1839030562);b=hh(b,C,d,a,x[i+14],23,-35309556);
+  a=hh(a,b,C,d,x[i+1],4,-1530992060);d=hh(d,a,b,C,x[i+4],11,1272893353);C=hh(C,d,a,b,x[i+7],16,-155497632);b=hh(b,C,d,a,x[i+10],23,-1094730640);
+  a=hh(a,b,C,d,x[i+13],4,681279174);d=hh(d,a,b,C,x[i],11,-358537222);C=hh(C,d,a,b,x[i+3],16,-722521979);b=hh(b,C,d,a,x[i+6],23,76029189);
+  a=hh(a,b,C,d,x[i+9],4,-640364487);d=hh(d,a,b,C,x[i+12],11,-421815835);C=hh(C,d,a,b,x[i+15],16,530742520);b=hh(b,C,d,a,x[i+2],23,-995338651);
+  a=ii(a,b,C,d,x[i],6,-198630844);d=ii(d,a,b,C,x[i+7],10,1126891415);C=ii(C,d,a,b,x[i+14],15,-1416354905);b=ii(b,C,d,a,x[i+5],21,-57434055);
+  a=ii(a,b,C,d,x[i+12],6,1700485571);d=ii(d,a,b,C,x[i+3],10,-1894986606);C=ii(C,d,a,b,x[i+10],15,-1051523);b=ii(b,C,d,a,x[i+1],21,-2054922799);
+  a=ii(a,b,C,d,x[i+8],6,1873313359);d=ii(d,a,b,C,x[i+15],10,-30611744);C=ii(C,d,a,b,x[i+6],15,-1560198380);b=ii(b,C,d,a,x[i+13],21,1309151649);
+  a=ii(a,b,C,d,x[i+4],6,-145523070);d=ii(d,a,b,C,x[i+11],10,-1120210379);C=ii(C,d,a,b,x[i+2],15,718787259);b=ii(b,C,d,a,x[i+9],21,-343485551);
+  a=c(a,A);b=c(b,B);C=c(C,CC);d=c(d,D)}
+ return [a,b,C,d].map(v=>{let h="";for(let j=0;j<4;j++)h+=((v>>>(j*8))&255).toString(16).padStart(2,"0");return h}).join("")}
+
+// ---------- the simulator (a port of sim.py readings() and tic40.py nested()/flat()) ----------
+const pyStr = v => typeof v === "number" ? (Number.isInteger(v) ? String(v) : String(v)) : String(v);
+const rnd = (...k) => parseInt(md5(k.map(pyStr).join("|")).slice(0, 8), 16) / 0xFFFFFFFF;
+const T0 = Date.UTC(2026, 0, 1) / 1000;
+const rd = (x, n) => { const p = 10 ** n; return Math.round(x * p) / p; };
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+function duty(e, t){
+  const h = (new Date(t * 1000).getUTCHours() + 4) % 24;
+  let base = (h >= 6 && h < 22) ? 0.82 : 0.6;
+  if (h === 3) base = 0.25;
+  if (e.class === "STS") base *= 0.6 + 0.4 * (0.5 + 0.5 * Math.sin((t / 3600 + parseInt(e.id.slice(-1))) / 5));
+  return clamp(base + 0.15 * (rnd(e.id, Math.floor(t / 600)) - 0.5), 0, 1);
+}
+function shift(sc, name, e, t){
+  const s = sc[name] || {};
+  if (!s.active || (s.asset || e.id) !== e.id) return 0;
+  return clamp((t - (s.since || t)) / 60 / Math.max(1, s.ramp_min || 15), 0, 1);
+}
+function readings(e, t, sc){
+  const age = 2026 - e.year;
+  const onH = age * 6900 * (0.9 + 0.2 * rnd(e.id, "h")) + (t - T0) / 3600 * 0.93;
+  const moves = onH * e.moves_h * 0.62, d = duty(e, t);
+  const hot = shift(sc, "hoist_overheat", e, t), cool = shift(sc, "coolant_fault", e, t);
+  const ws = sc.high_wind || {}, gust = ws.active ? 1 : 0;
+  const hour = (t / 3600) % 24, ambient = 31 + 6 * Math.sin((hour - 9) / 24 * 2 * Math.PI);
+  const load = d * (0.7 + 0.3 * rnd(e.id, Math.floor(t / 60)));
+  const k20 = Math.floor(t / 20);
+  const v = {
+    on_totaltimer: rd(onH, 2), working_status: d > 0.3, move_totalcounter: Math.trunc(moves),
+    energy_consumed: rd(e.moves_h * d / 3600 * 20 * (e.class === "STS" ? 5.6 : e.power === "electric" ? 3.1 : 4.4), 3),
+    wind: rd(18 + 10 * rnd("wind", Math.floor(t / 120)) + gust * (52 + 8 * rnd("gust", k20)), 1),
+    hoist_totaldistance: rd(moves * (e.class === "STS" ? 0.046 : 0.028), 1),
+    twistlock_totalcounter: Math.trunc(moves * (e.class === "STS" ? 1.12 : 1.0)),
+    spreader_weight_gross: d > 0.3 ? rd(8 + 24 * rnd(e.id, "w", Math.floor(t / 90)), 1) : 0.0,
+    trolley_totaldistance: rd(moves * 0.061, 1),
+    hoist_slackrope_totalcounter: Math.trunc(moves / 9000),
+    hoist_motor_temperature: rd(ambient + 24 + 14 * load + 1.5 * (rnd(e.id, "t", k20) - 0.5) + 33 * hot, 1),
+    hoist_motor_current: rd(380 + 520 * load * (1 + 0.18 * hot) + 20 * rnd(e.id, "a", k20), 0),
+    coolant_temperature: rd(84 + 6 * load + 1.2 * rnd(e.id, "c", k20) + 24 * cool, 1),
+    oil_pressure: rd(4.1 - 0.4 * load + 0.1 * rnd(e.id, "p", k20) - 1.6 * cool, 2),
+  };
+  if (e.class === "SC") v.hoist_totaldistance = rd(moves * 0.012, 1);
+  let fault = null; const tw = sc.twistlock_fault || {};
+  if (hot >= 0.85) fault = {active:true, tic40codeid:"HOIST_MOTOR_OVERTEMP", tic40codename:"hoist motor over temperature", mcode:"HM-0412", severity:"high", description:"Hoist motor winding temperature above 95 C"};
+  else if (cool >= 0.8) fault = {active:true, tic40codeid:"ENGINE_COOLANT_HIGH", tic40codename:"engine coolant temperature high", mcode:"", spncode:"110", fmicode:"0", severity:"high", description:"J1939 SPN 110 FMI 0: engine coolant temperature above normal operating range"};
+  else if (tw.active && tw.asset === e.id && rnd("tw", Math.floor(t / 60)) < (tw.rate ?? 0.35)) fault = {active:true, tic40codeid:"TWISTLOCK_NOT_LOCKED", tic40codename:"twistlock not locked", mcode:"SP-2207", severity:"medium", description:"Spreader twistlock locked feedback missing on landside corner"};
+  else if (ws.active && e.class === "STS" && v.wind > 72) fault = {active:true, tic40codeid:"WIND_LIMIT", tic40codename:"wind speed above operating limit", severity:"medium", description:"Wind above 72 km/h: stop and stow"};
+  return [v, fault];
+}
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === "x" ? r : r & 3 | 8).toString(16); }));
+function iso(t){ const d = new Date(Math.floor(t * 1000)); return d.toISOString(); }
+function nested(che, values, ts, sender, fault){
+  const root = {id:{metaelements:[{value:che.id}]}, name:che.name, type:{metaelements:[{value:che.type}]},
+    brand:{metaelements:[{value:che.brand}]}, model:{metaelements:[{value:che.model}]}};
+  for (const [name, subj, concept, prop, pomf, ess, , classes] of DATA.points){
+    if (!(name in values) || !classes.split(" ").includes(che.type)) continue;
+    let node = root;
+    for (const s of subj){ if (!node[s]) node[s] = [{}]; node = node[s][0]; }
+    if (!node[concept]) node[concept] = {};
+    const rec = {"#pomf#":pomf, "#pomt#":"actual"};
+    for (const k of Object.keys(ess).sort()) rec[`#${k}#`] = ess[k];
+    rec.timestamp = ts; rec.value = values[name];
+    node[concept][prop] = [rec];
+  }
+  if (fault){
+    const rec = {"#pomf#":"output", "#pomt#":"actual", timestamp:ts, value:!!fault.active};
+    for (const [, field] of DATA.fault_fields.slice(1)) rec[field] = fault[field] ?? "";
+    root.fault = {status:[rec]};
+  }
+  return {msg:{header:{id:uuid(), sender, timestamp:ts, topic:"", version:"2026.020"}, payload:{che:[root]}}};
+}
+function flat(msg){
+  const out = {};
+  for (const [k, v] of Object.entries(msg.msg.header)) out[`msg|header|${k}`] = v;
+  const walk = (node, path) => {
+    for (const [k, v] of Object.entries(node)){
+      if (Array.isArray(v) && v.length && v[0] && typeof v[0] === "object" && "timestamp" in v[0]){
+        for (const rec of v){
+          const head = [rec["#pomf#"] || "", rec["#pomt#"] || ""];
+          for (const e of Object.keys(rec).sort()) if (e.startsWith("#") && e !== "#pomf#" && e !== "#pomt#") head.push(e + rec[e]);
+          for (const [f, val] of Object.entries(rec)) if (!f.startsWith("#")) out[[...path, k, ...head, f].join("|")] = val;
+        }
+      } else if (Array.isArray(v)) { for (const item of v) walk(item, [...path, k, "@"]); }
+      else if (v && typeof v === "object" && "metaelements" in v) out[[...path, k].join("|")] = v.metaelements[0].value;
+      else if (v && typeof v === "object") walk(v, [...path, k]);
+      else out[[...path, k].join("|")] = v;
+    }
+  };
+  for (const che of msg.msg.payload.che) walk(che, ["che", "@"]);
+  return out;
+}
+function message(e, t, sc){
+  const [v0, fault] = readings(e, t, sc);
+  const names = new Set(DATA.metrics[e.class].map(m => m.name));
+  const v = Object.fromEntries(Object.entries(v0).filter(([k]) => names.has(k)));
+  const term = DATA.terminal.code;
+  const che = {id:`${e.brand}-${e.year}-${e.id}`, name:`${term}_${e.class}_${e.id.slice(-2)}`, type:e.class, brand:e.brand, model:e.model};
+  const n = nested(che, v, iso(t), che.name, fault || {active:false});
+  return {nested:n, flat:flat(n), values:v, fault};
+}
+if (typeof module !== "undefined") module.exports = {message, readings, md5, setData:d => { globalThis.DATA_ = d; }};
+
+// ---------- the page ----------
+if (typeof document !== "undefined") (function(){
+const F = DATA.fleet, byId = Object.fromEntries(F.map(e => [e.id, e]));
+const SC = {};                                  // scenario switches, like scenarios.json
+const STEP = 20, KEEP = 90;                     // a TiC message every 20 s of simulated time, 30 min of history
+let sel = "STS03", tab = "map", sent = 0, alerts = [], wos = [];
+const hist = {};                                // id -> [{t, temp, fault}]
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const vend = e => e.source.vendor === "ABB" ? "abb" : "sie";
+const cls = {STS:"Ship-to-shore crane", RTG:"Rubber-tyred gantry", SC:"Straddle carrier"};
+const LIMIT = 90;
+
+// Simulated clock: real time, but the page runs a 20 s TiC cycle every 2 s so a story unfolds in a couple of minutes.
+let simT = Math.floor(Date.now() / 1000 / STEP) * STEP;
+for (const e of F){ hist[e.id] = []; for (let k = KEEP; k > 0; k--){ const t = simT - k * STEP; const m = message(e, t, SC); hist[e.id].push({t, temp:m.values.hoist_motor_temperature, cool:m.values.coolant_temperature, fault:!!m.fault}); } }
+const latest = {};
+
+function sourceOf(e, metric){
+  const s = DATA.signal_sources, v = e.source.vendor;
+  if (s[v] && s[v][metric]) return [s[v][metric], v === "ABB" ? "abb" : "sie"];
+  if ((metric === "coolant_temperature" || metric === "oil_pressure") && e.power === "electric") return ["n/a", ""];
+  if (s.plc_tags[metric]) return [`${e.source.plc}: ${s.plc_tags[metric]}`, vend(e)];
+  return ["", ""];
+}
+
+function renderFleet(){
+  const groups = [["ABB", "abb", "ABB ACS880 drives · AC500 PLC"], ["Siemens", "sie", "Siemens SINAMICS S120 (SIMOCRANE) · SIMATIC S7-1500"]];
+  $("fleet").innerHTML = groups.map(([v, c, sub]) => {
+    const ms = F.filter(e => e.source.vendor === v);
+    return `<div class="vendor ${c}"><div class="vh"><h3>${v}-equipped · ${ms.length} machines</h3><small>${sub}</small></div>
+      <div class="machines">${ms.map(e => `<button class="m" id="m-${e.id}" data-id="${e.id}"><div class="id">${e.id}<span class="dot"></span></div>
+      <div class="ty">${cls[e.class]} · ${esc(e.brand)}</div><div class="v" id="mv-${e.id}"></div></button>`).join("")}</div></div>`;
+  }).join("");
+  document.querySelectorAll(".m").forEach(b => b.onclick = () => { sel = b.dataset.id; draw(); });
+}
+
+const SCEN = [
+  ["hoist_overheat", "Hoist motor running hot", e => e.class !== "SC"],
+  ["coolant_fault", "Engine coolant fault (J1939)", e => e.class !== "STS" && e.power !== "electric"],
+  ["twistlock_fault", "Twistlock not locking", () => true],
+  ["high_wind", "High wind at the quay", () => true],
+];
+function renderScen(){
+  const e = byId[sel];
+  $("scen").innerHTML = SCEN.map(([k, label, ok]) => {
+    const s = SC[k] || {}, on = s.active && (k === "high_wind" || s.asset === sel);
+    const dis = !ok(e) && !on;
+    return `<button data-k="${k}" class="${on ? "on" : ""}" ${dis ? "disabled title='Not on this machine type'" : ""}>${on ? "■ Stop: " : "▶ "}${label}${k === "high_wind" ? "" : " on " + sel}</button>`;
+  }).join("") + `<button data-k="reset">Reset all</button>`;
+  $("scen").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if (k === "reset"){ for (const x in SC) delete SC[x]; alerts = []; wos = []; draw(); return; }
+    const s = SC[k] || {}, on = s.active && (k === "high_wind" || s.asset === sel);
+    SC[k] = on ? {active:false} : {active:true, asset:sel, since:simT, ramp_min:5, rate:0.6};
+    draw();
+  });
+}
+
+function chart(){
+  const h = hist[sel], W = 520, H = 170, L = 34, R = 8, T = 8, B = 22;
+  const temps = h.map(p => p.temp), lo = Math.min(50, ...temps) - 2, hi = Math.max(110, ...temps) + 2;
+  const x = i => L + (W - L - R) * i / (h.length - 1), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  let g = "";
+  for (let v = Math.ceil(lo / 10) * 10; v <= hi; v += 10) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${y(LIMIT)}" y2="${y(LIMIT)}" stroke="var(--red)" stroke-dasharray="5 4"/><text x="${W - R}" y="${y(LIMIT) - 4}" text-anchor="end" style="fill:var(--red)">alert 90 °C</text>`;
+  const pts = h.map((p, i) => `${x(i).toFixed(1)},${y(p.temp).toFixed(1)}`).join(" ");
+  g += `<polyline points="${pts}" fill="none" stroke="var(--blue)" stroke-width="2"/>`;
+  h.forEach((p, i) => { if (p.temp > LIMIT) g += `<circle cx="${x(i)}" cy="${y(p.temp)}" r="2.5" fill="var(--red)"/>`; });
+  g += `<text x="${L}" y="${H - 4}">−30 min</text><text x="${W - R}" y="${H - 4}" text-anchor="end">now</text>`;
+  $("chart").innerHTML = g;
+}
+
+function draw(){
+  const e = byId[sel], m = latest[sel]; if (!m) return;
+  document.querySelectorAll(".m").forEach(b => b.classList.toggle("sel", b.dataset.id === sel));
+  const devType = DATA.classes[e.class];
+  $("dh").innerHTML = `<span class="big"><b>${e.id}</b> · ${cls[e.class]}</span><span class="pill ${vend(e)}">${e.source.vendor}</span>
+    <span class="muted">${esc(e.brand)} ${esc(e.model)} · ${e.year} · drive: ${esc(e.source.drive)} · PLC: ${esc(e.source.plc)} · edge: ${esc(e.source.link)}</span>`;
+  const rows = DATA.metrics[e.class].filter(x => !x.name.startsWith("fault_") || x.name === "fault_status").map(x => {
+    const [src, c] = sourceOf(e, x.name);
+    const val = x.name === "fault_status" ? (m.fault ? "true" : "false") : m.values[x.name];
+    const unit = (x.jsonPath.match(/#unit#([a-z_]+)/) || [, ""])[1].replace("celsius", "°C").replace("kilometer_per_hour", "km/h").replace("kilometer", "km").replace("amp", "A").replace("hour", "h").replace("ton", "t");
+    return `<tr><td><span class="src ${c}">${esc(src)}</span></td>
+      <td><span class="mono">${esc(x.tic)}</span></td><td><span class="mono">${esc(x.name)}</span></td>
+      <td class="val">${val === undefined ? "–" : esc(val)} ${unit}</td></tr>`;
+  }).join("");
+  $("t-map").innerHTML = `<table><thead><tr><th>At the equipment (${e.source.vendor})</th><th>TiC 4.0 data point</th><th>Monitor metric (${devType})</th><th style="text-align:right">Now</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="muted" style="margin-top:8px">Each Monitor metric's JSON path is the TiC FLAT key, for example <span class="mono">${esc(DATA.metrics[e.class].find(x => x.name === "hoist_motor_temperature")?.jsonPath || "")}</span>.</p>`;
+  $("t-flat").textContent = JSON.stringify(m.flat, null, 1);
+  $("t-nested").textContent = JSON.stringify(m.nested, null, 1);
+  ["map", "flat", "nested"].forEach(k => $("t-" + k).hidden = tab !== k);
+  $("monPath").innerHTML = `Device type ${devType} / device ${e.id}`;
+  const v = m.values, temp = v.hoist_motor_temperature;
+  $("kpis").innerHTML = [
+    ["Hoist motor", temp === undefined ? "–" : temp + " °C", temp > LIMIT],
+    [e.class === "STS" ? "Wind" : "Coolant", e.class === "STS" ? v.wind + " km/h" : (v.coolant_temperature ?? "–") + (v.coolant_temperature ? " °C" : ""), e.class === "STS" ? v.wind > 72 : v.coolant_temperature > 100],
+    ["TiC fault", m.fault ? esc(m.fault.tic40codeid) : "none", !!m.fault],
+  ].map(([k, val, bad]) => `<div class="kpi ${bad ? "bad" : ""}"><small>${k}</small><b>${val}</b></div>`).join("");
+  chart();
+  const mine = alerts.filter(a => a.src === sel).slice(-6).reverse();
+  $("alerts").innerHTML = mine.length ? mine.map(a => `<tr><td>${new Date(a.t * 1000).toISOString().slice(11, 19)}</td><td class="mono">${a.name}</td><td>${a.src}</td><td><span class="sev ${a.sev === "High" ? "" : "med"}"></span>${a.sev}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="muted">No alerts on ${sel}. Switch a story on above.</td></tr>`;
+  const w = wos.find(x => x.asset.startsWith(sel));
+  $("wo").innerHTML = w ? `<div class="wo"><b>Maximo Manage · work order ${w.num}</b> on <b>${w.asset}</b> (${w.part}), priority 1, status WAPPR<br>
+    ${esc(w.desc)}<br><span class="muted">Raised from Monitor alert ${w.alert}. Evidence: ${esc(w.evidence)}</span></div>` : "";
+  renderScen();
+}
+
+function addAlert(e, name, sev, t){
+  const last = alerts.filter(a => a.src === e.id && a.name === name).pop();
+  if (last && t - last.t < 60) return;
+  alerts.push({t, name, sev, src:e.id}); if (alerts.length > 400) alerts.shift();
+}
+function raiseWO(e, kind, t){
+  if (wos.find(w => w.asset.startsWith(e.id) && w.kind === kind)) return;
+  const part = {hoist:["HMT", "Hoist motor over temperature", "hoist motor temperature above 90 °C for several readings; drive " + e.source.drive],
+                cool:["PWR", "Engine coolant temperature high (J1939 SPN 110 FMI 0)", "coolant above 100 °C, oil pressure falling"],
+                tw:["SPR", "Twistlock not locking on landside corner", "repeated TiC fault TWISTLOCK_NOT_LOCKED from the " + e.source.plc]}[kind];
+  wos.push({kind, num:1420 + wos.length, asset:`${e.id}-${part[0]}`, part:part[0], desc:part[1], evidence:part[2], alert:200 + alerts.length});
+}
+
+function tick(){
+  simT += STEP;
+  for (const e of F){
+    const m = message(e, simT, SC); latest[e.id] = m; sent++;
+    const h = hist[e.id]; h.push({t:simT, temp:m.values.hoist_motor_temperature, cool:m.values.coolant_temperature, fault:!!m.fault}); if (h.length > KEEP) h.shift();
+    const v = m.values;
+    if (v.hoist_motor_temperature > LIMIT){ addAlert(e, "alert_hoist_motor_overtemp", "High", simT);
+      if (h.slice(-3).every(p => p.temp > LIMIT)) raiseWO(e, "hoist", simT); }
+    if (v.coolant_temperature > 100){ addAlert(e, "alert_coolant_high", "High", simT); raiseWO(e, "cool", simT); }
+    if (m.fault) addAlert(e, "alert_tic_fault", "Medium", simT);
+    if (m.fault && m.fault.tic40codeid === "TWISTLOCK_NOT_LOCKED" && alerts.filter(a => a.src === e.id && a.name === "alert_tic_fault").length >= 2) raiseWO(e, "tw", simT);
+    if (e.class === "STS" && v.wind > 72) addAlert(e, "alert_wind_limit", "Medium", simT);
+    const b = $("m-" + e.id), hot = m.fault || v.hoist_motor_temperature > LIMIT || v.coolant_temperature > 100;
+    b.classList.toggle("hot", !!hot); b.classList.toggle("warn", !hot && v.hoist_motor_temperature > 82);
+    $("mv-" + e.id).textContent = v.hoist_motor_temperature !== undefined ? `hoist ${v.hoist_motor_temperature} °C` : `coolant ${v.coolant_temperature} °C`;
+    // packets on the pipeline
+    if (Math.random() < 0.25){ const p = document.createElement("i"); p.className = "pkt " + (hot ? "bad" : vend(e)); p.style.animationDelay = (Math.random() * 1.6).toFixed(2) + "s"; $("flow").appendChild(p); setTimeout(() => p.remove(), 5200); }
+  }
+  $("c1").textContent = `${F.length} machines`;
+  $("c3").textContent = `${sent} messages`;
+  $("c4").textContent = `${alerts.length} alerts`;
+  $("c5").textContent = `${wos.length} work orders`;
+  $("liveTxt").textContent = `live · ${F.length} machines · TiC clock ${new Date(simT * 1000).toISOString().slice(11, 19)} UTC (10× speed)`;
+  draw();
+}
+
+$("tabs1").querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; $("tabs1").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); draw(); });
+$("theme").onclick = () => { const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme = dark ? "light" : "dark"; };
+renderFleet(); tick(); setInterval(tick, 2000);
+})();
+</script>
+</body>
+</html>
