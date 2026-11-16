@@ -21,6 +21,7 @@ header{background:var(--hdr);color:var(--hdrink);height:48px;display:flex;align-
 header b{font-weight:600}header .sep{width:1px;height:20px;background:#525252}
 header .live{margin-left:auto;font-size:13px;color:#c6c6c6;display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+[id]{scroll-margin-top:60px}
 main{max-width:1320px;margin:0 auto;padding:28px 16px 60px}
 h1{font-size:40px;font-weight:300;line-height:1.15}
 h1 b{font-weight:600}
@@ -156,7 +157,7 @@ Everything below is generated live in this page, the same way the demo terminal 
 <p class="sub">Each switch changes what the selected machine's drive and PLC report. The page shows the TiC message change, Monitor's alert fire and the work order Manage raises.</p>
 <div class="scen" id="scen"></div>
 
-<div class="detail">
+<div class="detail" id="detail">
  <div class="card">
   <div class="dh" id="dh"></div>
   <div class="tabs" id="tabs1"><button data-t="map" class="on">Equipment → TiC 4.0 → Monitor</button><button data-t="flat">TiC 4.0 FLAT (as published)</button><button data-t="nested">TiC 4.0 JSON (PAS 4000)</button></div>
@@ -180,7 +181,7 @@ Everything below is generated live in this page, the same way the demo terminal 
 
 <h2>The same flow on a real Maximo system</h2>
 <p class="sub">Captured from a running MAS 9 environment fed by the same simulator, so the names and limits match the page above.</p>
-<div class="gal">
+<div class="gal" id="gal">
  <figure><img src="img/monitor-metric-jsonpath.jpg" alt="Monitor device type TIC_STS, metric hoist_motor_temperature with JSON path set to the TiC FLAT name" loading="lazy">
   <figcaption><b>Monitor: one metric per TiC data point.</b> The metric is listed by its TiC name, and its JSON path is the TiC FLAT key. That is the whole adapter.</figcaption></figure>
  <figure><img src="img/monitor-dashboard.jpg" alt="Monitor dashboard of the ship-to-shore cranes with hoist motor temperature over 24 hours" loading="lazy">
@@ -484,7 +485,18 @@ function tick(){
 
 $("tabs1").querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; $("tabs1").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); draw(); });
 $("theme").onclick = () => { const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme = dark ? "light" : "dark"; };
-renderFleet(); tick(); setInterval(tick, 2000);
+// Deep links (also used by the video): #m=STS04&tab=flat&story=hoist_overheat&ago=400&at=detail
+const q = new URLSearchParams(location.hash.slice(1));
+if (byId[q.get("m")]) sel = q.get("m");
+if (["map", "flat", "nested"].includes(q.get("tab"))){ tab = q.get("tab"); $("tabs1").querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.t === tab)); }
+renderFleet();
+if (SCEN.some(x => x[0] === q.get("story"))){
+  const ago = +q.get("ago") || 0;
+  SC[q.get("story")] = {active:true, asset:sel, since:simT, ramp_min:5, rate:0.6};
+  for (let k = Math.floor(ago / STEP); k > 0; k--) tick();     // replay the minutes already gone
+}
+tick(); setInterval(tick, 2000);
+if (q.get("at")) setTimeout(() => $(q.get("at"))?.scrollIntoView(), 50);
 })();
 </script>
 </body>
