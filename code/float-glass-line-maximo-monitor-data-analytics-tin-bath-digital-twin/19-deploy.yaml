@@ -1,0 +1,59 @@
+# Float Glass Line 1 simulator + control page. Own namespace, nothing shared. Inputs (created by deploy.sh, not in git):
+#   configmap floatglass-sim-code    : sim.py, line.json, page.html
+#   secret    floatglass-sim-devices : devices.json (Monitor device tokens from monitor_setup.py)
+#   secret    floatglass-sim-key     : demo-key (switches scenarios from the page)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: floatglass-sim
+  namespace: floatglass-sim
+  labels: { app: floatglass-sim }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: floatglass-sim } }
+  template:
+    metadata: { labels: { app: floatglass-sim } }
+    spec:
+      containers:
+        - name: sim
+          image: docker.io/library/python:3.12-slim-bookworm
+          command: ["/bin/sh", "-c"]
+          args:
+            - pip install --quiet --no-cache-dir --user "paho-mqtt>=2" &&
+              exec python -u /code/sim.py live --every 10 --tin-every 10 --http 8080
+          env:
+            - { name: HOME, value: /tmp }
+            - { name: PYTHONUSERBASE, value: /tmp/pyuser }
+            - { name: DEV_FILE, value: /secret/devices.json }
+            - { name: SCENARIO_STATE, value: /tmp/scenarios.json }
+            - { name: DEMO_KEY, valueFrom: { secretKeyRef: { name: floatglass-sim-key, key: demo-key } } }
+          ports: [{ containerPort: 8080, name: http }]
+          readinessProbe: { httpGet: { path: /healthz, port: 8080 }, initialDelaySeconds: 20, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /healthz, port: 8080 }, initialDelaySeconds: 90, periodSeconds: 30 }
+          resources:
+            requests: { cpu: 20m, memory: 64Mi }
+            limits: { cpu: 300m, memory: 256Mi }
+          volumeMounts:
+            - { name: code, mountPath: /code }
+            - { name: devices, mountPath: /secret, readOnly: true }
+      volumes:
+        - name: code
+          configMap: { name: floatglass-sim-code }
+        - name: devices
+          secret: { secretName: floatglass-sim-devices }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: floatglass-sim, namespace: floatglass-sim }
+spec:
+  selector: { app: floatglass-sim }
+  ports: [{ name: http, port: 8080, targetPort: 8080 }]
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata: { name: floatglass-sim, namespace: floatglass-sim }
+spec:
+  to: { kind: Service, name: floatglass-sim }
+  port: { targetPort: http }
+  tls: { termination: edge, insecureEdgeTerminationPolicy: Redirect }

@@ -1,0 +1,31 @@
+{
+ "name": "FG_TINBATH",
+ "description": "Float line tin bath (PLC + SCADA tags)",
+ "dataItemDto": [
+  {
+   "name": "LIP_TEMP",
+   "type": "METRIC",
+   "columnType": "NUMBER",
+   "eventName": "tinbath",
+   "jsonPath": "d.lip_temp",
+   "description": "Glass at the spout lip (°C)"
+  },
+  {
+   "name": "ENTRY_TEMP",
+   "type": "METRIC",
+   "columnType": "NUMBER",
+   "eventName": "tinbath",
+   "jsonPath": "d.entry_temp",
+   "description": "Bath entry zone (°C)"
+  },
+  {
+   "name": "MID_TEMP",
+   "type": "METRIC",
+   "columnType": "NUMBER",
+   "eventName": "tinbath",
+   "jsonPath": "d.mid_temp",
+   "description": "Bath mid zone (°C)"
+  },
+  … 9 more, one per tag …
+ ]
+}

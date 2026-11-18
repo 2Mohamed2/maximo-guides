@@ -1,0 +1,21 @@
+{
+ "catalogFunctionName": "PythonExpression",
+ "description": "energy per tonne",
+ "input": {
+  "expression": "(df['GAS_FLOW'] * 24 * 0.036 / df['PULL_RATE']).round(2)"
+ },
+ "output": {
+  "output_name": "SPEC_ENERGY"
+ },
+ "enabled": true,
+ "schedule": {
+  "starting_at": "00:00:00",
+  "every": "5T"
+ },
+ "backtrack": {},
+ "outputMeta": {
+  "SPEC_ENERGY": {
+   "transient": false
+  }
+ }
+}

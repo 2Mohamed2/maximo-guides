@@ -1,0 +1,16 @@
+{
+ "d": {
+  "lip_temp": 1098.7,
+  "entry_temp": 1042.7,
+  "mid_temp": 903.9,
+  "exit_temp": 612.6,
+  "atm_o2": 1.71,
+  "atm_h2": 6.95,
+  "n2_flow": 1735.0,
+  "h2_flow": 131.7,
+  "bath_pressure": 24.2,
+  "ribbon_speed": 10.91,
+  "ribbon_width": 3.8,
+  "thickness_sp": 4.0
+ }
+}

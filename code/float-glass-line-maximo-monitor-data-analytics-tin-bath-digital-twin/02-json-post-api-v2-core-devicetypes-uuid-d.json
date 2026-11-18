@@ -1,0 +1,20 @@
+[
+ {
+  "id": "L1-TINBATH",
+  "name": "LINE",
+  "type": "LITERAL",
+  "value": "Line 1"
+ },
+ {
+  "id": "L1-TINBATH",
+  "name": "AREA",
+  "type": "LITERAL",
+  "value": "Tin bath"
+ },
+ {
+  "id": "L1-TINBATH",
+  "name": "SOURCE",
+  "type": "LITERAL",
+  "value": "Tin bath PLC"
+ }
+]

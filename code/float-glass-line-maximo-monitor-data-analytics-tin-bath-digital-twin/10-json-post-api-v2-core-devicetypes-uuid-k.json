@@ -1,0 +1,17 @@
+{
+ "catalogFunctionName": "AlertExpression",
+ "description": "df['ATM_O2'] > 8",
+ "input": {
+  "expression": "df['ATM_O2'] > 8",
+  "Severity": "High",
+  "Status": "New"
+ },
+ "output": {
+  "alert_name": "TIN_O2_HIGH"
+ },
+ "enabled": true,
+ "schedule": {
+  "starting_at": "00:00:00",
+  "every": "5T"
+ }
+}

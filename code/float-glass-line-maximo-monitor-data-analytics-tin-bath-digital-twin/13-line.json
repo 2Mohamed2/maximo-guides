@@ -1,0 +1,134 @@
+{
+  "line": "Float Glass Line 1",
+  "note": "Demo data, invented. A typical 600 t/day float line: furnace, tin bath, annealing lehr, cold end with inspection.",
+  "device_types": {
+    "FG_FURNACE": {
+      "desc": "Float line melting furnace (SCADA tags)",
+      "event": "furnace",
+      "devices": [
+        "L1-FURNACE"
+      ],
+      "metrics": {
+        "CROWN_TEMP": "Crown temperature (°C)",
+        "BOTTOM_TEMP": "Melter bottom temperature (°C)",
+        "REGEN_LEFT": "Regenerator top left (°C)",
+        "REGEN_RIGHT": "Regenerator top right (°C)",
+        "GAS_FLOW": "Natural gas flow (Nm³/h)",
+        "GAS_PRESSURE": "Gas supply pressure (mbar)",
+        "COMB_AIR": "Combustion air flow (Nm³/h)",
+        "FLUE_O2": "Flue gas O2 (%)",
+        "GLASS_LEVEL": "Glass level deviation (mm)",
+        "FURNACE_PRESSURE": "Furnace pressure (Pa)",
+        "PULL_RATE": "Pull rate (t/day)",
+        "CULLET_PCT": "Cullet in batch (%)"
+      }
+    },
+    "FG_TINBATH": {
+      "desc": "Float line tin bath (PLC + SCADA tags)",
+      "event": "tinbath",
+      "devices": [
+        "L1-TINBATH"
+      ],
+      "metrics": {
+        "LIP_TEMP": "Glass at the spout lip (°C)",
+        "ENTRY_TEMP": "Bath entry zone (°C)",
+        "MID_TEMP": "Bath mid zone (°C)",
+        "EXIT_TEMP": "Bath exit zone (°C)",
+        "ATM_O2": "Bath atmosphere O2 (ppm)",
+        "ATM_H2": "Bath atmosphere H2 (%)",
+        "N2_FLOW": "Nitrogen flow (Nm³/h)",
+        "H2_FLOW": "Hydrogen flow (Nm³/h)",
+        "BATH_PRESSURE": "Bath pressure (Pa)",
+        "RIBBON_SPEED": "Ribbon speed (m/min)",
+        "RIBBON_WIDTH": "Ribbon width (m)",
+        "THICKNESS_SP": "Thickness set point (mm)"
+      }
+    },
+    "FG_LEHR": {
+      "desc": "Annealing lehr (PLC tags)",
+      "event": "lehr",
+      "devices": [
+        "L1-LEHR"
+      ],
+      "metrics": {
+        "ZONE_A": "Zone A (°C)",
+        "ZONE_B": "Zone B (°C)",
+        "ZONE_C": "Zone C (°C)",
+        "ZONE_D": "Zone D (°C)",
+        "EXIT_TEMP": "Ribbon at lehr exit (°C)",
+        "STRESS": "Residual stress (nm/cm)",
+        "ROLLER_SPEED": "Roller speed (m/min)",
+        "DRIVE_CURRENT": "Main drive current (A)"
+      }
+    },
+    "FG_COLDEND": {
+      "desc": "Cold end: on-line inspection, cutting and stacking",
+      "event": "coldend",
+      "devices": [
+        "L1-COLDEND"
+      ],
+      "metrics": {
+        "THICKNESS": "Measured thickness (mm)",
+        "BUBBLES": "Bubbles (per 10 m²)",
+        "INCLUSIONS": "Stones and inclusions (per 10 m²)",
+        "TIN_DEFECTS": "Tin defects (per 10 m²)",
+        "DISTORTION": "Optical distortion, zebra angle (°)",
+        "CUT_SPEED": "Cutting line speed (m/min)",
+        "CUT_YIELD": "Cutting yield (%)",
+        "RUNNING": "Cold end running (1/0)"
+      }
+    },
+    "FG_LINE": {
+      "desc": "Float line roll-up: production and efficiency",
+      "event": "line",
+      "devices": [
+        "L1-LINE"
+      ],
+      "metrics": {
+        "PULL_RATE": "Pull rate (t/day)",
+        "PACKED_TPD": "Packed glass (t/day rate)",
+        "YIELD": "Pack-to-melt yield (%)",
+        "STATE": "Line state (2 production, 1 job change, 0 cold-end stop)",
+        "THICKNESS": "Product thickness (mm)",
+        "CROWN_TEMP": "Furnace crown (°C)",
+        "TIN_O2": "Tin bath O2 (ppm)",
+        "STRESS": "Lehr exit stress (nm/cm)",
+        "DEFECTS": "All defects (per 10 m²)",
+        "GAS_FLOW": "Furnace gas (Nm³/h)"
+      }
+    },
+    "FG_RIBBON": {
+      "desc": "Ribbon mass balance twin inputs (batch weigher, ribbon, inspection)",
+      "event": "ribbon",
+      "devices": [
+        "L1-RIBBON"
+      ],
+      "metrics": {
+        "WEIGHER_TPD": "Batch weigher, glass equivalent (t/day)",
+        "RIBBON_SPEED": "Ribbon speed (m/min)",
+        "RIBBON_WIDTH": "Ribbon width (m)",
+        "THICKNESS": "Measured thickness (mm)"
+      }
+    }
+  },
+  "dims": {
+    "LINE": "Line 1",
+    "PLANT": "Float plant",
+    "SOURCE": {
+      "L1-FURNACE": "Furnace SCADA historian",
+      "L1-TINBATH": "Tin bath PLC",
+      "L1-LEHR": "Lehr PLC",
+      "L1-COLDEND": "Inspection system + cutting PLC",
+      "L1-LINE": "Edge gateway roll-up",
+      "L1-RIBBON": "Batch weigher + tin bath PLC + inspection"
+    }
+  },
+  "area": {
+    "L1-FURNACE": "Furnace",
+    "L1-TINBATH": "Tin bath",
+    "L1-LEHR": "Annealing lehr",
+    "L1-COLDEND": "Cold end",
+    "L1-LINE": "Line 1",
+    "L1-RIBBON": "Ribbon"
+  }
+}

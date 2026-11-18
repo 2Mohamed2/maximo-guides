@@ -1,0 +1,11 @@
+{
+ "catalogFunctionName": "KMeansAnomalyScore",
+ "description": "ATM_O2 anomaly score",
+ "input": {
+  "input_item": "ATM_O2",
+  "windowsize": 12
+ },
+ "output": {
+  "output_item": "O2_ANOMALY"
+ }
+}
