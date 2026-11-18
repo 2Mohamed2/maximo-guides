@@ -1,0 +1,6 @@
+[SMOC_EnrichMeterAlarms] Parser log: SMOC enrichment started
+[SMOC_EnrichMeterAlarms] Parser log: Alarms to enrich: 3
+[SMOC_EnrichMeterAlarms] Parser log: Enriched MTR-4200-0101: Substation 4200-JCS-031500, Jeddah South / Residential feeder F-12
+[SMOC_EnrichMeterAlarms] Parser log: Enriched MTR-4200-0102: Substation 4200-JCS-031500, Jeddah South / Residential feeder F-12
+[SMOC_EnrichMeterAlarms] Parser log: Enriched MTR-4200-0103: Substation 4200-JCS-031500, Jeddah South / Residential feeder F-12
+[SMOC_EnrichMeterAlarms] Parser log: SMOC enrichment done

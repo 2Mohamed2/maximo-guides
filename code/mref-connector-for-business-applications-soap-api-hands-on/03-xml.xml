@@ -1,0 +1,11 @@
+<SOAP-ENV:Header>
+  <h:BasicChallenge xmlns:h="http://soap-authentication.org/basic/2001/10/" SOAP-ENV:mustUnderstand="1">
+    <Realm>tririga.com</Realm>
+  </h:BasicChallenge>
+</SOAP-ENV:Header>
+<SOAP-ENV:Body>
+  <SOAP-ENV:Fault>
+    <faultcode>SOAP-ENV:Client</faultcode>
+    <faultstring>Authentication failed: missing, malformed, or invalid credentials.</faultstring>
+  </SOAP-ENV:Fault>
+</SOAP-ENV:Body>

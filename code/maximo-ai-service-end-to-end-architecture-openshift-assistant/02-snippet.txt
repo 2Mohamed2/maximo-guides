@@ -1,0 +1,4 @@
+17:18:26  Preparing training data and creating zip file WOPROBLEMCODE.zip with 2,400 records.
+          worktype in ('EM', 'CM') and ai_usefortraining = 1
+17:19:00  Training upload complete with data ID WOPROBLEMCODE.zip. Initiating model creation.
+17:19:05  Model kmai1899753a0ba9711f created. Training initiated.

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: esri-adapter
+  namespace: gis-routing
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: esri-adapter}
+  template:
+    metadata:
+      labels: {app: esri-adapter}
+    spec:
+      containers:
+        - name: adapter
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command: ["python3", "/app/esri_osrm_adapter.py"]
+          env:
+            - {name: OSRM_URL, value: "http://osrm.gis-routing.svc:5000"}
+            - {name: PORT, value: "8080"}
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          volumeMounts: [{name: code, mountPath: /app}]
+      volumes:
+        - name: code
+          configMap: {name: esri-adapter}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: esri-adapter
+  namespace: gis-routing
+spec:
+  selector: {app: esri-adapter}
+  ports: [{port: 8080, targetPort: 8080}]

@@ -1,0 +1,2 @@
+GET /osrm/car/match/v1/driving/{139 points}
+    ?timestamps=...&radiuses=...&gaps=split&tidy=true&overview=full&annotations=distance

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script SYSTEM "script.dtd">
+<!--
+  Contractor API 1.0.1: let administrators put users into CONTRAPI.
+
+  A new security group is not in anyone's group reassignment list (GRPREASSIGNAUTH, the
+  "Authorize Group Reassignment" action in Security Groups). Until it is, the MAS Users page does not
+  offer the group, and Security Groups > Users > Select Users fails with BMXAA0028E.
+
+  Install: copy to tools/maximo/en/script, then from tools/maximo/internal
+           ./runscriptfile.sh -cscript -fcontractor_api_1.0.1
+-->
+<script author="CONTRAPI" scriptname="contractor_api_1.0.1">
+  <description>Contractor API: MAXADMIN and MXINTADM may assign users to CONTRAPI.</description>
+  <statements>
+    <insert table="GRPREASSIGNAUTH" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="USERID" string="MAXADMIN"/>
+        <columnvalue column="GROUPNAME" string="CONTRAPI"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="USERID" string="MXINTADM"/>
+        <columnvalue column="GROUPNAME" string="CONTRAPI"/>
+      </insertrow>
+    </insert>
+  </statements>
+</script>

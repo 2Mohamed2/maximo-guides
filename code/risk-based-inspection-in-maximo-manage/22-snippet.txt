@@ -1,0 +1,23 @@
+# RBI.CREATEWO - create the inspection work order the approved assessment asks for.
+# Runs from Select Action > Create Inspection Work Order and from the RBIDUE escalation.
+from psdi.mbo import MboConstants
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+a = mbo
+if a.getString("STATUS") != "APPR":
+    service.error("rbi", "notapproved")
+if not a.isNull("WONUM"):
+    service.error("rbi", "woexists", [a.getString("WONUM")])
+prio = {"HIGH": 1, "MEDHIGH": 2, "MEDIUM": 3, "LOW": 4}.get(a.getString("RISK"), 3)
+wos = a.getMboSet("$rbinewwo", "WORKORDER", "1=0")
+wo = wos.add()
+wo.setValue("SITEID", a.getString("SITEID"), F)
+wo.setValue("ASSETNUM", a.getString("ASSETNUM"))
+wo.setValue("WORKTYPE", "INSP")
+wo.setValue("DESCRIPTION", ("RBI %s: %s" % (a.getString("ASSETNUM"), a.getString("INSPMETHOD")))[:100])
+wo.setValue("WOPRIORITY", prio)
+wo.setValue("TARGSTARTDATE", a.getDate("NEXTINSPDATE"))
+wo.setValue("DESCRIPTION_LONGDESCRIPTION",
+            "Raised by RBI assessment %s (risk %s %s, driver %s).\n\n%s"
+            % (a.getString("ASSESSNUM"), a.getString("RISKCELL"), a.getString("RISK"), a.getString("DRIVER"),
+               a.getString("CALCNOTE")))
+a.setValue("WONUM", wo.getString("WONUM"), F)

@@ -1,0 +1,22 @@
+NAMESPACE aiservice-instdb2                  (the service)
+  ibm-aiservice-operator-…                   1/1 Running   operator
+  instdb2-aibroker-api-…                     1/1 Running   AI Service API (the public route)
+  instdb2-km-controller-…                    1/1 Running   model manager
+  instdb2-km-store-…                         1/1 Running   templates
+  instdb2-km-watcher-…                       1/1 Running   model status
+  ibm-truststore-mgr-controller-manager-…    1/1 Running   certificates
+
+NAMESPACE aiservice-instdb2-user             (the tenant)
+  ibm-aiservice-tenant-operator-…            1/1 Running   tenant operator
+  ibm-truststore-mgr-controller-manager-…    1/1 Running   certificates
+  kmai1899753a0ba9711f-predictor-…           2/2 Running   WOPROBLEMCODE        (pcc)
+  kmai1dd3f2600ba9611f-predictor-…           2/2 Running   PLUSGINCIDENTGROUP   (mcc)
+  kmai1d8d5d870ba9611f-predictor-…           2/2 Running   PLUSGINCTYPE         (mcc)
+  kmai11e421fb0ba8611f-predictor-…           2/2 Running   WOSIMILARITY         (similarity)
+  kmai1170a6fe0ba8611f-predictor-…           2/2 Running   TICKETSIMILARITY     (similarity)
+  kmai1fe613fd0ba8c11f-predictor-…           2/2 Running   ASSISTANT            (nl2oslc)
+  kmai1f958f320ba8c11f-predictor-…           2/2 Running   INSIGHT              (insightsgenerator)
+  kmai1c8eb99a0ba8b11f-predictor-…           2/2 Running   IBMDOCS              (docsearch)
+  kmai193828120ba8b11f-predictor-…           2/2 Running   RSSTRATEGYASSISTANT  (fmea)
+  kmai1c7d9db80ba8b11f-predictor-…           2/2 Running   MREF_LEASE_ABSTRACT  (fieldextractor)
+  kmai1almwatsonx-aiservice-instdb2-user-…   2/2 Running   watsonx.ai gateway

@@ -1,0 +1,13 @@
+(
+  {
+    "summary": alarm & " on meter " & meter,
+    "severity": severity = "critical" ? 6 : severity = "major" ? 5 : severity = "minor" ? 4 : 3,
+    "resource": { "name": meter, "type": "smart-meter", "location": station },
+    "type": {
+      "classification": alarm,
+      "eventType": state = "cleared" ? "resolution" : "problem"
+    },
+    "sender": { "name": "SMOC Lab", "type": "Webhook integration" },
+    "details": { "scope": station, "office": office }
+  }
+)

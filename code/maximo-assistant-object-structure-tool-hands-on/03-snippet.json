@@ -1,0 +1,19 @@
+{
+  "name": "os_mxapiwoschedule-scheduleworkorder",
+  "title": "Schedule work order",
+  "inputSchema": {
+    "properties": {
+      "siteid":      {"type": "string"},
+      "wonum":       {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+      "schedstart":  {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+      "schedfinish": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+      "lead":        {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+      "href":        {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+      "localref":    {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+      "record_descriptor": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null}
+    },
+    "required": ["siteid"],
+    "additionalProperties": false
+  },
+  "annotations": {"readOnlyHint": false, "destructiveHint": false, "toolType": "MAXINTOBJTOOL"}
+}

@@ -1,0 +1,15 @@
+// One pump reading. While flow.fault is true the bearing wears a little more on every reading.
+const fault = flow.get('fault') || false;
+let wear = fault ? (flow.get('wear') || 0) + 0.25 : 0;
+flow.set('wear', wear);
+const t = Date.now() / 1000;
+const jitter = (n) => (Math.random() - 0.5) * n;
+msg.payload = {
+    temperature: +(61 + 3 * Math.sin(t / 100) + jitter(1.2) + wear * 2.5).toFixed(2),
+    pressure:    +(4.2 + 0.15 * Math.sin(t / 70) + jitter(0.1) - wear * 0.08).toFixed(3),
+    vibration:   +(2.1 + jitter(0.5) + wear).toFixed(3),
+    flow:        +(118 + 4 * Math.sin(t / 125) + jitter(2) - wear * 3).toFixed(2)
+};
+msg.topic = 'iot-2/evt/status/fmt/json';
+node.status({ fill: fault ? 'red' : 'green', shape: 'dot', text: 'vibration ' + msg.payload.vibration });
+return msg;

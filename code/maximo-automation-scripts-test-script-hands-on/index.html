@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Test before you trust: a hands-on guide to Test Script in Maximo Autom</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Test before you trust: a hands-on guide to Test Script in Maximo Automation Scripts</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/10/25/maximo-automation-scripts-test-script-hands-on">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-automation-scripts-test-script-hands-on">github.com/2Mohamed2/maximo-guides/code/maximo-automation-scripts-test-script-hands-on</a>.</p><section class="s" id="s1"><div class="h"><div><b>Python</b> <small>34 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-automation-scripts-test-script-hands-on/01-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1"><span style="color:#8b949e;"># BLOGTEST_WOSUMMARY - REST API script (no launch point), read-only.
+# Call: GET /maximo/api/script/BLOGTEST_WOSUMMARY?site=BEDFORD&amp;status=APPR
+</span><span style="color:#ff7b72;">from </span>psdi.server <span style="color:#ff7b72;">import </span>MXServer
+<span style="color:#ff7b72;">from </span>psdi.mbo <span style="color:#ff7b72;">import </span>SqlFormat
+<span style="color:#ff7b72;">from </span>com.ibm.json.java <span style="color:#ff7b72;">import </span>JSONObject, JSONArray
+site = request.getQueryParam(<span style="color:#a5d6ff;">&quot;site&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;BEDFORD&quot;
+</span>status = request.getQueryParam(<span style="color:#a5d6ff;">&quot;status&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;APPR&quot;
+</span>service.log(<span style="color:#a5d6ff;">&quot;Request received: site=&quot; </span>+ site + <span style="color:#a5d6ff;">&quot;, status=&quot; </span>+ status)
+woSet = MXServer.getMXServer().getMboSet(<span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, request.getUserInfo())
+<span style="color:#ff7b72;">try</span>:
+    sql = SqlFormat(request.getUserInfo(), <span style="color:#a5d6ff;">&quot;siteid = :1 and status = :2 and istask = 0&quot;</span>)
+    sql.setObject(<span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;SITEID&quot;</span>, site)
+    sql.setObject(<span style="color:#79c0ff;">2</span>, <span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;STATUS&quot;</span>, status)
+    woSet.setWhere(sql.format())
+    woSet.setOrderBy(<span style="color:#a5d6ff;">&quot;wonum&quot;</span>)
+    total = woSet.count()
+    service.log(<span style="color:#a5d6ff;">&quot;Matching work orders: &quot; </span>+ <span style="color:#d2a8ff;">str</span>(total))
+    sample = JSONArray()
+    wo = woSet.moveFirst()
+    <span style="color:#ff7b72;">while </span>wo <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span>sample.size() &lt; <span style="color:#79c0ff;">3</span>:
+        row = JSONObject()
+        row.put(<span style="color:#a5d6ff;">&quot;wonum&quot;</span>, wo.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>))
+        row.put(<span style="color:#a5d6ff;">&quot;description&quot;</span>, wo.getString(<span style="color:#a5d6ff;">&quot;DESCRIPTION&quot;</span>))
+        row.put(<span style="color:#a5d6ff;">&quot;priority&quot;</span>, wo.getString(<span style="color:#a5d6ff;">&quot;WOPRIORITY&quot;</span>))
+        sample.add(row)
+        wo = woSet.moveNext()
+<span style="color:#ff7b72;">finally</span>:
+    woSet.close()
+result = JSONObject()
+result.put(<span style="color:#a5d6ff;">&quot;site&quot;</span>, site)
+result.put(<span style="color:#a5d6ff;">&quot;status&quot;</span>, status)
+result.put(<span style="color:#a5d6ff;">&quot;count&quot;</span>, total)
+result.put(<span style="color:#a5d6ff;">&quot;firstThree&quot;</span>, sample)
+responseBody = result.serialize(<span style="color:#79c0ff;">True</span>)</pre></section><section class="s" id="s2"><div class="h"><div><b>Python</b> <small>5 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-automation-scripts-test-script-hands-on/02-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2"><span style="color:#8b949e;"># BLOGTEST_BROKEN - REST API script with a deliberate bug (lab: reading an error).
+</span>site = request.getQueryParam(<span style="color:#a5d6ff;">&quot;site&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;BEDFORD&quot;
+</span>service.log(<span style="color:#a5d6ff;">&quot;Starting count for site &quot; </span>+ site)
+total = woCount + <span style="color:#79c0ff;">1      </span><span style="color:#8b949e;"># bug: woCount was never defined
+</span>responseBody = <span style="color:#a5d6ff;">&#x27;{&quot;total&quot;: &#x27; </span>+ <span style="color:#d2a8ff;">str</span>(total) + <span style="color:#a5d6ff;">&#x27;}&#x27;
+</span></pre></section><section class="s" id="s3"><div class="h"><div><b>Python</b> <small>11 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-automation-scripts-test-script-hands-on/03-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3"><span style="color:#8b949e;"># BLOGTEST_WOPRIORITY - attribute launch point, WORKORDER.WOPRIORITY, Validate.
+# Rule: emergency work (work type EM) must have priority 1 or 2.
+# During Validate, mbo already holds the new value the user typed.
+</span>wonum = mbo.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>)
+worktype = mbo.getString(<span style="color:#a5d6ff;">&quot;WORKTYPE&quot;</span>)
+priority = mbo.getString(<span style="color:#a5d6ff;">&quot;WOPRIORITY&quot;</span>)
+service.log(<span style="color:#a5d6ff;">&quot;Validating WO &quot; </span>+ wonum + <span style="color:#a5d6ff;">&quot;: work type=&quot; </span>+ worktype + <span style="color:#a5d6ff;">&quot;, new priority=&quot; </span>+ priority)
+<span style="color:#ff7b72;">if </span>worktype == <span style="color:#a5d6ff;">&quot;EM&quot; </span><span style="color:#ff7b72;">and </span>(mbo.isNull(<span style="color:#a5d6ff;">&quot;WOPRIORITY&quot;</span>) <span style="color:#ff7b72;">or </span>mbo.getInt(<span style="color:#a5d6ff;">&quot;WOPRIORITY&quot;</span>) &gt; <span style="color:#79c0ff;">2</span>):
+    service.log(<span style="color:#a5d6ff;">&quot;Rule broken: EM work needs priority 1 or 2&quot;</span>)
+    service.error(<span style="color:#a5d6ff;">&quot;configure&quot;</span>, <span style="color:#a5d6ff;">&quot;BlankMsg&quot;</span>, [<span style="color:#a5d6ff;">&quot;Emergency (EM) work orders need priority 1 or 2.&quot;</span>])
+service.log(<span style="color:#a5d6ff;">&quot;Rule passed&quot;</span>)</pre></section><section class="s" id="s4"><div class="h"><div><b>Python</b> <small>9 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-automation-scripts-test-script-hands-on/04-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4"><span style="color:#8b949e;"># BLOGTEST_WOINIT - object launch point, WORKORDER, Initialize Value.
+# Gives every NEW work order a default priority of 3.
+# The Initialize event also fires when an existing record is loaded,
+# so the script only acts on records that are being added.
+</span><span style="color:#ff7b72;">if </span>mbo.toBeAdded():
+    mbo.setValue(<span style="color:#a5d6ff;">&quot;WOPRIORITY&quot;</span>, <span style="color:#79c0ff;">3</span>)
+    service.log(<span style="color:#a5d6ff;">&quot;New work order at site &quot; </span>+ mbo.getString(<span style="color:#a5d6ff;">&quot;SITEID&quot;</span>) + <span style="color:#a5d6ff;">&quot;: default priority 3 set&quot;</span>)
+<span style="color:#ff7b72;">else</span>:
+    service.log(<span style="color:#a5d6ff;">&quot;Existing work order &quot; </span>+ mbo.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>) + <span style="color:#a5d6ff;">&quot;: nothing to do&quot;</span>)</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

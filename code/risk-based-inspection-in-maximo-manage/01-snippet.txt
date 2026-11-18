@@ -1,0 +1,1 @@
+PoF(t) = gff × FMS × Df(t)

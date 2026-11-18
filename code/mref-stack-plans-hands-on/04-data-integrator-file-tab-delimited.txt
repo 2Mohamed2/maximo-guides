@@ -1,0 +1,7 @@
+triNameTX	triIdTX	triDescriptionTX	triAreaNU	triAreaUO	Parent
+L01-PLATEAU	MA-HQ-0001-L01-WS	Opérations | Plateau ouvert, 168 postes	3000	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 01
+L01-NOYAU	MA-HQ-0001-L01-CORE	Noyau | Ascenseurs, escaliers, gaines, sanitaires	600	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 01
+L02-PLATEAU	MA-HQ-0001-L02-WS	Opérations | Plateau ouvert, 168 postes	3000	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 02
+L02-NOYAU	MA-HQ-0001-L02-CORE	Noyau | Ascenseurs, escaliers, gaines, sanitaires	600	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 02
+L03-PLATEAU	MA-HQ-0001-L03-WS	Opérations | Plateau ouvert, 168 postes	3000	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 03
+L03-NOYAU	MA-HQ-0001-L03-CORE	Noyau | Ascenseurs, escaliers, gaines, sanitaires	600	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 03

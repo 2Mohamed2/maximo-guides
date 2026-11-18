@@ -1,0 +1,2 @@
+RF_M2K_W =
+    (1 / U_ACTUAL_W_M2K - 1 / U_CLEAN_W_M2K)

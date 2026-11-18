@@ -1,0 +1,4 @@
+Geocode   https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer
+Route     https://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World
+Matrix    https://route.arcgis.com/arcgis/rest/services/World/OriginDestinationCostMatrix/NAServer/OriginDestinationCostMatrix_World
+Job       https://logistics.arcgis.com/arcgis/rest/services/World/OriginDestinationCostMatrix/GPServer/GenerateOriginDestinationCostMatrix

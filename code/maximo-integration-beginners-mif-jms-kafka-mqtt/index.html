@@ -1,0 +1,269 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Maximo Integration: From Sensor Readings to Work Orders — Understandin</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Maximo Integration: From Sensor Readings to Work Orders — Understanding MIF, JMS, Kafka, and MQTT</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/10/13/maximo-integration-beginners-mif-jms-kafka-mqtt">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt">github.com/2Mohamed2/maximo-guides/code/maximo-integration-beginners-mif-jms-kafka-mqtt</a>.</p><section class="s" id="s1"><div class="h"><div><b>Code</b> <small>12 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/01-snippet.yaml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1"><span style="color:#7ee787;">apiVersion</span>: kafka.strimzi.io/v1beta2
+<span style="color:#7ee787;">kind</span>: KafkaTopic
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: demo.pump.alerts
+  <span style="color:#7ee787;">namespace</span>: strimzi
+  <span style="color:#7ee787;">labels</span>:
+    <span style="color:#7ee787;">strimzi.io/cluster</span>: maskafka      <span style="color:#8b949e;"># which Kafka cluster owns the topic
+</span><span style="color:#7ee787;">spec</span>:
+  <span style="color:#7ee787;">partitions</span>: 3
+  <span style="color:#7ee787;">replicas</span>: 3
+  <span style="color:#7ee787;">config</span>:
+    <span style="color:#7ee787;">retention.ms</span>: 86400000            <span style="color:#8b949e;"># keep messages for one day
+</span></pre></section><section class="s" id="s2"><div class="h"><div><b>Code</b> <small>5 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/02-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2">$ oc apply -f topic.yaml
+kafkatopic.kafka.strimzi.io/demo.pump.alerts created
+$ oc get kafkatopic -n strimzi
+NAME               CLUSTER    PARTITIONS   REPLICATION FACTOR   READY
+demo.pump.alerts   maskafka   <span style="color:#79c0ff;">3            3                    </span>True</pre></section><section class="s" id="s3"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/03-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">BOOT = <span style="color:#a5d6ff;">&quot;maskafka-kafka-tls-bootstrap-strimzi.apps.&lt;your-cluster-domain&gt;:443&quot;
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">cfg</span>():
+    <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">dict</span>(bootstrap_servers=BOOT, security_protocol=<span style="color:#a5d6ff;">&quot;SASL_SSL&quot;</span>, sasl_mechanism=<span style="color:#a5d6ff;">&quot;SCRAM-SHA-512&quot;</span>,
+                sasl_plain_username=<span style="color:#d2a8ff;">open</span>(<span style="color:#a5d6ff;">&quot;user.txt&quot;</span>).read().strip(),
+                sasl_plain_password=<span style="color:#d2a8ff;">open</span>(<span style="color:#a5d6ff;">&quot;password.txt&quot;</span>).read().strip(),
+                ssl_cafile=<span style="color:#a5d6ff;">&quot;kafka-ca.crt&quot;</span>)</pre></section><section class="s" id="s4"><div class="h"><div><b>Code</b> <small>11 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/04-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4"><span style="color:#8b949e;"># produce.py
+</span><span style="color:#ff7b72;">import </span>json
+<span style="color:#ff7b72;">from </span>kafka <span style="color:#ff7b72;">import </span>KafkaProducer
+<span style="color:#ff7b72;">from </span>kc <span style="color:#ff7b72;">import </span>cfg
+p = KafkaProducer(**cfg(), key_serializer=<span style="color:#d2a8ff;">str</span>.encode,
+                  value_serializer=<span style="color:#ff7b72;">lambda </span>v: json.dumps(v).encode(), acks=<span style="color:#a5d6ff;">&quot;all&quot;</span>)
+<span style="color:#ff7b72;">for </span>i, pump <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>([<span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>, <span style="color:#a5d6ff;">&quot;PUMP-002&quot;</span>, <span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>, <span style="color:#a5d6ff;">&quot;PUMP-003&quot;</span>, <span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>]):
+    md = p.send(<span style="color:#a5d6ff;">&quot;demo.pump.alerts&quot;</span>, key=pump,
+                value={<span style="color:#a5d6ff;">&quot;pump&quot;</span>: pump, <span style="color:#a5d6ff;">&quot;alert&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH_VIBRATION&quot;</span>, <span style="color:#a5d6ff;">&quot;seq&quot;</span>: i}).get(<span style="color:#79c0ff;">15</span>)
+    <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">f&quot;sent key={</span>pump<span style="color:#a5d6ff;">} seq={</span>i<span style="color:#a5d6ff;">} -&gt; partition {</span>md.partition<span style="color:#a5d6ff;">} offset {</span>md.offset<span style="color:#a5d6ff;">}&quot;</span>)
+p.flush()</pre></section><section class="s" id="s5"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/05-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">$ python produce.py
+sent key=PUMP-001 seq=<span style="color:#79c0ff;">0 </span>-&gt; partition <span style="color:#79c0ff;">1 </span>offset <span style="color:#79c0ff;">0
+</span>sent key=PUMP-002 seq=<span style="color:#79c0ff;">1 </span>-&gt; partition <span style="color:#79c0ff;">2 </span>offset <span style="color:#79c0ff;">0
+</span>sent key=PUMP-001 seq=<span style="color:#79c0ff;">2 </span>-&gt; partition <span style="color:#79c0ff;">1 </span>offset <span style="color:#79c0ff;">1
+</span>sent key=PUMP-003 seq=<span style="color:#79c0ff;">3 </span>-&gt; partition <span style="color:#79c0ff;">0 </span>offset <span style="color:#79c0ff;">0
+</span>sent key=PUMP-001 seq=<span style="color:#79c0ff;">4 </span>-&gt; partition <span style="color:#79c0ff;">1 </span>offset <span style="color:#79c0ff;">2
+</span></pre></section><section class="s" id="s6"><div class="h"><div><b>Code</b> <small>13 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/06-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6"><span style="color:#8b949e;"># consume.py
+</span><span style="color:#ff7b72;">import </span>sys
+<span style="color:#ff7b72;">from </span>kafka <span style="color:#ff7b72;">import </span>KafkaConsumer
+<span style="color:#ff7b72;">from </span>kc <span style="color:#ff7b72;">import </span>cfg
+group = sys.argv[<span style="color:#79c0ff;">1</span>]
+c = KafkaConsumer(<span style="color:#a5d6ff;">&quot;demo.pump.alerts&quot;</span>, **cfg(), group_id=group,
+                  auto_offset_reset=<span style="color:#a5d6ff;">&quot;earliest&quot;</span>, consumer_timeout_ms=<span style="color:#79c0ff;">12000</span>)
+n = <span style="color:#79c0ff;">0
+</span><span style="color:#ff7b72;">for </span>m <span style="color:#ff7b72;">in </span>c:
+    n += <span style="color:#79c0ff;">1
+    </span><span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">f&quot;[{</span>group<span style="color:#a5d6ff;">}] partition {</span>m.partition<span style="color:#a5d6ff;">} offset {</span>m.offset<span style="color:#a5d6ff;">} key={</span>m.key.decode()<span style="color:#a5d6ff;">} value={</span>m.value.decode()<span style="color:#a5d6ff;">}&quot;</span>)
+<span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">f&quot;[{</span>group<span style="color:#a5d6ff;">}] read {</span>n<span style="color:#a5d6ff;">} messages&quot;</span>)
+c.close()</pre></section><section class="s" id="s7"><div class="h"><div><b>Code</b> <small>12 lines</small></div><div class="a"><button data-c="c7">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/07-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c7">$ python consume.py demo-readers
+[demo-readers] partition <span style="color:#79c0ff;">1 </span>offset <span style="color:#79c0ff;">0 </span>key=PUMP-001 value={<span style="color:#a5d6ff;">&quot;pump&quot;</span>: <span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>, <span style="color:#a5d6ff;">&quot;alert&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH_VIBRATION&quot;</span>, <span style="color:#a5d6ff;">&quot;seq&quot;</span>: <span style="color:#79c0ff;">0</span>}
+[demo-readers] partition <span style="color:#79c0ff;">1 </span>offset <span style="color:#79c0ff;">1 </span>key=PUMP-001 value={<span style="color:#a5d6ff;">&quot;pump&quot;</span>: <span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>, <span style="color:#a5d6ff;">&quot;alert&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH_VIBRATION&quot;</span>, <span style="color:#a5d6ff;">&quot;seq&quot;</span>: <span style="color:#79c0ff;">2</span>}
+[demo-readers] partition <span style="color:#79c0ff;">1 </span>offset <span style="color:#79c0ff;">2 </span>key=PUMP-001 value={<span style="color:#a5d6ff;">&quot;pump&quot;</span>: <span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>, <span style="color:#a5d6ff;">&quot;alert&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH_VIBRATION&quot;</span>, <span style="color:#a5d6ff;">&quot;seq&quot;</span>: <span style="color:#79c0ff;">4</span>}
+[demo-readers] partition <span style="color:#79c0ff;">2 </span>offset <span style="color:#79c0ff;">0 </span>key=PUMP-002 value={<span style="color:#a5d6ff;">&quot;pump&quot;</span>: <span style="color:#a5d6ff;">&quot;PUMP-002&quot;</span>, <span style="color:#a5d6ff;">&quot;alert&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH_VIBRATION&quot;</span>, <span style="color:#a5d6ff;">&quot;seq&quot;</span>: <span style="color:#79c0ff;">1</span>}
+[demo-readers] partition <span style="color:#79c0ff;">0 </span>offset <span style="color:#79c0ff;">0 </span>key=PUMP-003 value={<span style="color:#a5d6ff;">&quot;pump&quot;</span>: <span style="color:#a5d6ff;">&quot;PUMP-003&quot;</span>, <span style="color:#a5d6ff;">&quot;alert&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH_VIBRATION&quot;</span>, <span style="color:#a5d6ff;">&quot;seq&quot;</span>: <span style="color:#79c0ff;">3</span>}
+[demo-readers] <span style="color:#d2a8ff;">read </span><span style="color:#79c0ff;">5 </span>messages
+$ python consume.py demo-readers        <span style="color:#8b949e;"># the same group again
+</span>[demo-readers] <span style="color:#d2a8ff;">read </span><span style="color:#79c0ff;">0 </span>messages
+$ python consume.py audit-team          <span style="color:#8b949e;"># a different group
+</span>...
+[audit-team] <span style="color:#d2a8ff;">read </span><span style="color:#79c0ff;">5 </span>messages</pre></section><section class="s" id="s8"><div class="h"><div><b>Code</b> <small>20 lines</small></div><div class="a"><button data-c="c8">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/08-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c8"><span style="color:#8b949e;"># pump.py
+</span><span style="color:#ff7b72;">import </span>json, random, ssl, time
+<span style="color:#ff7b72;">import </span>paho.mqtt.client <span style="color:#ff7b72;">as </span>mqtt
+HOST = <span style="color:#a5d6ff;">&quot;wsp.messaging.iot.&lt;your-suite-domain&gt;&quot;
+</span>c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=<span style="color:#a5d6ff;">&quot;d:wsp:CoolingPump:PUMP-001&quot;</span>)
+c.username_pw_set(<span style="color:#a5d6ff;">&quot;use-token-auth&quot;</span>, <span style="color:#d2a8ff;">open</span>(<span style="color:#a5d6ff;">&quot;PUMP-001.token&quot;</span>).read().strip())
+ctx = ssl.create_default_context()
+ctx.check_hostname = <span style="color:#79c0ff;">False</span>; ctx.verify_mode = ssl.CERT_NONE   <span style="color:#8b949e;"># lab only: load the suite CA instead
+</span>c.tls_set_context(ctx)
+c.on_connect = <span style="color:#ff7b72;">lambda </span>cl, u, flags, rc, props=<span style="color:#79c0ff;">None</span>: <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;connected:&quot;</span>, rc)
+c.connect(HOST, <span style="color:#79c0ff;">443</span>, keepalive=<span style="color:#79c0ff;">60</span>)
+c.loop_start(); time.sleep(<span style="color:#79c0ff;">2</span>)
+<span style="color:#ff7b72;">while </span><span style="color:#79c0ff;">True</span>:
+    reading = {<span style="color:#a5d6ff;">&quot;temperature&quot;</span>: <span style="color:#d2a8ff;">round</span>(<span style="color:#79c0ff;">62 </span>+ random.uniform(-<span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">1</span>), <span style="color:#79c0ff;">2</span>),
+               <span style="color:#a5d6ff;">&quot;pressure&quot;</span>:    <span style="color:#d2a8ff;">round</span>(<span style="color:#79c0ff;">4.1 </span>+ random.uniform(-<span style="color:#79c0ff;">.1</span>, <span style="color:#79c0ff;">.1</span>), <span style="color:#79c0ff;">3</span>),
+               <span style="color:#a5d6ff;">&quot;vibration&quot;</span>:   <span style="color:#d2a8ff;">round</span>(<span style="color:#79c0ff;">2.1 </span>+ random.uniform(-<span style="color:#79c0ff;">.25</span>, <span style="color:#79c0ff;">.25</span>), <span style="color:#79c0ff;">3</span>),
+               <span style="color:#a5d6ff;">&quot;flow&quot;</span>:        <span style="color:#d2a8ff;">round</span>(<span style="color:#79c0ff;">120 </span>+ random.uniform(-<span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">2</span>), <span style="color:#79c0ff;">2</span>)}
+    c.publish(<span style="color:#a5d6ff;">&quot;iot-2/evt/status/fmt/json&quot;</span>, json.dumps(reading), qos=<span style="color:#79c0ff;">1</span>).wait_for_publish(<span style="color:#79c0ff;">10</span>)
+    <span style="color:#d2a8ff;">print</span>(time.strftime(<span style="color:#a5d6ff;">&quot;%H:%M:%S&quot;</span>), reading)
+    time.sleep(<span style="color:#79c0ff;">10</span>)</pre></section><section class="s" id="s9"><div class="h"><div><b>Code</b> <small>5 lines</small></div><div class="a"><button data-c="c9">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/09-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c9">$ python pump.py
+connected: Success
+<span style="color:#79c0ff;">07</span>:51:37 {<span style="color:#a5d6ff;">&#x27;temperature&#x27;</span>: <span style="color:#79c0ff;">62</span>.47, <span style="color:#a5d6ff;">&#x27;pressure&#x27;</span>: <span style="color:#79c0ff;">4</span>.022, <span style="color:#a5d6ff;">&#x27;vibration&#x27;</span>: <span style="color:#79c0ff;">2</span>.299, <span style="color:#a5d6ff;">&#x27;flow&#x27;</span>: <span style="color:#79c0ff;">121</span>.07}
+<span style="color:#79c0ff;">07</span>:51:40 {<span style="color:#a5d6ff;">&#x27;temperature&#x27;</span>: <span style="color:#79c0ff;">62</span>.37, <span style="color:#a5d6ff;">&#x27;pressure&#x27;</span>: <span style="color:#79c0ff;">4</span>.051, <span style="color:#a5d6ff;">&#x27;vibration&#x27;</span>: <span style="color:#79c0ff;">1</span>.995, <span style="color:#a5d6ff;">&#x27;flow&#x27;</span>: <span style="color:#79c0ff;">121</span>.13}
+<span style="color:#79c0ff;">07</span>:51:42 {<span style="color:#a5d6ff;">&#x27;temperature&#x27;</span>: <span style="color:#79c0ff;">62</span>.87, <span style="color:#a5d6ff;">&#x27;pressure&#x27;</span>: <span style="color:#79c0ff;">4</span>.072, <span style="color:#a5d6ff;">&#x27;vibration&#x27;</span>: <span style="color:#79c0ff;">2</span>.069, <span style="color:#a5d6ff;">&#x27;flow&#x27;</span>: <span style="color:#79c0ff;">121</span>.49}</pre></section><section class="s" id="s10"><div class="h"><div><b>Code</b> <small>8 lines</small></div><div class="a"><button data-c="c10">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/10-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c10">$ python peek.py instdb2_topic_events <span style="color:#79c0ff;">2
+</span>partition <span style="color:#79c0ff;">0</span>: offsets <span style="color:#79c0ff;">0</span>..0
+partition <span style="color:#79c0ff;">1</span>: offsets <span style="color:#79c0ff;">0</span>..3
+partition <span style="color:#79c0ff;">2</span>: offsets <span style="color:#79c0ff;">0</span>..0
+p1 o1 key=b<span style="color:#a5d6ff;">&#x27;…\x00\x03wsp\x00\x0bCoolingPump\x00\x08PUMP-001\x00\x06status\x00\x04json&#x27;
+   </span>value=b<span style="color:#a5d6ff;">&#x27;{&quot;temperature&quot;: 62.37, &quot;pressure&quot;: 4.051, &quot;vibration&quot;: 1.995, &quot;flow&quot;: 121.13}&#x27;
+</span>p1 o2 key=b<span style="color:#a5d6ff;">&#x27;…\x00\x03wsp\x00\x0bCoolingPump\x00\x08PUMP-001\x00\x06status\x00\x04json&#x27;
+   </span>value=b<span style="color:#a5d6ff;">&#x27;{&quot;temperature&quot;: 62.87, &quot;pressure&quot;: 4.072, &quot;vibration&quot;: 2.069, &quot;flow&quot;: 121.49}&#x27;
+</span></pre></section><section class="s" id="s11"><div class="h"><div><b>Code</b> <small>5 lines</small></div><div class="a"><button data-c="c11">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/11-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c11">$ podman run -d --name nodered -p <span style="color:#79c0ff;">1880</span>:1880 -v nodered-data:/data docker.io/nodered/node-red:latest
+$ podman logs nodered | grep -E <span style="color:#a5d6ff;">&quot;version|Started&quot;
+</span><span style="color:#79c0ff;">13 </span>Oct <span style="color:#79c0ff;">10</span>:46:10 - [info] Node-RED version: v5.0.8
+<span style="color:#79c0ff;">13 </span>Oct <span style="color:#79c0ff;">10</span>:46:10 - [info] Node.js  version: v24.21.0
+<span style="color:#79c0ff;">13 </span>Oct <span style="color:#79c0ff;">10</span>:46:11 - [info] Started flows</pre></section><section class="s" id="s12"><div class="h"><div><b>Code</b> <small>15 lines</small></div><div class="a"><button data-c="c12">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/12-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c12">// One pump reading. While flow.fault is true the bearing wears a little more on every reading.
+const fault = flow.get(&#x27;fault&#x27;) || false;
+let wear = fault ? (flow.get(&#x27;wear&#x27;) || 0) + 0.25 : 0;
+flow.set(&#x27;wear&#x27;, wear);
+const t = Date.now() / 1000;
+const jitter = (n) =&gt; (Math.random() - 0.5) * n;
+msg.payload = {
+    temperature: +(61 + 3 * Math.sin(t / 100) + jitter(1.2) + wear * 2.5).toFixed(2),
+    pressure:    +(4.2 + 0.15 * Math.sin(t / 70) + jitter(0.1) - wear * 0.08).toFixed(3),
+    vibration:   +(2.1 + jitter(0.5) + wear).toFixed(3),
+    flow:        +(118 + 4 * Math.sin(t / 125) + jitter(2) - wear * 3).toFixed(2)
+};
+msg.topic = &#x27;iot-2/evt/status/fmt/json&#x27;;
+node.status({ fill: fault ? &#x27;red&#x27; : &#x27;green&#x27;, shape: &#x27;dot&#x27;, text: &#x27;vibration &#x27; + msg.payload.vibration });
+return msg;</pre></section><section class="s" id="s13"><div class="h"><div><b>Code</b> <small>12 lines</small></div><div class="a"><button data-c="c13">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/13-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c13">// A legacy system posts one line of text: temperature,pressure,vibration,flow
+const p = String(msg.payload).trim().split(&#x27;,&#x27;).map(Number);
+if (p.length !== 4 || p.some(isNaN)) {
+    msg.statusCode = 400;
+    msg.payload = { error: &#x27;expected: temperature,pressure,vibration,flow&#x27; };
+    return [null, msg];
+}
+const reading = { temperature: p[0], pressure: p[1], vibration: p[2], flow: p[3] };
+const toIot = { topic: &#x27;iot-2/evt/status/fmt/json&#x27;, payload: reading };
+msg.statusCode = 202;
+msg.payload = { accepted: true, device: &#x27;PUMP-001&#x27;, reading: reading };
+return [toIot, msg];</pre></section><section class="s" id="s14"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c14">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/14-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c14">$ curl -s -o /dev/null -w <span style="color:#a5d6ff;">&quot;%{http_code}\n&quot; </span>-H <span style="color:#a5d6ff;">&quot;Content-Type: text/plain&quot; </span>-d <span style="color:#a5d6ff;">&quot;70.5,3.9,2.4,111&quot; </span>http://localhost:1880/pump/reading
+<span style="color:#79c0ff;">401
+</span>$ curl -s -u pump:&lt;password&gt; -H <span style="color:#a5d6ff;">&quot;Content-Type: text/plain&quot; </span>-d <span style="color:#a5d6ff;">&quot;70.5,3.9,2.4,111&quot; </span>http://localhost:1880/pump/reading
+{<span style="color:#a5d6ff;">&quot;accepted&quot;</span>:true,<span style="color:#a5d6ff;">&quot;device&quot;</span>:<span style="color:#a5d6ff;">&quot;PUMP-001&quot;</span>,<span style="color:#a5d6ff;">&quot;reading&quot;</span>:{<span style="color:#a5d6ff;">&quot;temperature&quot;</span>:70.5,<span style="color:#a5d6ff;">&quot;pressure&quot;</span>:3.9,<span style="color:#a5d6ff;">&quot;vibration&quot;</span>:2.4,<span style="color:#a5d6ff;">&quot;flow&quot;</span>:111}}
+$ curl -s -u pump:&lt;password&gt; -H <span style="color:#a5d6ff;">&quot;Content-Type: text/plain&quot; </span>-d <span style="color:#a5d6ff;">&quot;hello&quot; </span>http://localhost:1880/pump/reading
+{<span style="color:#a5d6ff;">&quot;error&quot;</span>:<span style="color:#a5d6ff;">&quot;expected: temperature,pressure,vibration,flow&quot;</span>}</pre></section><section class="s" id="s15"><div class="h"><div><b>Code</b> <small>11 lines</small></div><div class="a"><button data-c="c15">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/15-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c15">{
+  <span style="color:#7ee787;">&quot;title&quot;</span>: <span style="color:#a5d6ff;">&quot;Temperature now&quot;</span>,
+  <span style="color:#7ee787;">&quot;size&quot;</span>: <span style="color:#a5d6ff;">&quot;SMALL&quot;</span>,
+  <span style="color:#7ee787;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;VALUE&quot;</span>,
+  <span style="color:#7ee787;">&quot;content&quot;</span>: {
+    <span style="color:#7ee787;">&quot;attributes&quot;</span>: [ { <span style="color:#7ee787;">&quot;dataSourceId&quot;</span>: <span style="color:#a5d6ff;">&quot;temperature_1&quot;</span>, <span style="color:#7ee787;">&quot;label&quot;</span>: <span style="color:#a5d6ff;">&quot;Temperature&quot;</span>, <span style="color:#7ee787;">&quot;unit&quot;</span>: <span style="color:#a5d6ff;">&quot;°C&quot;</span>, <span style="color:#7ee787;">&quot;precision&quot;</span>: <span style="color:#79c0ff;">2 </span>} ]
+  },
+  <span style="color:#7ee787;">&quot;dataSource&quot;</span>: {
+    <span style="color:#7ee787;">&quot;attributes&quot;</span>: [ { <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;temperature_1&quot;</span>, <span style="color:#7ee787;">&quot;attribute&quot;</span>: <span style="color:#a5d6ff;">&quot;temperature&quot;</span>, <span style="color:#7ee787;">&quot;aggregator&quot;</span>: <span style="color:#a5d6ff;">&quot;last&quot;</span>, <span style="color:#7ee787;">&quot;eventName&quot;</span>: <span style="color:#a5d6ff;">&quot;status&quot; </span>} ]
+  }
+}</pre></section><section class="s" id="s16"><div class="h"><div><b>Code</b> <small>3 lines</small></div><div class="a"><button data-c="c16">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/16-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c16">$ oc logs -n mas-instdb2-monitor &lt;latest wsp.g1... pod&gt; | grep -i kmeans
+KMeans, Entity: PUMP-001, Input: vibration, Windowsize: <span style="color:#79c0ff;">12</span>, Output: [<span style="color:#a5d6ff;">&#x27;vibration_anomaly&#x27;</span>], Overlap: <span style="color:#79c0ff;">6</span>, Inputsize: <span style="color:#79c0ff;">30
+</span>KMeans failed with Could not form valid cluster separation. Please change n_clusters or change clustering method</pre></section><section class="s" id="s17"><div class="h"><div><b>Code</b> <small>4 lines</small></div><div class="a"><button data-c="c17">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/17-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c17">$ oc <span style="color:#d2a8ff;">exec </span>-n mas-instdb2-manage &lt;manage-pod&gt; -- grep -n -i jms /config/server.xml
+<span style="color:#79c0ff;">10</span>:      &lt;feature&gt;wasJmsClient-2.0&lt;/feature&gt;
+<span style="color:#79c0ff;">16</span>:      &lt;!--feature&gt;wmqJmsClient-2.0&lt;/feature&gt;
+<span style="color:#79c0ff;">17</span>:      &lt;feature&gt;jmsMdb-3.2&lt;/feature--&gt;</pre></section><section class="s" id="s18"><div class="h"><div><b>Code</b> <small>49 lines</small></div><div class="a"><button data-c="c18">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/18-snippet.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c18"><span style="color:#8b949e;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+</span><span style="color:#7ee787;">&lt;server </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Manage all bundle: client of the JMS server bundle&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;featureManager&gt;
+    &lt;feature&gt;</span>jndi-1.0<span style="color:#7ee787;">&lt;/feature&gt;
+    &lt;feature&gt;</span>wasJmsClient-2.0<span style="color:#7ee787;">&lt;/feature&gt;
+    &lt;feature&gt;</span>jmsMdb-3.2<span style="color:#7ee787;">&lt;/feature&gt;
+    &lt;feature&gt;</span>mdb-3.2<span style="color:#7ee787;">&lt;/feature&gt;
+  &lt;/featureManager&gt;
+  </span><span style="color:#8b949e;">&lt;!-- one connection factory for all MIF queues, pointing at the JMS server pod through its service --&gt;
+  </span><span style="color:#7ee787;">&lt;jmsQueueConnectionFactory </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/cf/intcf&quot; </span><span style="color:#79c0ff;">connectionManagerRef=</span><span style="color:#a5d6ff;">&quot;mifjmsconfact&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">remoteServerAddress=</span><span style="color:#a5d6ff;">&quot;instdb2-wsp-jms.mas-instdb2-manage.svc:7276:BootstrapBasicMessaging&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueueConnectionFactory&gt;
+  &lt;connectionManager </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;mifjmsconfact&quot; </span><span style="color:#79c0ff;">maxPoolSize=</span><span style="color:#a5d6ff;">&quot;20&quot;</span><span style="color:#7ee787;">/&gt;
+  </span><span style="color:#8b949e;">&lt;!-- JNDI name used by the queue records in Manage  -&gt;  queue defined on the JMS server --&gt;
+  </span><span style="color:#7ee787;">&lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/sqout&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/sqout&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;sqoutbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/sqin&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/sqin&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;sqinbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqin&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqin&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;cqinbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqinerr&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqinerr&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;cqinerrbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqout&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqout&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;cqoutbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqouterr&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqouterr&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;cqouterrbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/notf&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/notf&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;notfbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  &lt;jmsQueue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/notferr&quot; </span><span style="color:#79c0ff;">jndiName=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/notferr&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">queueName=</span><span style="color:#a5d6ff;">&quot;notferrbd&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsQueue&gt;
+  </span><span style="color:#8b949e;">&lt;!-- consumers of the continuous queues: message-driven beans inside the Manage server --&gt;
+  </span><span style="color:#7ee787;">&lt;jmsActivationSpec </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;maximo-all/mboejb/JMSContQueueProcessor-1&quot; </span><span style="color:#79c0ff;">maxEndpoints=</span><span style="color:#a5d6ff;">&quot;5&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">destinationRef=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqin&quot; </span><span style="color:#79c0ff;">destinationType=</span><span style="color:#a5d6ff;">&quot;javax.jms.Queue&quot;
+                       </span><span style="color:#79c0ff;">remoteServerAddress=</span><span style="color:#a5d6ff;">&quot;instdb2-wsp-jms.mas-instdb2-manage.svc:7276:BootstrapBasicMessaging&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsActivationSpec&gt;
+  &lt;jmsActivationSpec </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;maximo-all/mboejb/JMSContQueueProcessor-2&quot; </span><span style="color:#79c0ff;">maxEndpoints=</span><span style="color:#a5d6ff;">&quot;1&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;properties.wasJms </span><span style="color:#79c0ff;">destinationRef=</span><span style="color:#a5d6ff;">&quot;jms/maximo/int/queues/cqinerr&quot; </span><span style="color:#79c0ff;">destinationType=</span><span style="color:#a5d6ff;">&quot;javax.jms.Queue&quot;
+                       </span><span style="color:#79c0ff;">remoteServerAddress=</span><span style="color:#a5d6ff;">&quot;instdb2-wsp-jms.mas-instdb2-manage.svc:7276:BootstrapBasicMessaging&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/jmsActivationSpec&gt;
+  </span><span style="color:#8b949e;">&lt;!-- the same two again for cqout and cqouterr: JMSContOutQueueProcessor-1 and -2 --&gt;
+</span><span style="color:#7ee787;">&lt;/server&gt;
+</span></pre></section><section class="s" id="s19"><div class="h"><div><b>Code</b> <small>3 lines</small></div><div class="a"><button data-c="c19">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/19-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c19">$ oc create secret generic wsp-all-jms-client -n mas-instdb2-manage <span style="color:#a5d6ff;">\
+     </span>--from-file=server-custom.xml=server-custom.xml
+secret/wsp-all-jms-client created</pre></section><section class="s" id="s20"><div class="h"><div><b>Code</b> <small>29 lines</small></div><div class="a"><button data-c="c20">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/20-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c20">$ oc patch manageworkspace instdb2-wsp -n mas-instdb2-manage --type merge -p <span style="color:#a5d6ff;">&#x27;
+spec:
+  settings:
+    deployment:
+      defaultJMS: true                         # message beans for the continuous queues
+      persistentVolumes:
+        - pvcName: manage-jms
+          mountPath: /jmsstore                 # the path the JMS server writes its store to
+          size: 5Gi
+          storageClassName: ocs-external-storagecluster-cephfs
+          accessModes: [ReadWriteMany]
+      serverBundles:
+        - name: all                            # the existing Manage server bundle ...
+          bundleType: all
+          isDefault: true
+          isMobileTarget: true
+          isUserSyncTarget: true
+          replica: 1
+          routeSubDomain: all
+          additionalServerConfig:
+            secretName: wsp-all-jms-client     # ... now with the client XML of step 1
+        - name: jms                            # new: the JMS server
+          bundleType: standalonejms
+          isDefault: false
+          isMobileTarget: false
+          isUserSyncTarget: false
+          replica: 1
+          routeSubDomain: jms
+&#x27;
+</span></pre></section><section class="s" id="s21"><div class="h"><div><b>Code</b> <small>18 lines</small></div><div class="a"><button data-c="c21">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/21-snippet.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c21"><span style="color:#7ee787;">&lt;featureManager&gt;
+    &lt;feature&gt;</span>wasJmsSecurity-1.0<span style="color:#7ee787;">&lt;/feature&gt;
+    &lt;feature&gt;</span>wasJmsServer-1.0<span style="color:#7ee787;">&lt;/feature&gt;                       </span><span style="color:#8b949e;">&lt;!-- this pod IS the messaging server --&gt;
+</span><span style="color:#7ee787;">&lt;/featureManager&gt;
+&lt;wasJmsEndpoint </span><span style="color:#79c0ff;">host=</span><span style="color:#a5d6ff;">&quot;*&quot; </span><span style="color:#79c0ff;">wasJmsSSLPort=</span><span style="color:#a5d6ff;">&quot;7286&quot; </span><span style="color:#79c0ff;">wasJmsPort=</span><span style="color:#a5d6ff;">&quot;7276&quot; </span><span style="color:#7ee787;">/&gt;   </span><span style="color:#8b949e;">&lt;!-- Manage connects here --&gt;
+</span><span style="color:#7ee787;">&lt;messagingEngine&gt;
+    &lt;fileStore </span><span style="color:#79c0ff;">path=</span><span style="color:#a5d6ff;">&quot;/jmsstore&quot;</span><span style="color:#7ee787;">/&gt;                             </span><span style="color:#8b949e;">&lt;!-- where messages are kept --&gt;
+    </span><span style="color:#7ee787;">&lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;sqoutbd&quot;   </span><span style="color:#79c0ff;">maintainStrictOrder=</span><span style="color:#a5d6ff;">&quot;true&quot; </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;500000&quot;
+           </span><span style="color:#79c0ff;">failedDeliveryPolicy=</span><span style="color:#a5d6ff;">&quot;KEEP_TRYING&quot; </span><span style="color:#79c0ff;">maxRedeliveryCount=</span><span style="color:#a5d6ff;">&quot;-1&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;sqinbd&quot;    </span><span style="color:#79c0ff;">maintainStrictOrder=</span><span style="color:#a5d6ff;">&quot;true&quot; </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;500000&quot;
+           </span><span style="color:#79c0ff;">failedDeliveryPolicy=</span><span style="color:#a5d6ff;">&quot;KEEP_TRYING&quot; </span><span style="color:#79c0ff;">maxRedeliveryCount=</span><span style="color:#a5d6ff;">&quot;-1&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;cqinerrbd&quot; </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;500000&quot; </span><span style="color:#79c0ff;">failedDeliveryPolicy=</span><span style="color:#a5d6ff;">&quot;KEEP_TRYING&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;cqinbd&quot;    </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;500000&quot; </span><span style="color:#79c0ff;">exceptionDestination=</span><span style="color:#a5d6ff;">&quot;cqinerrbd&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;cqouterrbd&quot; </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;500000&quot; </span><span style="color:#79c0ff;">failedDeliveryPolicy=</span><span style="color:#a5d6ff;">&quot;KEEP_TRYING&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;cqoutbd&quot;   </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;500000&quot; </span><span style="color:#79c0ff;">exceptionDestination=</span><span style="color:#a5d6ff;">&quot;cqouterrbd&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;notferrbd&quot; </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;100000&quot; </span><span style="color:#79c0ff;">failedDeliveryPolicy=</span><span style="color:#a5d6ff;">&quot;KEEP_TRYING&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;queue </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;notfbd&quot;    </span><span style="color:#79c0ff;">maxMessageDepth=</span><span style="color:#a5d6ff;">&quot;100000&quot; </span><span style="color:#79c0ff;">exceptionDestination=</span><span style="color:#a5d6ff;">&quot;notferrbd&quot;</span><span style="color:#7ee787;">/&gt;
+&lt;/messagingEngine&gt;
+</span></pre></section><section class="s" id="s22"><div class="h"><div><b>Code</b> <small>4 lines</small></div><div class="a"><button data-c="c22">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/22-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c22">[CID-CRON-437] Message <span style="color:#79c0ff;">2530637</span>.179187229887528509 processed by JMS Queue Cron Task
+               JMSQSEQCONSUMER.SEQQOUT, destjndiname = jms/maximo/int/queues/sqout
+$ oc <span style="color:#d2a8ff;">exec </span>-n mas-instdb2-manage &lt;manage-pod&gt; -- ls -la /opt/ibm/wlp/output/defaultServer/xmlfiles/
+-rw-r-----. <span style="color:#79c0ff;">1 1000960000 </span>root <span style="color:#79c0ff;">7888 </span>Oct <span style="color:#79c0ff;">13 06</span>:29 DEMOERP_MXASSETInterface_2530637.179187229887528509.xml</pre></section><section class="s" id="s23"><div class="h"><div><b>Code</b> <small>12 lines</small></div><div class="a"><button data-c="c23">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/23-snippet.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c23"><span style="color:#7ee787;">&lt;PublishMXASSET </span><span style="color:#79c0ff;">xmlns=</span><span style="color:#a5d6ff;">&quot;http://www.ibm.com/maximo&quot; </span><span style="color:#79c0ff;">creationDateTime=</span><span style="color:#a5d6ff;">&quot;2026-10-13T06:18:18+00:00&quot;
+                </span><span style="color:#79c0ff;">messageID=</span><span style="color:#a5d6ff;">&quot;1453117918722980361594&quot; </span><span style="color:#79c0ff;">event=</span><span style="color:#a5d6ff;">&quot;1&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;MXASSETSet&gt;
+    &lt;ASSET </span><span style="color:#79c0ff;">action=</span><span style="color:#a5d6ff;">&quot;Add&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;ASSETNUM&gt;</span>PUMP-001<span style="color:#7ee787;">&lt;/ASSETNUM&gt;
+      &lt;DESCRIPTION&gt;</span>Cooling water pump 1<span style="color:#7ee787;">&lt;/DESCRIPTION&gt;
+      &lt;SITEID&gt;</span>BEDFORD<span style="color:#7ee787;">&lt;/SITEID&gt;
+      &lt;STATUS&gt;</span>NOT READY<span style="color:#7ee787;">&lt;/STATUS&gt;
+      </span>... about 200 more fields ...
+    <span style="color:#7ee787;">&lt;/ASSET&gt;
+  &lt;/MXASSETSet&gt;
+&lt;/PublishMXASSET&gt;
+</span></pre></section><section class="s" id="s24"><div class="h"><div><b>Code</b> <small>10 lines</small></div><div class="a"><button data-c="c24">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/24-snippet.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c24"><span style="color:#8b949e;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+</span><span style="color:#7ee787;">&lt;SyncMXASSET </span><span style="color:#79c0ff;">xmlns=</span><span style="color:#a5d6ff;">&quot;http://www.ibm.com/maximo&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;MXASSETSet&gt;
+    &lt;ASSET&gt;
+      &lt;ASSETNUM&gt;</span>PUMP-002<span style="color:#7ee787;">&lt;/ASSETNUM&gt;
+      &lt;DESCRIPTION&gt;</span>Cooling water pump 2 (sent by the ERP)<span style="color:#7ee787;">&lt;/DESCRIPTION&gt;
+      &lt;SITEID&gt;</span>BEDFORD<span style="color:#7ee787;">&lt;/SITEID&gt;
+    &lt;/ASSET&gt;
+  &lt;/MXASSETSet&gt;
+&lt;/SyncMXASSET&gt;
+</span></pre></section><section class="s" id="s25"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c25">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-integration-beginners-mif-jms-kafka-mqtt/25-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c25">[CID-CRON-697] got message 9635157.1791873245883959498 from queue jms/maximo/int/queues/sqin
+[ERROR] Processing failed for MXASSETInterface. ...
+        BMXAA9301E - The user of the transaction is not authorized for Object Structure MXASSET.
+        Configure authorization in the object structure application and grant necessary access to the user.
+[ERROR] Message 9635157.1791873245883959498 processing was unsucessful by JMS Queue Cron Task
+        JMSQSEQCONSUMER.SEQQIN</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

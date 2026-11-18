@@ -1,0 +1,6 @@
+Risk at the RBI date  = 7.61E-4 × 2 760 000              =  2 102 USD/y   cell 3D, medium-high
+Risk at the plan date = 3.06E-5 × 189.3 × 2 760 000      = 15 987 USD/y   cell 4D, HIGH
+Risk target 10 000 USD/y is crossed on                   = 2030-08-19     (monthly scan)
+Half the remaining life: 5.0 / 2 = 2.5 y from 2026-11-18 = 2029-05-14
+10-year cap from the last inspection 2026-04-14          = 2036-04-14
+Next inspection = earliest                               = 2029-05-14    (half remaining life governs)

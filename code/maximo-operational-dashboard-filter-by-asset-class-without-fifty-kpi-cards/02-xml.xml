@@ -1,0 +1,7 @@
+<sql target="sqlserver">
+  insert into workqueue (workqueueid, queuename, description, intobjectname, clausename,
+                         app, queuetype, owner, priority, isactive, langcode)
+  select next value for workqueueseq, 'ASSETS - PUMPS', 'In-service assets: Pumps, with class and sub-class',
+         'MXAPIASSET', 'ASSET:ACLASS_PUMP', 'ASSET', 'RESULTSET', 'MAXADMIN', 3, 1, 'EN'
+  where not exists (select 1 from workqueue where queuename='ASSETS - PUMPS')
+</sql>

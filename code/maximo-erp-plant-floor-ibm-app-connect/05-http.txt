@@ -1,0 +1,6 @@
+POST /maximo/api/os/mxapiwodetail/{id}?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+
+{"externalrefid": "JE-4001",
+ "worklog": [{"logtype": "UPDATE", "description": "Costs posted to ERP journal JE-4001"}]}

@@ -1,0 +1,11 @@
+"mapFloorInfo": {
+  "facilityLayer": { "layerId": "bk_facilities", "facilityIdField": "FACILITY_ID",
+                     "siteIdField": "SITE_ID", "nameField": "NAME", "shortNameField": "SHORT_NAME" },
+  "levelLayer":    { "layerId": "bk_levels", "levelIdField": "LEVEL_ID", "facilityIdField": "FACILITY_ID",
+                     "levelNumberField": "LEVEL_NUMBER", "verticalOrderField": "VERTICAL_ORDER",
+                     "nameField": "NAME", "shortNameField": "SHORT_NAME" }
+}
+...
+{ "id": "bk_units", "title": "Rooms", "url": ".../BartonKeep_Indoor/FeatureServer/2",
+  "layerDefinition": { "floorInfo": { "floorField": "LEVEL_ID" },
+                       "facilityInfo": { "facilityField": "FACILITY_ID" } } }

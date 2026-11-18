@@ -1,0 +1,6 @@
+GET https://HOST/oslc/sp
+
+  …/oslc/sp/triAssetManagementSP
+  …/oslc/sp/triWorkManagementSP
+  …/oslc/sp/triReserve
+  …/oslc/sp/triBIMSP                      (ten in all)

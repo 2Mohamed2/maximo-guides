@@ -1,0 +1,11 @@
+<ns2:anyFailed>false</ns2:anyFailed>
+<ns2:failed>0</ns2:failed>
+<ns2:responseHelpers>
+  <ns2:ResponseHelper>
+    <ns2:name>1037141-CBA demo - work task created over SOAP</ns2:name>
+    <ns2:recordId>16280334</ns2:recordId>
+    <ns2:status>Successful</ns2:status>
+  </ns2:ResponseHelper>
+</ns2:responseHelpers>
+<ns2:successful>1</ns2:successful>
+<ns2:total>1</ns2:total>

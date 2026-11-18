@@ -1,0 +1,2 @@
+PUMP_FLOW_RATIO =
+    (PUMP_FLOW_VOL_LS / np.maximum(PUMP_FLOW_EXPECTED_LS, 1))

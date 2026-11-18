@@ -1,0 +1,14 @@
+{
+  "member": [
+    { "href": "http://localhost/maximo/api/os/contrwo/_QkVERk9SRC84ODM5",
+      "wonum": "8839", "description": "HVAC unit tripping on high head pressure",
+      "status": "APPR", "status_description": "Approved", "wopriority": 1,
+      "siteid": "BEDFORD", "location": "BR200", "assetnum": "11200",
+      "worktype": "CM", "targcompdate": "2026-11-11T17:00:00+00:00" },
+    { "href": "http://localhost/maximo/api/os/contrwo/_QkVERk9SRC84ODQx",
+      "wonum": "8841", "description": "Circulation fan vibration above 7 mm/s",
+      "status": "INPRG", "status_description": "In progress", "wopriority": 2,
+      "siteid": "BEDFORD", "location": "BR240", "assetnum": "11240",
+      "worktype": "CM", "targcompdate": "2026-11-12T17:00:00+00:00" }
+  ]
+}

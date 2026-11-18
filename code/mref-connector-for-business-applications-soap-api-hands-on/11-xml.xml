@@ -1,0 +1,12 @@
+<ws:moduleName>Organization</ws:moduleName>
+<ws:objectTypeNames><ws:string>Organization</ws:string></ws:objectTypeNames>
+...
+<ws:associationFilters>
+  <dto:AssociationFilter>
+    <dto:associationName>Has Organization</dto:associationName>  <!-- building Has Organization org -->
+    <dto:moduleName>Location</dto:moduleName>
+    <dto:objectTypeName>triBuilding</dto:objectTypeName>
+    <dto:reverseAssociation>false</dto:reverseAssociation>
+    <dto:runTimeData>10336440,10336461,10336479,10336491,10336498,10336546,10348367,10587254,11372668,11411534</dto:runTimeData>
+  </dto:AssociationFilter>
+</ws:associationFilters>

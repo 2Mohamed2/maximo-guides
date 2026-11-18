@@ -1,0 +1,24 @@
+<ws:runDynamicQuery>
+  <ws:projectName></ws:projectName>
+  <ws:moduleName>Location</ws:moduleName>
+  <ws:objectTypeNames><ws:string>triBuilding</ws:string></ws:objectTypeNames>
+  <ws:guiNames xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+  <ws:projectScope>1</ws:projectScope>
+  <ws:displayFields>
+    <dto:DisplayLabel><dto:fieldName>triIdTX</dto:fieldName><dto:label>ID</dto:label><dto:sectionName>General</dto:sectionName></dto:DisplayLabel>
+    <dto:DisplayLabel><dto:fieldName>triNameTX</dto:fieldName><dto:label>Name</dto:label><dto:sectionName>General</dto:sectionName></dto:DisplayLabel>
+    <dto:DisplayLabel><dto:fieldName>triCityTX</dto:fieldName><dto:label>City</dto:label><dto:sectionName>General</dto:sectionName></dto:DisplayLabel>
+    <dto:DisplayLabel><dto:fieldName>triPrimaryUseCL</dto:fieldName><dto:label>Primary Use</dto:label><dto:sectionName>General</dto:sectionName></dto:DisplayLabel>
+  </ws:displayFields>
+  <ws:filters>
+    <dto:Filter>
+      <dto:dataType>320</dto:dataType>          <!-- 320 = string -->
+      <dto:fieldName>triNameTX</dto:fieldName>
+      <dto:operator>16</dto:operator>            <!-- 16 = contains -->
+      <dto:sectionName>General</dto:sectionName>
+      <dto:value>Center</dto:value>
+    </dto:Filter>
+  </ws:filters>
+  <ws:start>1</ws:start>
+  <ws:maximumResultCount>10</ws:maximumResultCount>
+</ws:runDynamicQuery>

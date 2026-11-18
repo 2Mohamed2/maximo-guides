@@ -1,0 +1,3 @@
+POST /maximo/api/script/OSRMMATCH
+{ "assetnum": "TRK-07", "siteid": "BEDFORD", "laborcode": "KOWALSKI", "wonum": "1214",
+  "points": [[-71.235601, 42.376391, 1793598012, 15], ...] }      lon, lat, unix time, accuracy (m)

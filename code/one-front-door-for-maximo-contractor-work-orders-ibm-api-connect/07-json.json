@@ -1,0 +1,4 @@
+{ "Error": { "reasonCode": "NOTALLOWED",
+  "message": "BMXAA4590E - Could not change Work Order 8840 status to COMP.\n\tBMXAA0032E - The status that you selected is the same as the current status. Select a different status." } }
+
+x-contractor-vendor: VOLTPRO, wonum 8839  ->  { "Error": { "reasonCode": "NOTFOUND", "message": "Not found" } }

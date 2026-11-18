@@ -1,0 +1,9 @@
+group = TimeToFailureAssetGroupPipeline(
+    asset_group_id=asset_group_id,                      # NEW_AFMGRP
+    model_pipeline={
+        "features": ['Pump_AFM:velocityx', 'Pump_AFM:velocityy', 'Pump_AFM:velocityz'],
+        "features_resampled": {'Pump_AFM': {'${freqency}': '1D',
+            'velocityx': {'mean': None}, 'velocityy': {'mean': None}, 'velocityz': {'mean': None}}},
+        "predictions": ['predicted_time_to_failure', 'predicted_failure_date'],
+    })
+df = group.execute()

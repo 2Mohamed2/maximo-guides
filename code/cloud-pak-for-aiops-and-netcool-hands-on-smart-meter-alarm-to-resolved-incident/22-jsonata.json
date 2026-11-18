@@ -1,0 +1,13 @@
+(
+  {
+    "summary": Summary,
+    "severity": Severity >= 5 ? 6 : Severity = 4 ? 5 : Severity = 3 ? 4 : Severity = 2 ? 3 : 1,
+    "resource": { "name": Node, "type": "netcool-node", "location": Location },
+    "type": {
+      "classification": AlertGroup,
+      "eventType": (Severity = 0 or Type = 2) ? "resolution" : "problem"
+    },
+    "sender": { "name": "Netcool/OMNIbus AGG_P", "type": "Netcool forwarder" },
+    "details": { "identifier": Identifier, "serial": Serial, "manager": Manager, "alertKey": AlertKey, "tally": Tally, "netcoolSeverity": Severity }
+  }
+)

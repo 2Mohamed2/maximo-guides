@@ -1,0 +1,74 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Maximo Application Framework explained: Graphite, role-based apps, bun</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Maximo Application Framework explained: Graphite, role-based apps, bundles, Maximo Mobile and where React fits</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/10/13/maximo-application-framework-graphite-role-based-apps-mobile">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile">github.com/2Mohamed2/maximo-guides/code/maximo-application-framework-graphite-role-based-apps-mobile</a>.</p><section class="s" id="s1"><div class="h"><div><b>Code</b> <small>9 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/01-snippet.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1"><span style="color:#7ee787;">&lt;page </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;workOrderDetails&quot; </span><span style="color:#79c0ff;">title=</span><span style="color:#a5d6ff;">&quot;Work order&quot; </span><span style="color:#79c0ff;">controller=</span><span style="color:#a5d6ff;">&quot;WorkOrderDetailsController&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;states </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;x947_&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;state </span><span style="color:#79c0ff;">name=</span><span style="color:#a5d6ff;">&quot;canLoadWoDetailResource&quot; </span><span style="color:#79c0ff;">value=</span><span style="color:#a5d6ff;">&quot;true&quot; </span><span style="color:#79c0ff;">type=</span><span style="color:#a5d6ff;">&quot;boolean&quot; </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;xdv7y&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/states&gt;
+  &lt;maximo-datasource </span><span style="color:#79c0ff;">id=</span><span style="color:#a5d6ff;">&quot;woDetailResource&quot; </span><span style="color:#79c0ff;">default=</span><span style="color:#a5d6ff;">&quot;true&quot;
+      </span><span style="color:#79c0ff;">can-load=</span><span style="color:#a5d6ff;">&quot;{page.state.canLoadWoDetailResource}&quot;
+      </span><span style="color:#79c0ff;">object-structure=</span><span style="color:#a5d6ff;">&quot;mxapiwodetail&quot;
+      </span><span style="color:#79c0ff;">where=</span><span style="color:#a5d6ff;">&quot;wonum=&amp;quot;{page.params.wonum}&amp;quot; and siteid=&amp;quot;{page.params.siteid}&amp;quot;&quot;
+      </span><span style="color:#79c0ff;">controller=</span><span style="color:#a5d6ff;">&quot;WorkOrderDataController&quot; </span><span style="color:#79c0ff;">item-url=</span><span style="color:#a5d6ff;">&quot;{page.params.href}&quot; </span><span style="color:#79c0ff;">page-size=</span><span style="color:#a5d6ff;">&quot;1&quot;</span><span style="color:#7ee787;">&gt;
+</span></pre></section><section class="s" id="s2"><div class="h"><div><b>Code</b> <small>2 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/02-snippet.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2"><span style="color:#7ee787;">&lt;text-input </span><span style="color:#79c0ff;">value=</span><span style="color:#a5d6ff;">&quot;{page.state.name}&quot; </span><span style="color:#79c0ff;">required=</span><span style="color:#a5d6ff;">&quot;true&quot;
+    </span><span style="color:#79c0ff;">invalid=</span><span style="color:#a5d6ff;">&quot;{page.state.nameInvalid}&quot; </span><span style="color:#79c0ff;">invalid-text=</span><span style="color:#a5d6ff;">&quot;{page.state.nameInvalidText}&quot;</span><span style="color:#7ee787;">/&gt;
+</span></pre></section><section class="s" id="s3"><div class="h"><div><b>Code</b> <small>11 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/03-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">// Generated File - Do <span style="color:#ff7b72;">not </span>edit
+<span style="color:#ff7b72;">import </span>React, { Component, useEffect, useState } <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;react&#x27;</span>;
+<span style="color:#ff7b72;">import </span>{ observer, Provider, inject } <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;mobx-react&#x27;</span>;
+<span style="color:#ff7b72;">import </span>{ Datasource, JSONDataAdapter, Application, Page, Dialog } <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;@maximo/maximo-js-api&#x27;</span>;
+<span style="color:#ff7b72;">import </span>{ Button, Box, Label, Field, SmartInput, Tabs, Tab, Tag, BorderLayout } <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;@maximo/react-components&#x27;</span>;
+<span style="color:#ff7b72;">import </span>AppController <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;./AppController&#x27;</span>;
+<span style="color:#ff7b72;">import </span>PagePtwList <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;./PagePtwList&#x27;</span>;
+<span style="color:#ff7b72;">import </span>PagePtwDetails <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;./PagePtwDetails&#x27;</span>;
+<span style="color:#ff7b72;">import </span>PTWDetailsController <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;./PTWDetailsController&#x27;</span>;
+<span style="color:#ff7b72;">import </span>DialogChgStatusDialog <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;./DialogChgStatusDialog&#x27;</span>;
+<span style="color:#ff7b72;">import </span>SlidingDrawerAssetLookup <span style="color:#ff7b72;">from </span><span style="color:#a5d6ff;">&#x27;./SlidingDrawerAssetLookup&#x27;</span>;</pre></section><section class="s" id="s4"><div class="h"><div><b>Code</b> <small>10 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/04-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4">techmobile bundle (145 entries)
+  index.html          the page a browser loads
+  assets/             104 files: the built JavaScript and styles, split into chunks
+  js/                 2 files
+  i18n/               29 files: the labels, one per language
+  data/               4 files
+  build.json          version 9.2.110, application ID, title, and the routes
+  manifest.json       name, icon and &quot;standalone&quot; display, as for any installable web app
+  loader.css, favicon.svg
+  app-source.zip      the source this bundle was built from</pre></section><section class="s" id="s5"><div class="h"><div><b>Code</b> <small>7 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/05-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">app-source.zip (368 entries)
+  package.json        dependencies and build scripts
+  src/app.xml         the application description
+  src/*Controller.js  about 37 controllers: WorkOrderDetailsController, SchedulePageController, ...
+  src/assets/
+  public/i18n/        29 label files
+  ibm-config/         63 files: IBM&#x27;s original, kept for comparison</pre></section><section class="s" id="s6"><div class="h"><div><b>Code</b> <small>8 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/06-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6">/maximo/oslc/login                           who is this session
+/maximo/oslc/whoami                          user, person, default site and organization
+/maximo/oslc/systeminfo                      version of the server
+/maximo/oslc/permission/allowedappoptions    which security options this user holds
+/maximo/oslc/licenseinfo                     which products are licensed
+/maximo/oslc/messages                        text of system messages
+/maximo/oslc/os/mxapiwodetail                the first data source loads
+/maximo/oslc/os/mxapimaxapp, mxapiorganization, ...   supporting data</pre></section><section class="s" id="s7"><div class="h"><div><b>Code</b> <small>19 lines</small></div><div class="a"><button data-c="c7">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/07-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c7">// AppCustomizations.js: your code, kept apart <span style="color:#ff7b72;">from </span>IBM<span style="color:#a5d6ff;">&#x27;s controllers
+</span><span style="color:#ff7b72;">class </span><span style="color:#ffa657;">AppCustomizations </span>{
+  applicationInitialized(app) {
+    this.app = app;
+  }
+  // show only work orders of my own organization, whatever <span style="color:#d2a8ff;">list </span><span style="color:#ff7b72;">is </span>chosen
+  onBeforeLoadData(datasource, query) {
+    <span style="color:#ff7b72;">if </span>(datasource.name !== <span style="color:#a5d6ff;">&#x27;todaywoassignedDS&#x27;</span>) <span style="color:#ff7b72;">return</span>;
+    const mine = datasource.parseQBE({ orgid: <span style="color:#a5d6ff;">&#x27;=&#x27; </span>+ this.app.client.userInfo.defaultOrg });
+    query.qbe = { ...query.qbe, ...mine };
+  }
+  // warn when the estimated duration <span style="color:#ff7b72;">is </span>cleared
+  onValueChanged({ datasource, field, newValue }) {
+    <span style="color:#ff7b72;">if </span>(datasource.name === <span style="color:#a5d6ff;">&#x27;dsCreateWo&#x27; </span>&amp;&amp; field === <span style="color:#a5d6ff;">&#x27;estdur&#x27; </span>&amp;&amp; !newValue) {
+      this.app.toast(<span style="color:#a5d6ff;">&#x27;Estimated duration is empty&#x27;</span>, <span style="color:#a5d6ff;">&#x27;warning&#x27;</span>);
+    }
+  }
+}
+export default AppCustomizations;</pre></section><section class="s" id="s8"><div class="h"><div><b>Code</b> <small>13 lines</small></div><div class="a"><button data-c="c8">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-application-framework-graphite-role-based-apps-mobile/08-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c8">{
+  <span style="color:#7ee787;">&quot;dependencies&quot;</span>: {
+    <span style="color:#7ee787;">&quot;@maximo/maximo-js-api&quot;</span>: <span style="color:#a5d6ff;">&quot;3.2.803&quot;</span>,
+    <span style="color:#7ee787;">&quot;@maximo/react-components&quot;</span>: <span style="color:#a5d6ff;">&quot;3.2.803&quot;</span>,
+    <span style="color:#7ee787;">&quot;mobx&quot;</span>: <span style="color:#a5d6ff;">&quot;6.15.4&quot;</span>,
+    <span style="color:#7ee787;">&quot;react&quot;</span>: <span style="color:#a5d6ff;">&quot;18.3.1&quot;
+  </span>},
+  <span style="color:#7ee787;">&quot;scripts&quot;</span>: {
+    <span style="color:#7ee787;">&quot;build&quot;</span>: <span style="color:#a5d6ff;">&quot;npx @maximo/maxdev-cli build --in ./src/app.xml --out ./build/app/src/ --update-ids --copy&quot;</span>,
+    <span style="color:#7ee787;">&quot;build:production&quot;</span>: <span style="color:#a5d6ff;">&quot;yarn build &amp;&amp; yarn labels &amp;&amp; cd build/app &amp;&amp; react-scripts build&quot;</span>,
+    <span style="color:#7ee787;">&quot;labels&quot;</span>: <span style="color:#a5d6ff;">&quot;npx @maximo/maxdev-cli localize -i ./src/app.xml -o ./src/i18n/labels.json --format json&quot;
+  </span>}
+}</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

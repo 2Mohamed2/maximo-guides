@@ -1,0 +1,5 @@
+data: {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"{...}"}],
+ "structuredContent":{"status_description":"Approved","description":"Replace mechanical seal on chilled water pump CHWP-104",
+ "lead":"WILSON","wonum":"1204","schedstart":"2026-10-27T05:00:00+00:00","schedfinish":"2026-10-27T13:00:00+00:00",
+ "assetnum":"CHWP-104","location":"DCP-NORTH","estdur":8.0,"status":"APPR",
+ "href":"http://localhost/maximo/api/os/MXAPIWOSCHEDULE/_QkVERk9SRC8xMjA0"},"isError":false}}

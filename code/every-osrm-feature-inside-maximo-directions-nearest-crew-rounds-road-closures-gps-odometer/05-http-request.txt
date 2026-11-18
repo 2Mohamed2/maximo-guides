@@ -1,0 +1,3 @@
+GET /osrm/car/table/v1/driving/{crew1};{crew2};...;{work order}
+    ?sources=0;1;2;3;4;5&destinations=6&annotations=duration,distance
+    &fallback_speed=8.33&fallback_coordinate=snapped

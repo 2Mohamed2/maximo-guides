@@ -1,0 +1,10 @@
+{
+  "catalogFunctionName": "AlertExpression",
+  "input":  {"expression": "df['INLET_TEMP'] > 27", "Severity": "High", "Status": "New"},
+  "output": {"alert_name": "RACK_INLET_HIGH"},
+  "outputMeta": {"RACK_INLET_HIGH": {"transient": false}},
+  "schedule": {"starting_at": "00:00:00", "every": "5T"}
+}
+
+second rule, same shape:
+  "expression": "df['FAILOVER_PCT'] > 80"   ->  "alert_name": "RACK_FAILOVER_RISK"

@@ -1,0 +1,8 @@
+/home/wiotp/userfiles/ClassLoader/
+├── EsriJS/
+│   ├── Java/   EsriJS.jar, TRIRIGAIntegration.jar
+│   └── Web/    EsriJS_arcgis.js, language files, …
+├── MREF3D/
+│   ├── Java/   MREF3D.jar
+│   └── Web/    index.html, app.js, config.json, sample.json, enrich.json
+└── TjeneConnectV3/

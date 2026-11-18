@@ -1,0 +1,25 @@
+<ws:saveRecord>
+  <ws:IntegrationRecords>
+    <dto:IntegrationRecord>
+      <dto:actionName>triCreateDraft</dto:actionName>
+      <dto:guiId>10011966</dto:guiId>
+      <dto:id>-1</dto:id>
+      <dto:moduleId>29</dto:moduleId>
+      <dto:objectTypeId>10008284</dto:objectTypeId>
+      <dto:objectTypeName>triWorkTask</dto:objectTypeName>
+      <dto:sections>
+        <dto:IntegrationSection>
+          <dto:fields>
+            <dto:IntegrationField><dto:name>triNameTX</dto:name><dto:value>CBA demo - work task created over SOAP</dto:value></dto:IntegrationField>
+            <dto:IntegrationField><dto:name>triDescriptionTX</dto:name><dto:value>Created by an external SOAP client ...</dto:value></dto:IntegrationField>
+            <dto:IntegrationField><dto:name>triTaskTypeCL</dto:name><dto:value>Corrective</dto:value></dto:IntegrationField>
+            <dto:IntegrationField><dto:name>triCurrencyUO</dto:name><dto:value>US Dollars</dto:value></dto:IntegrationField>
+            <dto:IntegrationField><dto:name>triPlannedStartDT</dto:name><dto:value>1793391412465</dto:value></dto:IntegrationField>
+            <dto:IntegrationField><dto:name>triPlannedEndDT</dto:name><dto:value>1793564212465</dto:value></dto:IntegrationField>
+          </dto:fields>
+          <dto:name>RecordInformation</dto:name>
+        </dto:IntegrationSection>
+      </dto:sections>
+    </dto:IntegrationRecord>
+  </ws:IntegrationRecords>
+</ws:saveRecord>

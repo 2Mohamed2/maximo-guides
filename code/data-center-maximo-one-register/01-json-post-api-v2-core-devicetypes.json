@@ -1,0 +1,10 @@
+{
+  "name": "DC_RACK",
+  "description": "Data center cabinet: inlet conditions and load per feed",
+  "dataItemDto": [
+    {"name": "INLET_TEMP", "type": "METRIC", "columnType": "NUMBER", "eventName": "rack", "jsonPath": "d.inlet_temp"},
+    {"name": "HUMIDITY",   "type": "METRIC", "columnType": "NUMBER", "eventName": "rack", "jsonPath": "d.humidity"},
+    {"name": "KW_A",       "type": "METRIC", "columnType": "NUMBER", "eventName": "rack", "jsonPath": "d.kw_a"},
+    {"name": "KW_B",       "type": "METRIC", "columnType": "NUMBER", "eventName": "rack", "jsonPath": "d.kw_b"}
+  ]
+}

@@ -1,0 +1,9 @@
+GET https://HOST/oslc/so/triAssetRS/10375298
+Accept: application/json
+
+{ "dcterms:identifier": "10375298",
+  "dcterms:title": "Blackberry Curve",
+  "spi:triBusinessObjectLabelSY": "Telephones",
+  "spi:triCreatedSY": "2009-09-28T16:52:21-07:00",
+  "spi:action": "https://HOST/oslc/system/action/triAssetRS/10375298",
+  … }

@@ -1,0 +1,20 @@
+[00] WSDL                       HTTP 200  70 operations
+[--] getApplicationInfo (no credentials) HTTP 401
+[01] getApplicationInfo         HTTP 500    817 ms  basic-auth=yes
+[02] getApplicationInfo         HTTP 200    301 ms  basic-auth=no
+      {'apiVersion': '3', 'dbBuildNumber': '9200031'}
+[03] getHttpSession             HTTP 200    256 ms  basic-auth=no
+[04] getModules                 HTTP 200    694 ms  basic-auth=no
+      109 modules, e.g. Classification, Data Utilities, Document, Geography, Group, Location ...
+[06] getModuleId                HTTP 200    273 ms  basic-auth=no
+[07] getObjectTypeId            HTTP 200    267 ms  basic-auth=no
+[08] getDefaultGuiId            HTTP 200    287 ms  basic-auth=no
+      {'moduleId': 29, 'objectTypeId': 10008284, 'guiId': 10011966}
+[09] runDynamicQuery            HTTP 200    469 ms  basic-auth=no
+      totalResults=137
+[10] saveRecord                 HTTP 200  10412 ms  basic-auth=no
+      {'successful': '1', 'failed': '0', 'recordId': '16280334', 'status': 'Successful'}
+[12] getAvailableActions        HTTP 200    592 ms  basic-auth=no
+      state=triDraft
+[13] triggerActions             HTTP 200   1287 ms  basic-auth=no
+[14] terminateSession           HTTP 200    377 ms  basic-auth=no

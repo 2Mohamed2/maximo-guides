@@ -1,0 +1,9 @@
+<page id="workOrderDetails" title="Work order" controller="WorkOrderDetailsController">
+  <states id="x947_">
+    <state name="canLoadWoDetailResource" value="true" type="boolean" id="xdv7y"/>
+  </states>
+  <maximo-datasource id="woDetailResource" default="true"
+      can-load="{page.state.canLoadWoDetailResource}"
+      object-structure="mxapiwodetail"
+      where="wonum=&quot;{page.params.wonum}&quot; and siteid=&quot;{page.params.siteid}&quot;"
+      controller="WorkOrderDataController" item-url="{page.params.href}" page-size="1">

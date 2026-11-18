@@ -1,0 +1,12 @@
+REQUEST               created from work order 1368
+DRAFT                 header, risk assessment, plan LT-2201A, lock box, reviewer, approver
+APPR                  WILSON   reviewed by RAMIREZ, approved by WILSON
+ISOLATION INPRG       WILSON   points 1 and 2 locked and signed; permit 1006 refused at ISSUED (BMXAO0420E)
+ISOLATION COMP        WILSON   points 3, 4, 5 signed; lock box locked; permit 1006 issued, accepted, active
+APPR, DRAFT                    stepped back to add condition for work, hazard review, checklist
+APPR                  WILSON   gas test 1, site check, toolbox talk and work party
+ISOLATION COMP        WILSON
+ISOLATION PENDREMOVE  WILSON   sanction for test 1 on MCC-02-07; five de-isolations (BMXAO0504W on each)
+ISOLATION REMOVED     WILSON   padlocks, car seal and lock box released
+CANCELED              WILSON   handback signed
+CLOSED                WILSON

@@ -1,0 +1,1 @@
+select riskassessnum, status, template, assessmenttype, riskcategory, location, approvedby, mostsigrisk, mostsigpriority, plusgtotalscore, envirimpactassess from plusgriskassess where riskassessnum in ('1005','1006','1009','1010') order by 1

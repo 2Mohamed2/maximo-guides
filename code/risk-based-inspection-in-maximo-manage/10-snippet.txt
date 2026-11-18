@@ -1,0 +1,16 @@
+POST /maximo/api/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+properties: assetnum,assetmeter{metername,lastreading,lastreadingdate}
+
+{
+  "assetmeter": [
+    {
+      "metername": "WALL-THK",
+      "linearassetmeterid": 0,
+      "newreading": "12.8",
+      "newreadingdate": "2026-11-16T14:00:00",
+      "inspector": "WILSON"
+    }
+  ]
+}

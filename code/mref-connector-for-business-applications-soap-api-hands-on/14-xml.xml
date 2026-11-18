@@ -1,0 +1,8 @@
+<ws:triggerActions>
+  <ws:TriggerActions>
+    <dto:TriggerActions>
+      <dto:actionName>triSave</dto:actionName>
+      <dto:recordId>16280334</dto:recordId>
+    </dto:TriggerActions>
+  </ws:TriggerActions>
+</ws:triggerActions>

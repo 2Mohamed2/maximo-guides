@@ -1,0 +1,2 @@
+!curl -sk -o /project_data/data_asset/pmlib.zip \
+  "${APM_API_BASEURL}/ibm/pmi/service/rest/ds/${APM_ID}/${APM_API_KEY}/lib/download?filename=pmlib"

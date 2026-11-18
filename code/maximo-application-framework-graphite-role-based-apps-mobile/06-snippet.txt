@@ -1,0 +1,8 @@
+/maximo/oslc/login                           who is this session
+/maximo/oslc/whoami                          user, person, default site and organization
+/maximo/oslc/systeminfo                      version of the server
+/maximo/oslc/permission/allowedappoptions    which security options this user holds
+/maximo/oslc/licenseinfo                     which products are licensed
+/maximo/oslc/messages                        text of system messages
+/maximo/oslc/os/mxapiwodetail                the first data source loads
+/maximo/oslc/os/mxapimaxapp, mxapiorganization, ...   supporting data

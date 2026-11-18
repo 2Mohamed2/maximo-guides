@@ -1,0 +1,84 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Your first MREF app: a Key Register from scratch</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Your first MREF app: a Key Register from scratch</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/10/02/your-first-mref-app-a-key-register-from-scratch">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/your-first-mref-app-a-key-register-from-scratch">github.com/2Mohamed2/maximo-guides/code/your-first-mref-app-a-key-register-from-scratch</a>.</p><section class="s" id="s1"><div class="h"><div><b>Code</b> <small>84 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/your-first-mref-app-a-key-register-from-scratch/01-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1">// MREF / TRIRIGA classic builders: open pop-up windows as in-page dialogs, and show
+// browser alert() boxes as an in-page message instead of a blocking box.
+// Paste into DevTools console on the builder page. Re-run after a full page reload.
+// confirm() questions are left as the normal browser box on purpose.
+(function installBuilderHelpers() {
+  const top_ = window;
+  // Some builders (Report Manager) are a &lt;frameset&gt; page that cannot show anything
+  // itself: then put messages and dialogs in its main frame.
+  const doc = (top_.document.body &amp;&amp; top_.document.body.tagName === &#x27;FRAMESET&#x27;)
+    ? ((top_.frames.frameMain || top_.frames[0]).document) : top_.document;
+  const stack = [];                       // open dialogs, last = on top
+  const closeTop = () =&gt; { const ov = stack.pop(); if (ov) ov.remove(); };
+
+  // 1. alert() -&gt; a message strip at the top of the page (also written to the console).
+  const toast = (msg) =&gt; {
+    console.info(&#x27;[MREF alert]&#x27;, msg);
+    const t = doc.createElement(&#x27;div&#x27;);
+    t.textContent = msg;
+    t.style.cssText = &#x27;position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:200000;&#x27; +
+      &#x27;max-width:640px;padding:10px 16px;background:#fff8e1;border:1px solid #f1c21b;&#x27; +
+      &#x27;border-radius:6px;font:14px sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer&#x27;;
+    t.title = &#x27;Click to close&#x27;;
+    t.onclick = () =&gt; t.remove();
+    doc.body.appendChild(t);
+    setTimeout(() =&gt; t.remove(), 12000);
+  };
+
+  const findFrame = (w, name) =&gt; {
+    try {
+      for (const f of w.document.querySelectorAll(&#x27;iframe,frame&#x27;)) {
+        if (f.name === name) return f.contentWindow;
+        const hit = findFrame(f.contentWindow, name);
+        if (hit) return hit;
+      }
+    } catch (e) {}
+    return null;
+  };
+
+  // 2. A finished pop-up calls window.close(), sometimes on the top window:
+  //    close a dialog, never the tab.
+  top_.close = closeTop;
+
+  const hook = (w, ownDialog) =&gt; {
+    try {
+      w.alert = toast;
+      w.close = ownDialog
+        ? () =&gt; { const i = stack.indexOf(ownDialog); if (i &gt;= 0) stack.splice(i, 1); ownDialog.remove(); }
+        : closeTop;
+      // 3. window.open() -&gt; an iframe in a dialog stacked on top of the page and other dialogs.
+      w.open = function (url, name) {
+        // window.open(url, &#x27;someFrame&#x27;) where that frame already exists just means
+        // &quot;load into that frame&quot; (Report Manager tabs work this way): do exactly that.
+        const existing = name &amp;&amp; findFrame(top_, name);
+        if (existing) { if (url) existing.location.href = url; return existing; }
+        const n = stack.length;
+        const ov = doc.createElement(&#x27;div&#x27;);
+        ov.style.cssText = `position:fixed;left:${3 + n * 2}%;top:${4 + n * 2}%;width:${94 - n * 4}%;` +
+          `height:${92 - n * 4}%;z-index:${100000 + n};background:#fff;border:2px solid #0f62fe;` +
+          &#x27;box-shadow:0 8px 30px rgba(0,0,0,.4)&#x27;;
+        const x = doc.createElement(&#x27;button&#x27;);   // manual close, top-right corner
+        x.textContent = &#x27;×&#x27;;
+        x.title = &#x27;Close this dialog&#x27;;
+        x.style.cssText = &#x27;position:absolute;right:4px;top:2px;z-index:1;border:0;background:#0f62fe;&#x27; +
+          &#x27;color:#fff;font:16px sans-serif;width:24px;height:24px;cursor:pointer&#x27;;
+        x.onclick = () =&gt; { const i = stack.indexOf(ov); if (i &gt;= 0) stack.splice(i, 1); ov.remove(); };
+        const fr = doc.createElement(&#x27;iframe&#x27;);
+        fr.name = name || &#x27;pop&#x27; + n;
+        fr.style.cssText = &#x27;width:100%;height:100%;border:0&#x27;;
+        ov.append(x, fr);
+        doc.body.appendChild(ov);
+        stack.push(ov);
+        // The pop-up talks back to the page that opened it through window.opener: keep that link.
+        fr.addEventListener(&#x27;load&#x27;, () =&gt; { try { fr.contentWindow.opener = w; hook(fr.contentWindow, ov); } catch (e) {} });
+        fr.src = url;
+        return fr.contentWindow;
+      };
+      // Builders are built from nested frames: patch every one of them.
+      [...w.document.querySelectorAll(&#x27;iframe,frame&#x27;)].forEach(f =&gt; hook(f.contentWindow, ownDialog));
+    } catch (e) { /* cross-origin frame: skip */ }
+  };
+  hook(window, null);
+  top_.__installBuilderHelpers = installBuilderHelpers;   // re-run after a builder panel reloads
+  return &#x27;pop-ups open as dialogs; alerts show as a message at the top&#x27;;
+})();</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

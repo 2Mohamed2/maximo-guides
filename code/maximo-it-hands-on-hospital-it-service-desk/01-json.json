@@ -1,0 +1,6 @@
+{
+  "event": "worker.hired",
+  "worker": { "employeeId": "E-48213", "firstName": "Amira", "lastName": "Haddad",
+              "jobTitle": "Radiology nurse", "department": "Radiology", "manager": "FORD",
+              "workLocation": "OFF101", "email": "amira.haddad@example-hospital.org" }
+}

@@ -1,0 +1,966 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Nearest technician, travel time and road routes in Maximo Graphical As</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Nearest technician, travel time and road routes in Maximo Graphical Assignment, without an ArcGIS routing subscription</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/11/01/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing">github.com/2Mohamed2/maximo-guides/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing</a>.</p><section class="s" id="s1"><div class="h"><div><b>Shell</b> <small>4 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/01-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1">osrm-extract   -p /opt/car.lua region.osm.pbf     <span style="color:#8b949e;"># read roads, speeds, turn rules
+</span>osrm-partition region.osrm                         <span style="color:#8b949e;"># split the graph into cells
+</span>osrm-customize region.osrm                         <span style="color:#8b949e;"># pre-compute travel costs per cell
+</span>osrm-routed --algorithm mld --max-table-size <span style="color:#79c0ff;">10000 </span>region.osrm   <span style="color:#8b949e;"># serve on port 5000
+</span></pre></section><section class="s" id="s2"><div class="h"><div><b>YAML</b> <small>93 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/02-yaml.yaml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2"><span style="color:#8b949e;"># Self-hosted road routing for Maximo (no ArcGIS Online routing licence).
+#   osrm         - OSRM car router on the OpenStreetMap GCC extract (Saudi Arabia + Gulf)
+#   esri-adapter - answers Maximo&#x27;s Esri route / OD-matrix / GP-job calls from OSRM
+# Apply:  oc apply -f gis-routing.yaml
+#         oc -n gis-routing create configmap esri-adapter --from-file=esri_osrm_adapter.py=../adapter/esri_osrm_adapter.py
+</span><span style="color:#7ee787;">apiVersion</span>: v1
+<span style="color:#7ee787;">kind</span>: Namespace
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: gis-routing
+---
+<span style="color:#7ee787;">apiVersion</span>: v1
+<span style="color:#7ee787;">kind</span>: PersistentVolumeClaim
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: osrm-data
+  <span style="color:#7ee787;">namespace</span>: gis-routing
+<span style="color:#7ee787;">spec</span>:
+  <span style="color:#7ee787;">accessModes</span>: [ReadWriteOnce]
+  <span style="color:#7ee787;">resources</span>:
+    <span style="color:#7ee787;">requests</span>:
+      <span style="color:#7ee787;">storage</span>: 20Gi
+---
+<span style="color:#7ee787;">apiVersion</span>: apps/v1
+<span style="color:#7ee787;">kind</span>: Deployment
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: osrm
+  <span style="color:#7ee787;">namespace</span>: gis-routing
+<span style="color:#7ee787;">spec</span>:
+  <span style="color:#7ee787;">replicas</span>: 1
+  <span style="color:#7ee787;">strategy</span>: {<span style="color:#7ee787;">type</span>: Recreate}
+  <span style="color:#7ee787;">selector</span>:
+    <span style="color:#7ee787;">matchLabels</span>: {<span style="color:#7ee787;">app</span>: osrm}
+  <span style="color:#7ee787;">template</span>:
+    <span style="color:#7ee787;">metadata</span>:
+      <span style="color:#7ee787;">labels</span>: {<span style="color:#7ee787;">app</span>: osrm}
+    <span style="color:#7ee787;">spec</span>:
+      <span style="color:#7ee787;">initContainers</span>:
+        - <span style="color:#7ee787;">name</span>: download
+          <span style="color:#7ee787;">image</span>: registry.access.redhat.com/ubi9/ubi-minimal:latest
+          <span style="color:#7ee787;">command</span>: [<span style="color:#a5d6ff;">&quot;/bin/sh&quot;</span>, <span style="color:#a5d6ff;">&quot;-c&quot;</span>]
+          <span style="color:#7ee787;">args</span>:
+            - |
+              set -e
+              cd /data
+              if [ ! -s region.osm.pbf ]; then
+                echo &quot;downloading $PBF_URL&quot;
+                curl -fSL --retry 5 -o region.osm.pbf.part &quot;$PBF_URL&quot;
+                mv region.osm.pbf.part region.osm.pbf
+              fi
+              ls -la /data
+          <span style="color:#7ee787;">env</span>:
+            - {<span style="color:#7ee787;">name</span>: PBF_URL,<span style="color:#7ee787;"> value</span>: <span style="color:#a5d6ff;">&quot;https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf&quot;</span>}
+          <span style="color:#7ee787;">volumeMounts</span>: [{<span style="color:#7ee787;">name</span>: data,<span style="color:#7ee787;"> mountPath</span>: /data}]
+        - <span style="color:#7ee787;">name</span>: build
+          <span style="color:#7ee787;">image</span>: ghcr.io/project-osrm/osrm-backend:v5.27.1
+          <span style="color:#7ee787;">command</span>: [<span style="color:#a5d6ff;">&quot;/bin/sh&quot;</span>, <span style="color:#a5d6ff;">&quot;-c&quot;</span>]
+          <span style="color:#7ee787;">args</span>:
+            - |
+              set -e
+              cd /data
+              if [ ! -s region.osrm.mldgr ]; then
+                osrm-extract -p /opt/car.lua region.osm.pbf
+                osrm-partition region.osrm
+                osrm-customize region.osrm
+              fi
+              echo built
+          <span style="color:#7ee787;">resources</span>:
+            <span style="color:#7ee787;">requests</span>: {<span style="color:#7ee787;">cpu</span>: <span style="color:#a5d6ff;">&quot;2&quot;</span>,<span style="color:#7ee787;"> memory</span>: 6Gi}
+            <span style="color:#7ee787;">limits</span>: {<span style="color:#7ee787;">cpu</span>: <span style="color:#a5d6ff;">&quot;8&quot;</span>,<span style="color:#7ee787;"> memory</span>: 16Gi}
+          <span style="color:#7ee787;">volumeMounts</span>: [{<span style="color:#7ee787;">name</span>: data,<span style="color:#7ee787;"> mountPath</span>: /data}]
+      <span style="color:#7ee787;">containers</span>:
+        - <span style="color:#7ee787;">name</span>: osrm
+          <span style="color:#7ee787;">image</span>: ghcr.io/project-osrm/osrm-backend:v5.27.1
+          <span style="color:#7ee787;">command</span>: [<span style="color:#a5d6ff;">&quot;osrm-routed&quot;</span>, <span style="color:#a5d6ff;">&quot;--algorithm&quot;</span>, <span style="color:#a5d6ff;">&quot;mld&quot;</span>, <span style="color:#a5d6ff;">&quot;--max-table-size&quot;</span>, <span style="color:#a5d6ff;">&quot;10000&quot;</span>, <span style="color:#a5d6ff;">&quot;/data/region.osrm&quot;</span>]
+          <span style="color:#7ee787;">ports</span>: [{<span style="color:#7ee787;">containerPort</span>: 5000}]
+          <span style="color:#7ee787;">readinessProbe</span>:
+            <span style="color:#7ee787;">tcpSocket</span>: {<span style="color:#7ee787;">port</span>: 5000}
+            <span style="color:#7ee787;">initialDelaySeconds</span>: 5
+          <span style="color:#7ee787;">resources</span>:
+            <span style="color:#7ee787;">requests</span>: {<span style="color:#7ee787;">cpu</span>: 500m,<span style="color:#7ee787;"> memory</span>: 2Gi}
+            <span style="color:#7ee787;">limits</span>: {<span style="color:#7ee787;">cpu</span>: <span style="color:#a5d6ff;">&quot;4&quot;</span>,<span style="color:#7ee787;"> memory</span>: 8Gi}
+          <span style="color:#7ee787;">volumeMounts</span>: [{<span style="color:#7ee787;">name</span>: data,<span style="color:#7ee787;"> mountPath</span>: /data}]
+      <span style="color:#7ee787;">volumes</span>:
+        - <span style="color:#7ee787;">name</span>: data
+          <span style="color:#7ee787;">persistentVolumeClaim</span>: {<span style="color:#7ee787;">claimName</span>: osrm-data}
+---
+<span style="color:#7ee787;">apiVersion</span>: v1
+<span style="color:#7ee787;">kind</span>: Service
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: osrm
+  <span style="color:#7ee787;">namespace</span>: gis-routing
+<span style="color:#7ee787;">spec</span>:
+  <span style="color:#7ee787;">selector</span>: {<span style="color:#7ee787;">app</span>: osrm}
+  <span style="color:#7ee787;">ports</span>: [{<span style="color:#7ee787;">port</span>: 5000,<span style="color:#7ee787;"> targetPort</span>: 5000}]</pre></section><section class="s" id="s3"><div class="h"><div><b>Shell</b> <small>1 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/03-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">curl <span style="color:#a5d6ff;">&quot;http://osrm.gis-routing.svc:5000/route/v1/driving/46.6753,24.7136;46.6420,24.6905?overview=false&quot;
+</span></pre></section><section class="s" id="s4"><div class="h"><div><b>JSON</b> <small>1 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/04-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4">{<span style="color:#7ee787;">&quot;code&quot;</span>: <span style="color:#a5d6ff;">&quot;Ok&quot;</span>, <span style="color:#7ee787;">&quot;routes&quot;</span>: [{<span style="color:#7ee787;">&quot;distance&quot;</span>: <span style="color:#79c0ff;">5313.5</span>, <span style="color:#7ee787;">&quot;duration&quot;</span>: <span style="color:#79c0ff;">400.7</span>}]}</pre></section><section class="s" id="s5"><div class="h"><div><b>Shell</b> <small>1 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/05-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">curl <span style="color:#a5d6ff;">&quot;http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/NAServer/Route/solve?f=json&amp;stops=46.6753,24.7136;46.6420,24.6905&quot;
+</span></pre></section><section class="s" id="s6"><div class="h"><div><b>JSON</b> <small>22 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/06-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6">{
+  <span style="color:#7ee787;">&quot;routes&quot;</span>: {
+    <span style="color:#7ee787;">&quot;geometryType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriGeometryPolyline&quot;</span>,
+    <span style="color:#7ee787;">&quot;spatialReference&quot;</span>: {<span style="color:#7ee787;">&quot;wkid&quot;</span>: <span style="color:#79c0ff;">4326</span>},
+    <span style="color:#7ee787;">&quot;features&quot;</span>: [{
+      <span style="color:#7ee787;">&quot;attributes&quot;</span>: {
+        <span style="color:#7ee787;">&quot;Name&quot;</span>: <span style="color:#a5d6ff;">&quot;Location 1 - Location 2&quot;</span>,
+        <span style="color:#7ee787;">&quot;Total_TravelTime&quot;</span>: <span style="color:#79c0ff;">6.678</span>,
+        <span style="color:#7ee787;">&quot;Total_Minutes&quot;</span>: <span style="color:#79c0ff;">6.678</span>,
+        <span style="color:#7ee787;">&quot;Total_Kilometers&quot;</span>: <span style="color:#79c0ff;">5.3135</span>,
+        <span style="color:#7ee787;">&quot;Total_Miles&quot;</span>: <span style="color:#79c0ff;">3.3017</span>,
+        <span style="color:#7ee787;">&quot;Shape_Length&quot;</span>: <span style="color:#79c0ff;">5313.5
+      </span>},
+      <span style="color:#7ee787;">&quot;geometry&quot;</span>: {<span style="color:#7ee787;">&quot;paths&quot;</span>: [[[<span style="color:#79c0ff;">46.675293</span>, <span style="color:#79c0ff;">24.71363</span>], [<span style="color:#79c0ff;">46.675168</span>, <span style="color:#79c0ff;">24.713579</span>], <span style="color:#a5d6ff;">&quot;... 113 points along the roads&quot;</span>]]}
+    }]
+  },
+  <span style="color:#7ee787;">&quot;directions&quot;</span>: [{
+    <span style="color:#7ee787;">&quot;summary&quot;</span>: {<span style="color:#7ee787;">&quot;totalLength&quot;</span>: <span style="color:#79c0ff;">5.3135</span>, <span style="color:#7ee787;">&quot;totalTime&quot;</span>: <span style="color:#79c0ff;">6.678</span>, <span style="color:#7ee787;">&quot;totalDriveTime&quot;</span>: <span style="color:#79c0ff;">6.678</span>},
+    <span style="color:#7ee787;">&quot;features&quot;</span>: [<span style="color:#a5d6ff;">&quot;Start at Location 1&quot;</span>, <span style="color:#a5d6ff;">&quot;Continue onto …&quot;</span>, <span style="color:#a5d6ff;">&quot;Turn … onto …&quot;</span>, <span style="color:#a5d6ff;">&quot;Arrive at Location 2&quot;</span>]
+  }],
+  <span style="color:#7ee787;">&quot;stops&quot;</span>: {<span style="color:#7ee787;">&quot;features&quot;</span>: [<span style="color:#a5d6ff;">&quot;Location 1&quot;</span>, <span style="color:#a5d6ff;">&quot;Location 2&quot;</span>]}
+}</pre></section><section class="s" id="s7"><div class="h"><div><b>JSON</b> <small>7 lines</small></div><div class="a"><button data-c="c7">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/07-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c7">{
+  <span style="color:#7ee787;">&quot;odCostMatrix&quot;</span>: {
+    <span style="color:#7ee787;">&quot;costAttributeNames&quot;</span>: [<span style="color:#a5d6ff;">&quot;TravelTime&quot;</span>, <span style="color:#a5d6ff;">&quot;Kilometers&quot;</span>],
+    <span style="color:#7ee787;">&quot;1&quot;</span>: {<span style="color:#7ee787;">&quot;1&quot;</span>: [<span style="color:#79c0ff;">6.678</span>, <span style="color:#79c0ff;">5.3135</span>]},
+    <span style="color:#7ee787;">&quot;2&quot;</span>: {<span style="color:#7ee787;">&quot;1&quot;</span>: [<span style="color:#79c0ff;">14.79</span>, <span style="color:#79c0ff;">9.7419</span>]}
+  }
+}</pre></section><section class="s" id="s8"><div class="h"><div><b>YAML</b> <small>39 lines</small></div><div class="a"><button data-c="c8">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/08-yaml.yaml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c8"><span style="color:#7ee787;">apiVersion</span>: apps/v1
+<span style="color:#7ee787;">kind</span>: Deployment
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: esri-adapter
+  <span style="color:#7ee787;">namespace</span>: gis-routing
+<span style="color:#7ee787;">spec</span>:
+  <span style="color:#7ee787;">replicas</span>: 1
+  <span style="color:#7ee787;">selector</span>:
+    <span style="color:#7ee787;">matchLabels</span>: {<span style="color:#7ee787;">app</span>: esri-adapter}
+  <span style="color:#7ee787;">template</span>:
+    <span style="color:#7ee787;">metadata</span>:
+      <span style="color:#7ee787;">labels</span>: {<span style="color:#7ee787;">app</span>: esri-adapter}
+    <span style="color:#7ee787;">spec</span>:
+      <span style="color:#7ee787;">containers</span>:
+        - <span style="color:#7ee787;">name</span>: adapter
+          <span style="color:#7ee787;">image</span>: registry.access.redhat.com/ubi9/python-311:latest
+          <span style="color:#7ee787;">command</span>: [<span style="color:#a5d6ff;">&quot;python3&quot;</span>, <span style="color:#a5d6ff;">&quot;/app/esri_osrm_adapter.py&quot;</span>]
+          <span style="color:#7ee787;">env</span>:
+            - {<span style="color:#7ee787;">name</span>: OSRM_URL,<span style="color:#7ee787;"> value</span>: <span style="color:#a5d6ff;">&quot;http://osrm.gis-routing.svc:5000&quot;</span>}
+            - {<span style="color:#7ee787;">name</span>: PORT,<span style="color:#7ee787;"> value</span>: <span style="color:#a5d6ff;">&quot;8080&quot;</span>}
+          <span style="color:#7ee787;">ports</span>: [{<span style="color:#7ee787;">containerPort</span>: 8080}]
+          <span style="color:#7ee787;">readinessProbe</span>:
+            <span style="color:#7ee787;">httpGet</span>: {<span style="color:#7ee787;">path</span>: /healthz,<span style="color:#7ee787;"> port</span>: 8080}
+          <span style="color:#7ee787;">resources</span>:
+            <span style="color:#7ee787;">requests</span>: {<span style="color:#7ee787;">cpu</span>: 100m,<span style="color:#7ee787;"> memory</span>: 128Mi}
+            <span style="color:#7ee787;">limits</span>: {<span style="color:#7ee787;">cpu</span>: <span style="color:#a5d6ff;">&quot;1&quot;</span>,<span style="color:#7ee787;"> memory</span>: 512Mi}
+          <span style="color:#7ee787;">volumeMounts</span>: [{<span style="color:#7ee787;">name</span>: code,<span style="color:#7ee787;"> mountPath</span>: /app}]
+      <span style="color:#7ee787;">volumes</span>:
+        - <span style="color:#7ee787;">name</span>: code
+          <span style="color:#7ee787;">configMap</span>: {<span style="color:#7ee787;">name</span>: esri-adapter}
+---
+<span style="color:#7ee787;">apiVersion</span>: v1
+<span style="color:#7ee787;">kind</span>: Service
+<span style="color:#7ee787;">metadata</span>:
+  <span style="color:#7ee787;">name</span>: esri-adapter
+  <span style="color:#7ee787;">namespace</span>: gis-routing
+<span style="color:#7ee787;">spec</span>:
+  <span style="color:#7ee787;">selector</span>: {<span style="color:#7ee787;">app</span>: esri-adapter}
+  <span style="color:#7ee787;">ports</span>: [{<span style="color:#7ee787;">port</span>: 8080,<span style="color:#7ee787;"> targetPort</span>: 8080}]</pre></section><section class="s" id="s9"><div class="h"><div><b>Shell</b> <small>1 lines</small></div><div class="a"><button data-c="c9">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/09-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c9">http://esri-adapter.gis-routing.svc:8080</pre></section><section class="s" id="s10"><div class="h"><div><b>Shell</b> <small>4 lines</small></div><div class="a"><button data-c="c10">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/10-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c10">oc apply -f gis-routing.yaml
+oc -n gis-routing create configmap esri-adapter --from-file=esri_osrm_adapter.py=esri_osrm_adapter.py
+oc -n gis-routing rollout status deploy/esri-adapter
+oc -n gis-routing rollout status deploy/osrm --timeout=60m     <span style="color:#8b949e;"># the first build takes a while
+</span></pre></section><section class="s" id="s11"><div class="h"><div><b>Shell</b> <small>11 lines</small></div><div class="a"><button data-c="c11">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/11-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c11">$ oc -n gis-routing get deploy,svc,pvc
+NAME                           READY   UP-TO-DATE   AVAILABLE
+deployment.apps/esri-adapter   <span style="color:#79c0ff;">1</span>/1     <span style="color:#79c0ff;">1            1
+</span>deployment.apps/osrm           <span style="color:#79c0ff;">1</span>/1     <span style="color:#79c0ff;">1            1
+
+</span>NAME                   TYPE        CLUSTER-IP       PORT(S)
+service/esri-adapter   ClusterIP   <span style="color:#79c0ff;">172</span>.30.19.19     <span style="color:#79c0ff;">8080</span>/TCP
+service/osrm           ClusterIP   <span style="color:#79c0ff;">172</span>.30.188.174   <span style="color:#79c0ff;">5000</span>/TCP
+
+NAME                              STATUS   CAPACITY   ACCESS MODES
+persistentvolumeclaim/osrm-data   Bound    20Gi       RWO</pre></section><section class="s" id="s12"><div class="h"><div><b>Shell</b> <small>3 lines</small></div><div class="a"><button data-c="c12">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/12-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c12">oc -n gis-routing create configmap esri-adapter --from-file=esri_osrm_adapter.py=esri_osrm_adapter.py <span style="color:#a5d6ff;">\
+   </span>--dry-run=client -o yaml | oc apply -f -
+oc -n gis-routing rollout restart deploy/esri-adapter</pre></section><section class="s" id="s13"><div class="h"><div><b>Shell</b> <small>2 lines</small></div><div class="a"><button data-c="c13">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/13-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c13">oc -n mas-&lt;instance&gt;-manage get pods | grep -- -all-
+oc -n mas-&lt;instance&gt;-manage <span style="color:#d2a8ff;">exec </span>&lt;manage-all-pod&gt; -- curl -s http://esri-adapter.gis-routing.svc:8080/healthz</pre></section><section class="s" id="s14"><div class="h"><div><b>JSON</b> <small>1 lines</small></div><div class="a"><button data-c="c14">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/14-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c14">{<span style="color:#7ee787;">&quot;ok&quot;</span>: <span style="color:#79c0ff;">true</span>, <span style="color:#7ee787;">&quot;osrm&quot;</span>: <span style="color:#a5d6ff;">&quot;http://osrm.gis-routing.svc:5000&quot;</span>}</pre></section><section class="s" id="s15"><div class="h"><div><b>Shell</b> <small>1 lines</small></div><div class="a"><button data-c="c15">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/15-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c15">curl <span style="color:#a5d6ff;">&quot;http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/NAServer/Route/solve?f=json&amp;stops=46.6753,24.7136;46.6420,24.6905&quot;
+</span></pre></section><section class="s" id="s16"><div class="h"><div><b>Shell</b> <small>10 lines</small></div><div class="a"><button data-c="c16">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/16-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c16">mkdir -p /srv/osrm &amp;&amp; <span style="color:#d2a8ff;">cd </span>/srv/osrm
+curl -fSL -o region.osm.pbf https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf
+IMG=ghcr.io/project-osrm/osrm-backend:v5.27.1
+podman run --rm -v /srv/osrm:/data $IMG osrm-extract -p /opt/car.lua /data/region.osm.pbf
+podman run --rm -v /srv/osrm:/data $IMG osrm-partition /data/region.osrm
+podman run --rm -v /srv/osrm:/data $IMG osrm-customize /data/region.osrm
+podman run -d --name osrm -p <span style="color:#79c0ff;">5000</span>:5000 -v /srv/osrm:/data $IMG <span style="color:#a5d6ff;">\
+   </span>osrm-routed --algorithm mld --max-table-size <span style="color:#79c0ff;">10000 </span>/data/region.osrm
+
+OSRM_URL=http://localhost:5000 PORT=<span style="color:#79c0ff;">8080 </span>python3 esri_osrm_adapter.py</pre></section><section class="s" id="s17"><div class="h"><div><b>XML</b> <small>71 lines</small></div><div class="a"><button data-c="c17">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/17-xml.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c17"><span style="color:#8b949e;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE script SYSTEM &quot;script.dtd&quot;&gt;
+
+&lt;!--
+  Point Maximo&#x27;s routing services at the self-hosted OSRM router (via the
+  Esri-compatible adapter in gis-nearest-tech/), instead of ArcGIS Online&#x27;s
+  licensed Route and OD Cost Matrix services.
+
+  What uses each field (read from the Manage 9.2 code):
+    SPATIALROUTE           browser RouteTask -&gt; route line + itinerary on the
+                           Dispatch / Work Center maps; ResourceFinder -&gt; travel
+                           time from a technician&#x27;s live GPS position
+    SPATIALDISTANCEMATRIX  SpatialTravelTimeMatrix, direct mode (&lt;= 10 points)
+    SPATIALJOBMATRIX       SpatialTravelTimeMatrix, async GP job (&gt; 10 points)
+    USEPROXY               browser sends every map service call through
+                           /maximo/webclient/pluss/proxy.jsp, so the adapter is
+                           reached on its internal cluster address and nothing
+                           is exposed to the internet (no CORS, no TLS trust)
+
+  The adapter answers in Esri&#x27;s JSON shapes, so no Maximo code or presentation
+  changes. Travel times are real road times on the OpenStreetMap network.
+
+  ADAPTER points at the in-cluster service. For an on-premises install change it
+  to wherever the adapter runs; the Maximo server must reach it.
+
+  Guarded: only rewrites values that are empty or still on arcgis.com, so it is
+  re-runnable and never stamps over an ArcGIS Server someone configured since.
+  MAPNAME: the active Spatial map (LBS_DEMO on this instance).
+--&gt;
+</span><span style="color:#7ee787;">&lt;script </span><span style="color:#79c0ff;">author=</span><span style="color:#a5d6ff;">&quot;mc&quot; </span><span style="color:#79c0ff;">scriptname=</span><span style="color:#a5d6ff;">&quot;mas_map_osrm_routing_1.0.0&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;description&gt;</span>Route, travel-time matrix and proxy settings for self-hosted OSRM routing<span style="color:#7ee787;">&lt;/description&gt;
+  &lt;statements&gt;
+
+    &lt;freeform </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Route service -&amp;gt; OSRM adapter&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;all&quot;</span><span style="color:#7ee787;">&gt;
+        </span>UPDATE mapmanager
+           SET spatialroute = &#x27;http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/NAServer/Route&#x27;
+         WHERE mapname = &#x27;LBS_DEMO&#x27;
+           AND (spatialroute IS NULL OR spatialroute LIKE &#x27;%arcgis.com%&#x27;)
+      <span style="color:#7ee787;">&lt;/sql&gt;
+    &lt;/freeform&gt;
+
+    &lt;freeform </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Travel-time matrix (direct) -&amp;gt; OSRM adapter&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;all&quot;</span><span style="color:#7ee787;">&gt;
+        </span>UPDATE mapmanager
+           SET spatialdistancematrix = &#x27;http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/NAServer/ODCostMatrix/solveODCostMatrix&#x27;
+         WHERE mapname = &#x27;LBS_DEMO&#x27;
+           AND (spatialdistancematrix IS NULL OR spatialdistancematrix LIKE &#x27;%arcgis.com%&#x27;)
+      <span style="color:#7ee787;">&lt;/sql&gt;
+    &lt;/freeform&gt;
+
+    &lt;freeform </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Travel-time matrix (async job, more than 10 points) -&amp;gt; OSRM adapter&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;all&quot;</span><span style="color:#7ee787;">&gt;
+        </span>UPDATE mapmanager
+           SET spatialjobmatrix = &#x27;http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/GPServer/GenerateOriginDestinationCostMatrix&#x27;
+         WHERE mapname = &#x27;LBS_DEMO&#x27;
+           AND (spatialjobmatrix IS NULL OR spatialjobmatrix LIKE &#x27;%arcgis.com%&#x27;)
+      <span style="color:#7ee787;">&lt;/sql&gt;
+    &lt;/freeform&gt;
+
+    &lt;freeform </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Browser map calls go through Maximo&#x27;s proxy&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;all&quot;</span><span style="color:#7ee787;">&gt;
+        </span>UPDATE mapmanager
+           SET useproxy = 1
+         WHERE mapname = &#x27;LBS_DEMO&#x27;
+           AND useproxy = 0
+      <span style="color:#7ee787;">&lt;/sql&gt;
+    &lt;/freeform&gt;
+
+  &lt;/statements&gt;
+&lt;/script&gt;
+</span></pre></section><section class="s" id="s18"><div class="h"><div><b>Shell</b> <small>5 lines</small></div><div class="a"><button data-c="c18">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/18-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c18">NS=mas-&lt;instance&gt;-manage
+POD=<span style="color:#ff7b72;">$(</span>oc -n $NS get pods -o name | grep maxinst | head -1 | cut -d/ -f2<span style="color:#ff7b72;">)
+</span>oc -n $NS cp mas_map_osrm_routing_1.0.0.dbc $POD:/opt/IBM/SMP/maximo/tools/maximo/en/script/
+oc -n $NS <span style="color:#d2a8ff;">exec </span>$POD -- bash -c <span style="color:#a5d6ff;">\
+   &#x27;cd /opt/IBM/SMP/maximo/tools/maximo/internal &amp;&amp; ./runscriptfile.sh -cscript -fmas_map_osrm_routing_1.0.0&#x27;
+</span></pre></section><section class="s" id="s19"><div class="h"><div><b>Output</b> <small>1 lines</small></div><div class="a"><button data-c="c19">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/19-output.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c19">RunScript complete: Successful</pre></section><section class="s" id="s20"><div class="h"><div><b>Shell</b> <small>2 lines</small></div><div class="a"><button data-c="c20">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/20-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c20"><span style="color:#ff7b72;">select </span>mapname, useproxy, spatialroute, spatialdistancematrix, spatialjobmatrix
+  from mapmanager where mapname = <span style="color:#a5d6ff;">&#x27;LBS_DEMO&#x27;</span>;</pre></section><section class="s" id="s21"><div class="h"><div><b>XML</b> <small>38 lines</small></div><div class="a"><button data-c="c21">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/21-xml.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c21"><span style="color:#8b949e;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE script SYSTEM &quot;script.dtd&quot;&gt;
+&lt;!--
+  Road distance next to travel time on Graphical Assignment emergency recommendations.
+
+  Adds SKDEMAVAILRES.DISTANCEKM (road kilometres, technician -&gt; emergency work order)
+  and shows it in the &quot;Emergency Work Resource Availability&quot; dialog (id runemrg) of
+  RLASSIGN, RLCAPACITY and GWORKASSIGN: a list column after Travel Time and a field in
+  the row details. The value is filled by automation script GISNTEMRES (1.0.2 or later,
+  dbc/gisnt_emres_traveltime_1.0.2.dbc) from the routing service.
+
+  Presentation edits are targeted replace() calls anchored on the stock Travel Time
+  markup, guarded so a re-run is a no-op and a customised dialog is left alone.
+  Reverse: replace the added tablecol / textbox with &#x27;&#x27; and drop the attribute.
+--&gt;
+</span><span style="color:#7ee787;">&lt;script </span><span style="color:#79c0ff;">author=</span><span style="color:#a5d6ff;">&quot;GISNT&quot; </span><span style="color:#79c0ff;">scriptname=</span><span style="color:#a5d6ff;">&quot;gisnt_emres_distance_1.0.0&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;description&gt;</span>Distance (km) on Graphical Assignment emergency recommendations<span style="color:#7ee787;">&lt;/description&gt;
+  &lt;check </span><span style="color:#79c0ff;">tag=</span><span style="color:#a5d6ff;">&quot;INFO&quot; </span><span style="color:#79c0ff;">group=</span><span style="color:#a5d6ff;">&quot;scriptrun&quot; </span><span style="color:#79c0ff;">key=</span><span style="color:#a5d6ff;">&quot;ScriptNotNeeded&quot; </span><span style="color:#79c0ff;">default=</span><span style="color:#a5d6ff;">&quot;DISTANCEKM already on SKDEMAVAILRES; skipped.&quot; </span><span style="color:#79c0ff;">skip_script=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+    &lt;check_query </span><span style="color:#79c0ff;">query=</span><span style="color:#a5d6ff;">&quot;select 1 from maxattribute where objectname = &#x27;SKDEMAVAILRES&#x27; and attributename = &#x27;DISTANCEKM&#x27;&quot;</span><span style="color:#7ee787;">/&gt;
+  &lt;/check&gt;
+  &lt;statements&gt;
+    &lt;freeform </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Distance column in the Emergency Work Resource Availability list&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;oracle&quot;</span><span style="color:#7ee787;">&gt;</span>update maxpresentation set presentation = replace(presentation, &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&#x27;, &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&amp;lt;tablecol dataattribute=&quot;distancekm&quot; id=&quot;runemrg_assignments_table_tablebody_distkm&quot;/&amp;gt;&#x27;) where app in (&#x27;RLASSIGN&#x27;, &#x27;RLCAPACITY&#x27;, &#x27;GWORKASSIGN&#x27;) and dbms_lob.instr(presentation, &#x27;runemrg_assignments_table_tablebody_distkm&#x27;) = 0 and dbms_lob.instr(presentation, &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&#x27;) &amp;gt; 0<span style="color:#7ee787;">&lt;/sql&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;db2&quot;</span><span style="color:#7ee787;">&gt;</span>update maxpresentation set presentation = replace(presentation, &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&#x27;, &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&amp;lt;tablecol dataattribute=&quot;distancekm&quot; id=&quot;runemrg_assignments_table_tablebody_distkm&quot;/&amp;gt;&#x27;) where app in (&#x27;RLASSIGN&#x27;, &#x27;RLCAPACITY&#x27;, &#x27;GWORKASSIGN&#x27;) and locate(&#x27;runemrg_assignments_table_tablebody_distkm&#x27;, presentation) = 0 and locate(&#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&#x27;, presentation) &amp;gt; 0<span style="color:#7ee787;">&lt;/sql&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;sqlserver&quot;</span><span style="color:#7ee787;">&gt;</span>update maxpresentation set presentation = replace(cast(presentation as varchar(max)), &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&#x27;, &#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&amp;lt;tablecol dataattribute=&quot;distancekm&quot; id=&quot;runemrg_assignments_table_tablebody_distkm&quot;/&amp;gt;&#x27;) where app in (&#x27;RLASSIGN&#x27;, &#x27;RLCAPACITY&#x27;, &#x27;GWORKASSIGN&#x27;) and charindex(&#x27;runemrg_assignments_table_tablebody_distkm&#x27;, cast(presentation as varchar(max))) = 0 and charindex(&#x27;&amp;lt;tablecol dataattribute=&quot;traveltime&quot; id=&quot;runemrg_assignments_table_tablebody_travtime&quot;/&amp;gt;&#x27;, cast(presentation as varchar(max))) &amp;gt; 0<span style="color:#7ee787;">&lt;/sql&gt;
+    &lt;/freeform&gt;
+    &lt;freeform </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Distance field in the recommendation details&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;oracle&quot;</span><span style="color:#7ee787;">&gt;</span>update maxpresentation set presentation = replace(presentation, &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&#x27;, &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&amp;lt;textbox dataattribute=&quot;distancekm&quot; id=&quot;emwo_preview_1_grid7_52&quot;/&amp;gt;&#x27;) where app in (&#x27;RLASSIGN&#x27;, &#x27;RLCAPACITY&#x27;, &#x27;GWORKASSIGN&#x27;) and dbms_lob.instr(presentation, &#x27;emwo_preview_1_grid7_52&#x27;) = 0 and dbms_lob.instr(presentation, &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&#x27;) &amp;gt; 0<span style="color:#7ee787;">&lt;/sql&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;db2&quot;</span><span style="color:#7ee787;">&gt;</span>update maxpresentation set presentation = replace(presentation, &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&#x27;, &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&amp;lt;textbox dataattribute=&quot;distancekm&quot; id=&quot;emwo_preview_1_grid7_52&quot;/&amp;gt;&#x27;) where app in (&#x27;RLASSIGN&#x27;, &#x27;RLCAPACITY&#x27;, &#x27;GWORKASSIGN&#x27;) and locate(&#x27;emwo_preview_1_grid7_52&#x27;, presentation) = 0 and locate(&#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&#x27;, presentation) &amp;gt; 0<span style="color:#7ee787;">&lt;/sql&gt;
+      &lt;sql </span><span style="color:#79c0ff;">target=</span><span style="color:#a5d6ff;">&quot;sqlserver&quot;</span><span style="color:#7ee787;">&gt;</span>update maxpresentation set presentation = replace(cast(presentation as varchar(max)), &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&#x27;, &#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&amp;lt;textbox dataattribute=&quot;distancekm&quot; id=&quot;emwo_preview_1_grid7_52&quot;/&amp;gt;&#x27;) where app in (&#x27;RLASSIGN&#x27;, &#x27;RLCAPACITY&#x27;, &#x27;GWORKASSIGN&#x27;) and charindex(&#x27;emwo_preview_1_grid7_52&#x27;, cast(presentation as varchar(max))) = 0 and charindex(&#x27;&amp;lt;textbox dataattribute=&quot;traveltime&quot; id=&quot;emwo_preview_1_grid7_51&quot;/&amp;gt;&#x27;, cast(presentation as varchar(max))) &amp;gt; 0<span style="color:#7ee787;">&lt;/sql&gt;
+    &lt;/freeform&gt;
+    &lt;add_attributes </span><span style="color:#79c0ff;">object=</span><span style="color:#a5d6ff;">&quot;SKDEMAVAILRES&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;attrdef </span><span style="color:#79c0ff;">attribute=</span><span style="color:#a5d6ff;">&quot;DISTANCEKM&quot; </span><span style="color:#79c0ff;">maxtype=</span><span style="color:#a5d6ff;">&quot;DECIMAL&quot; </span><span style="color:#79c0ff;">length=</span><span style="color:#a5d6ff;">&quot;10&quot; </span><span style="color:#79c0ff;">scale=</span><span style="color:#a5d6ff;">&quot;2&quot; </span><span style="color:#79c0ff;">persistent=</span><span style="color:#a5d6ff;">&quot;true&quot; </span><span style="color:#79c0ff;">haslongdesc=</span><span style="color:#a5d6ff;">&quot;false&quot;
+               </span><span style="color:#79c0ff;">required=</span><span style="color:#a5d6ff;">&quot;false&quot; </span><span style="color:#79c0ff;">userdefined=</span><span style="color:#a5d6ff;">&quot;true&quot; </span><span style="color:#79c0ff;">title=</span><span style="color:#a5d6ff;">&quot;Distance (km)&quot;
+               </span><span style="color:#79c0ff;">remarks=</span><span style="color:#a5d6ff;">&quot;Road distance in kilometres from where the technician is now to the emergency work order&quot; </span><span style="color:#7ee787;">/&gt;
+    &lt;/add_attributes&gt;
+  &lt;/statements&gt;
+&lt;/script&gt;
+</span></pre></section><section class="s" id="s22"><div class="h"><div><b>Shell</b> <small>1 lines</small></div><div class="a"><button data-c="c22">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/22-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c22">insert into autoscript (autoscript, status, createddate, statusdate, changedate, changeby, autoscriptid, hasld, langcode, scriptlanguage, userdefined, loglevel, interface, active, description, version, <span style="color:#d2a8ff;">source</span>) <span style="color:#ff7b72;">select </span><span style="color:#a5d6ff;">&#x27;GISNTEMRES&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Active&#x27;</span>, current timestamp, current timestamp, current timestamp, <span style="color:#a5d6ff;">&#x27;MAXADMIN&#x27;</span>, nextval <span style="color:#ff7b72;">for </span>autoscriptseq, <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&#x27;EN&#x27;</span>, <span style="color:#a5d6ff;">&#x27;jython&#x27;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;ERROR&#x27;</span>, <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;Correct travel time on GA emergency recommendations&#x27;</span>, <span style="color:#a5d6ff;">&#x27;1.0.2&#x27;</span>, CAST(&#x27;<span style="color:#8b949e;"># GISNTEMRES - correct travel time on Graphical Assignment emergency recomme ...
+</span></pre></section><section class="s" id="s23"><div class="h"><div><b>Shell</b> <small>1 lines</small></div><div class="a"><button data-c="c23">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/23-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c23">insert into scriptlaunchpoint (launchpointname, autoscript, launchpointtype, objectname, objectevent, active, description, scriptlaunchpointid) <span style="color:#ff7b72;">select </span><span style="color:#a5d6ff;">&#x27;GISNTEMRES&#x27;</span>, <span style="color:#a5d6ff;">&#x27;GISNTEMRES&#x27;</span>, <span style="color:#a5d6ff;">&#x27;OBJECT&#x27;</span>, <span style="color:#a5d6ff;">&#x27;SKDEMAVAILRES&#x27;</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;Before save on add&#x27;</span>, nextval <span style="color:#ff7b72;">for </span>scriptlaunchpointseq from sysibm.sysdummy1 where not exists (<span style="color:#ff7b72;">select </span><span style="color:#79c0ff;">1 </span>from scriptlaunchpoint where launchpointname=<span style="color:#a5d6ff;">&#x27;GISNTEMRES&#x27;</span>)</pre></section><section class="s" id="s24"><div class="h"><div><b>Shell</b> <small>5 lines</small></div><div class="a"><button data-c="c24">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/24-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c24"><span style="color:#ff7b72;">for </span>f <span style="color:#ff7b72;">in </span>gisnt_emres_distance_1.0.0 gisnt_emres_traveltime_1.0.2; <span style="color:#ff7b72;">do
+  </span>oc -n $NS cp $f.dbc $POD:/opt/IBM/SMP/maximo/tools/maximo/en/script/
+  oc -n $NS <span style="color:#d2a8ff;">exec </span>$POD -- bash -c <span style="color:#a5d6ff;">&quot;cd /opt/IBM/SMP/maximo/tools/maximo/internal &amp;&amp; ./runscriptfile.sh -cscript -f</span>$f<span style="color:#a5d6ff;">&quot;
+</span><span style="color:#ff7b72;">done
+</span>oc -n $NS delete pod <span style="color:#ff7b72;">$(</span>oc -n $NS get pods -o name | grep -- -all- | cut -d/ -f2<span style="color:#ff7b72;">)   </span><span style="color:#8b949e;"># OpenShift starts a fresh one
+</span></pre></section><section class="s" id="s25"><div class="h"><div><b>Shell</b> <small>2 lines</small></div><div class="a"><button data-c="c25">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/25-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c25"><span style="color:#ff7b72;">select </span>laborcode, traveltime, distancekm from skdemavailres
+ where skdprojectid = &lt;schedule id&gt; order by traveltime;</pre></section><section class="s" id="s26"><div class="h"><div><b>Output</b> <small>5 lines</small></div><div class="a"><button data-c="c26">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/26-output.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c26">LABORCODE  TRAVELTIME  DISTANCEKM
+RUH-T2     0.18        4.62
+RUH-T4     0.27        10.62
+RUH-T1     0.40        27.42
+RUH-T3     0.43        26.74</pre></section><section class="s" id="s27"><div class="h"><div><b>Python</b> <small>364 lines</small></div><div class="a"><button data-c="c27">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/27-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c27"><span style="color:#a5d6ff;">&quot;&quot;&quot;Esri-compatible routing endpoints for Maximo, backed by OSRM (OpenStreetMap).
+
+Maximo Spatial / Scheduler / Graphical Assignment call three Esri network services.
+This service answers them in Esri&#x27;s JSON shapes, using a self-hosted OSRM router,
+so no ArcGIS Online routing licence or credits are needed:
+
+  Map Manager field          Maximo caller                         Endpoint here
+  SPATIALROUTE               browser RouteTask (route line on map)  .../NAServer/Route/solve
+                             ResourceFinder (live GPS travel time)
+  SPATIALDISTANCEMATRIX      SpatialTravelTimeMatrix (&lt;=10 points)  .../NAServer/ODCostMatrix/solveODCostMatrix
+  SPATIALJOBMATRIX           SpatialTravelTimeMatrix (&gt;10 points)   .../GPServer/GenerateOriginDestinationCostMatrix/submitJob
+                             SpatialTravelTimeMatrixJobHandler      .../jobs/&lt;id&gt;, .../jobs/&lt;id&gt;/results/...
+  (token discovery)          getTokenServiceFromEsri                /arcgis/rest/info
+
+Env: OSRM_URL (default http://osrm:5000), PORT (default 8080).
+Standard library only.
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>json
+<span style="color:#ff7b72;">import </span>math
+<span style="color:#ff7b72;">import </span>os
+<span style="color:#ff7b72;">import </span>threading
+<span style="color:#ff7b72;">import </span>time
+<span style="color:#ff7b72;">import </span>urllib.parse
+<span style="color:#ff7b72;">import </span>urllib.request
+<span style="color:#ff7b72;">import </span>uuid
+<span style="color:#ff7b72;">from </span>http.server <span style="color:#ff7b72;">import </span>BaseHTTPRequestHandler, ThreadingHTTPServer
+
+OSRM = os.environ.get(<span style="color:#a5d6ff;">&quot;OSRM_URL&quot;</span>, <span style="color:#a5d6ff;">&quot;http://osrm:5000&quot;</span>).rstrip(<span style="color:#a5d6ff;">&quot;/&quot;</span>)
+PORT = <span style="color:#d2a8ff;">int</span>(os.environ.get(<span style="color:#a5d6ff;">&quot;PORT&quot;</span>, <span style="color:#a5d6ff;">&quot;8080&quot;</span>))
+BASE = <span style="color:#a5d6ff;">&quot;/arcgis/rest/services/World&quot;
+</span>JOBS = {}            <span style="color:#8b949e;"># jobId -&gt; {&quot;status&quot;, &quot;lines&quot;, &quot;created&quot;}
+</span>JOB_TTL = <span style="color:#79c0ff;">3600
+
+</span><span style="color:#8b949e;"># ---------------------------------------------------------------- geometry ---
+
+</span>R = <span style="color:#79c0ff;">6378137.0
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">to_wgs84</span>(x, y, wkid):
+    <span style="color:#ff7b72;">if </span>wkid <span style="color:#ff7b72;">in </span>(<span style="color:#79c0ff;">102100</span>, <span style="color:#79c0ff;">102113</span>, <span style="color:#79c0ff;">3857</span>, <span style="color:#79c0ff;">900913</span>) <span style="color:#ff7b72;">or </span><span style="color:#d2a8ff;">abs</span>(x) &gt; <span style="color:#79c0ff;">180 </span><span style="color:#ff7b72;">or </span><span style="color:#d2a8ff;">abs</span>(y) &gt; <span style="color:#79c0ff;">90</span>:
+        lon = math.degrees(x / R)
+        lat = math.degrees(<span style="color:#79c0ff;">2 </span>* math.atan(math.exp(y / R)) - math.pi / <span style="color:#79c0ff;">2</span>)
+        <span style="color:#ff7b72;">return </span>lon, lat
+    <span style="color:#ff7b72;">return </span>x, y
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">from_wgs84</span>(lon, lat, wkid):
+    <span style="color:#ff7b72;">if </span>wkid <span style="color:#ff7b72;">in </span>(<span style="color:#79c0ff;">102100</span>, <span style="color:#79c0ff;">102113</span>, <span style="color:#79c0ff;">3857</span>, <span style="color:#79c0ff;">900913</span>):
+        x = R * math.radians(lon)
+        y = R * math.log(math.tan(math.pi / <span style="color:#79c0ff;">4 </span>+ math.radians(lat) / <span style="color:#79c0ff;">2</span>))
+        <span style="color:#ff7b72;">return </span>x, y
+    <span style="color:#ff7b72;">return </span>lon, lat
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">b32</span>(n):
+    digits = <span style="color:#a5d6ff;">&quot;0123456789abcdefghijklmnopqrstuv&quot;
+    </span><span style="color:#ff7b72;">if </span>n == <span style="color:#79c0ff;">0</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;0&quot;
+    </span>s = <span style="color:#a5d6ff;">&quot;&quot;
+    </span><span style="color:#ff7b72;">while </span>n:
+        n, r = <span style="color:#d2a8ff;">divmod</span>(n, <span style="color:#79c0ff;">32</span>)
+        s = digits[r] + s
+    <span style="color:#ff7b72;">return </span>s
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">compress</span>(points, wkid):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Esri compressed geometry (the classic &#x27;+mult+dx+dy...&#x27; form the 3.x JS API decodes).&quot;&quot;&quot;
+    </span>mult = <span style="color:#79c0ff;">1000000 </span><span style="color:#ff7b72;">if </span>wkid == <span style="color:#79c0ff;">4326 </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">10
+    </span>out = [<span style="color:#a5d6ff;">&quot;+&quot; </span>+ b32(mult)]
+    lx = ly = <span style="color:#79c0ff;">0
+    </span><span style="color:#ff7b72;">for </span>x, y <span style="color:#ff7b72;">in </span>points:
+        ix, iy = <span style="color:#d2a8ff;">int</span>(<span style="color:#d2a8ff;">round</span>(x * mult)), <span style="color:#d2a8ff;">int</span>(<span style="color:#d2a8ff;">round</span>(y * mult))
+        dx, dy = ix - lx, iy - ly
+        lx, ly = ix, iy
+        out.append((<span style="color:#a5d6ff;">&quot;+&quot; </span><span style="color:#ff7b72;">if </span>dx &gt;= <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;-&quot;</span>) + b32(<span style="color:#d2a8ff;">abs</span>(dx)))
+        out.append((<span style="color:#a5d6ff;">&quot;+&quot; </span><span style="color:#ff7b72;">if </span>dy &gt;= <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;-&quot;</span>) + b32(<span style="color:#d2a8ff;">abs</span>(dy)))
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;&quot;</span>.join(out)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">envelope</span>(points, wkid):
+    xs = [p[<span style="color:#79c0ff;">0</span>] <span style="color:#ff7b72;">for </span>p <span style="color:#ff7b72;">in </span>points]
+    ys = [p[<span style="color:#79c0ff;">1</span>] <span style="color:#ff7b72;">for </span>p <span style="color:#ff7b72;">in </span>points]
+    <span style="color:#ff7b72;">return </span>{<span style="color:#a5d6ff;">&quot;xmin&quot;</span>: <span style="color:#d2a8ff;">min</span>(xs), <span style="color:#a5d6ff;">&quot;ymin&quot;</span>: <span style="color:#d2a8ff;">min</span>(ys), <span style="color:#a5d6ff;">&quot;xmax&quot;</span>: <span style="color:#d2a8ff;">max</span>(xs), <span style="color:#a5d6ff;">&quot;ymax&quot;</span>: <span style="color:#d2a8ff;">max</span>(ys), <span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>: {<span style="color:#a5d6ff;">&quot;wkid&quot;</span>: wkid}}
+
+<span style="color:#8b949e;"># ------------------------------------------------------------------ inputs ---
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">parse_wkid</span>(v, default=<span style="color:#79c0ff;">4326</span>):
+    <span style="color:#ff7b72;">if </span>v <span style="color:#ff7b72;">in </span>(<span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>):
+        <span style="color:#ff7b72;">return </span>default
+    <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">isinstance</span>(v, (<span style="color:#d2a8ff;">int</span>, <span style="color:#d2a8ff;">float</span>)):
+        <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">int</span>(v)
+    <span style="color:#ff7b72;">try</span>:
+        j = json.loads(v)
+        <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">isinstance</span>(j, <span style="color:#d2a8ff;">dict</span>):
+            <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">int</span>(j.get(<span style="color:#a5d6ff;">&quot;latestWkid&quot;</span>) <span style="color:#ff7b72;">or </span>j.get(<span style="color:#a5d6ff;">&quot;wkid&quot;</span>) <span style="color:#ff7b72;">or </span>default)
+        <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">int</span>(j)
+    <span style="color:#ff7b72;">except </span>Exception:
+        <span style="color:#ff7b72;">return </span>default
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">parse_points</span>(raw, default_wkid=<span style="color:#79c0ff;">4326</span>):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Esri stops/origins/destinations: features JSON, or &#x27;x,y;x,y&#x27;. Returns [(lon, lat, attrs)].&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">if </span>raw <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        <span style="color:#ff7b72;">return </span>[]
+    <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">isinstance</span>(raw, <span style="color:#d2a8ff;">str</span>):
+        raw = raw.strip()
+        <span style="color:#ff7b72;">if not </span>raw.startswith(<span style="color:#a5d6ff;">&quot;{&quot;</span>) <span style="color:#ff7b72;">and not </span>raw.startswith(<span style="color:#a5d6ff;">&quot;[&quot;</span>):
+            pts = []
+            <span style="color:#ff7b72;">for </span>pair <span style="color:#ff7b72;">in </span>raw.split(<span style="color:#a5d6ff;">&quot;;&quot;</span>):
+                <span style="color:#ff7b72;">if </span>pair.strip():
+                    x, y = [<span style="color:#d2a8ff;">float</span>(v) <span style="color:#ff7b72;">for </span>v <span style="color:#ff7b72;">in </span>pair.split(<span style="color:#a5d6ff;">&quot;,&quot;</span>)[:<span style="color:#79c0ff;">2</span>]]
+                    lon, lat = to_wgs84(x, y, default_wkid)
+                    pts.append((lon, lat, {}))
+            <span style="color:#ff7b72;">return </span>pts
+        raw = json.loads(raw)
+    feats = raw.get(<span style="color:#a5d6ff;">&quot;features&quot;</span>, []) <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">isinstance</span>(raw, <span style="color:#d2a8ff;">dict</span>) <span style="color:#ff7b72;">else </span>raw
+    top = parse_wkid((raw.get(<span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>) <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">isinstance</span>(raw, <span style="color:#d2a8ff;">dict</span>) <span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">None</span>) <span style="color:#ff7b72;">and </span>json.dumps(raw[<span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>]), default_wkid)
+    pts = []
+    <span style="color:#ff7b72;">for </span>f <span style="color:#ff7b72;">in </span>feats:
+        g = f.get(<span style="color:#a5d6ff;">&quot;geometry&quot;</span>, f)
+        wk = parse_wkid(g.get(<span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>) <span style="color:#ff7b72;">and </span>json.dumps(g[<span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>]), top)
+        lon, lat = to_wgs84(<span style="color:#d2a8ff;">float</span>(g[<span style="color:#a5d6ff;">&quot;x&quot;</span>]), <span style="color:#d2a8ff;">float</span>(g[<span style="color:#a5d6ff;">&quot;y&quot;</span>]), wk)
+        attrs = <span style="color:#d2a8ff;">dict</span>(f.get(<span style="color:#a5d6ff;">&quot;attributes&quot;</span>) <span style="color:#ff7b72;">or </span>{})
+        <span style="color:#ff7b72;">for </span>k <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;pointID&quot;</span>, <span style="color:#a5d6ff;">&quot;isPointOnTheFly&quot;</span>):
+            <span style="color:#ff7b72;">if </span>k <span style="color:#ff7b72;">in </span>f:
+                attrs[k] = f[k]
+        pts.append((lon, lat, attrs))
+    <span style="color:#ff7b72;">return </span>pts
+
+<span style="color:#8b949e;"># -------------------------------------------------------------------- OSRM ---
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">osrm</span>(path):
+    <span style="color:#ff7b72;">with </span>urllib.request.urlopen(OSRM + path, timeout=<span style="color:#79c0ff;">60</span>) <span style="color:#ff7b72;">as </span>r:
+        j = json.loads(r.read().decode())
+    <span style="color:#ff7b72;">if </span>j.get(<span style="color:#a5d6ff;">&quot;code&quot;</span>) != <span style="color:#a5d6ff;">&quot;Ok&quot;</span>:
+        <span style="color:#ff7b72;">raise </span>RuntimeError(<span style="color:#a5d6ff;">&quot;OSRM: %s %s&quot; </span>% (j.get(<span style="color:#a5d6ff;">&quot;code&quot;</span>), j.get(<span style="color:#a5d6ff;">&quot;message&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>)))
+    <span style="color:#ff7b72;">return </span>j
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">coords</span>(pts):
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;;&quot;</span>.join(<span style="color:#a5d6ff;">&quot;%.6f,%.6f&quot; </span>% (p[<span style="color:#79c0ff;">0</span>], p[<span style="color:#79c0ff;">1</span>]) <span style="color:#ff7b72;">for </span>p <span style="color:#ff7b72;">in </span>pts)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">table</span>(origins, dests):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Minutes and km for every origin x destination, origin-major.&quot;&quot;&quot;
+    </span>pts = origins + dests
+    src = <span style="color:#a5d6ff;">&quot;;&quot;</span>.join(<span style="color:#d2a8ff;">str</span>(i) <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#d2a8ff;">len</span>(origins)))
+    dst = <span style="color:#a5d6ff;">&quot;;&quot;</span>.join(<span style="color:#d2a8ff;">str</span>(<span style="color:#d2a8ff;">len</span>(origins) + i) <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#d2a8ff;">len</span>(dests)))
+    j = osrm(<span style="color:#a5d6ff;">&quot;/table/v1/driving/%s?sources=%s&amp;destinations=%s&amp;annotations=duration,distance&quot; </span>% (coords(pts), src, dst))
+    out = []
+    <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#d2a8ff;">len</span>(origins)):
+        row = []
+        <span style="color:#ff7b72;">for </span>k <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#d2a8ff;">len</span>(dests)):
+            d = j[<span style="color:#a5d6ff;">&quot;durations&quot;</span>][i][k]
+            m = j[<span style="color:#a5d6ff;">&quot;distances&quot;</span>][i][k]
+            row.append((<span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">if </span>d <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span>d / <span style="color:#79c0ff;">60.0</span>, <span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">if </span>m <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span>m / <span style="color:#79c0ff;">1000.0</span>))
+        out.append(row)
+    <span style="color:#ff7b72;">return </span>out
+
+<span style="color:#8b949e;"># ---------------------------------------------------------------- services ---
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">maneuver_text</span>(step, i_leg):
+    m = step[<span style="color:#a5d6ff;">&quot;maneuver&quot;</span>]
+    kind, mod = m.get(<span style="color:#a5d6ff;">&quot;type&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>), m.get(<span style="color:#a5d6ff;">&quot;modifier&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>)
+    road = step.get(<span style="color:#a5d6ff;">&quot;name&quot;</span>) <span style="color:#ff7b72;">or </span>step.get(<span style="color:#a5d6ff;">&quot;ref&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;the road&quot;
+    </span><span style="color:#ff7b72;">if </span>kind == <span style="color:#a5d6ff;">&quot;roundabout&quot; </span><span style="color:#ff7b72;">or </span>kind == <span style="color:#a5d6ff;">&quot;rotary&quot;</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;At the roundabout take exit %s onto %s&quot; </span>% (m.get(<span style="color:#a5d6ff;">&quot;exit&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>), road)
+    <span style="color:#ff7b72;">if </span>kind <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;turn&quot;</span>, <span style="color:#a5d6ff;">&quot;end of road&quot;</span>, <span style="color:#a5d6ff;">&quot;fork&quot;</span>, <span style="color:#a5d6ff;">&quot;on ramp&quot;</span>, <span style="color:#a5d6ff;">&quot;off ramp&quot;</span>, <span style="color:#a5d6ff;">&quot;merge&quot;</span>):
+        <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;%s %s onto %s&quot; </span>% (<span style="color:#a5d6ff;">&quot;Turn&quot; </span><span style="color:#ff7b72;">if </span>kind == <span style="color:#a5d6ff;">&quot;turn&quot; </span><span style="color:#ff7b72;">else </span>kind.capitalize(), mod, road)
+    <span style="color:#ff7b72;">if </span>kind == <span style="color:#a5d6ff;">&quot;new name&quot; </span><span style="color:#ff7b72;">or </span>kind == <span style="color:#a5d6ff;">&quot;continue&quot;</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;Continue onto %s&quot; </span>% road
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;Go %s on %s&quot; </span>% (mod <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;straight&quot;</span>, road)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">solve_route</span>(params):
+    out_wkid = parse_wkid(params.get(<span style="color:#a5d6ff;">&quot;outSR&quot;</span>), <span style="color:#79c0ff;">4326</span>)
+    stops = parse_points(params.get(<span style="color:#a5d6ff;">&quot;stops&quot;</span>))
+    <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(stops) &lt; <span style="color:#79c0ff;">2</span>:
+        <span style="color:#ff7b72;">return </span>{<span style="color:#a5d6ff;">&quot;error&quot;</span>: {<span style="color:#a5d6ff;">&quot;code&quot;</span>: <span style="color:#79c0ff;">400</span>, <span style="color:#a5d6ff;">&quot;message&quot;</span>: <span style="color:#a5d6ff;">&quot;At least two stops are required.&quot;</span>, <span style="color:#a5d6ff;">&quot;details&quot;</span>: []}}
+    j = osrm(<span style="color:#a5d6ff;">&quot;/route/v1/driving/%s?overview=full&amp;geometries=geojson&amp;steps=true&quot; </span>% coords(stops))
+    route = j[<span style="color:#a5d6ff;">&quot;routes&quot;</span>][<span style="color:#79c0ff;">0</span>]
+    path = [from_wgs84(lon, lat, out_wkid) <span style="color:#ff7b72;">for </span>lon, lat <span style="color:#ff7b72;">in </span>route[<span style="color:#a5d6ff;">&quot;geometry&quot;</span>][<span style="color:#a5d6ff;">&quot;coordinates&quot;</span>]]
+    total_min = route[<span style="color:#a5d6ff;">&quot;duration&quot;</span>] / <span style="color:#79c0ff;">60.0
+    </span>total_km = route[<span style="color:#a5d6ff;">&quot;distance&quot;</span>] / <span style="color:#79c0ff;">1000.0
+
+    </span>feats = []
+    <span style="color:#ff7b72;">for </span>li, leg <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(route[<span style="color:#a5d6ff;">&quot;legs&quot;</span>]):
+        a = from_wgs84(stops[li][<span style="color:#79c0ff;">0</span>], stops[li][<span style="color:#79c0ff;">1</span>], out_wkid)
+        b = from_wgs84(stops[li + <span style="color:#79c0ff;">1</span>][<span style="color:#79c0ff;">0</span>], stops[li + <span style="color:#79c0ff;">1</span>][<span style="color:#79c0ff;">1</span>], out_wkid)
+        feats.append({<span style="color:#a5d6ff;">&quot;attributes&quot;</span>: {<span style="color:#a5d6ff;">&quot;length&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;time&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;text&quot;</span>: <span style="color:#a5d6ff;">&quot;Start at Location %d&quot; </span>% (li + <span style="color:#79c0ff;">1</span>),
+                                     <span style="color:#a5d6ff;">&quot;ETA&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;maneuverType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriDMTDepart&quot;</span>},
+                      <span style="color:#a5d6ff;">&quot;compressedGeometry&quot;</span>: compress([a], out_wkid)})
+        <span style="color:#ff7b72;">for </span>st <span style="color:#ff7b72;">in </span>leg[<span style="color:#a5d6ff;">&quot;steps&quot;</span>]:
+            <span style="color:#ff7b72;">if </span>st[<span style="color:#a5d6ff;">&quot;maneuver&quot;</span>][<span style="color:#a5d6ff;">&quot;type&quot;</span>] <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;depart&quot;</span>, <span style="color:#a5d6ff;">&quot;arrive&quot;</span>):
+                <span style="color:#ff7b72;">continue
+            </span>geom = [from_wgs84(lon, lat, out_wkid) <span style="color:#ff7b72;">for </span>lon, lat <span style="color:#ff7b72;">in </span>st[<span style="color:#a5d6ff;">&quot;geometry&quot;</span>][<span style="color:#a5d6ff;">&quot;coordinates&quot;</span>]] <span style="color:#ff7b72;">or </span>[a]
+            feats.append({<span style="color:#a5d6ff;">&quot;attributes&quot;</span>: {<span style="color:#a5d6ff;">&quot;length&quot;</span>: <span style="color:#d2a8ff;">max</span>(st[<span style="color:#a5d6ff;">&quot;distance&quot;</span>] / <span style="color:#79c0ff;">1000.0</span>, <span style="color:#79c0ff;">0.001</span>), <span style="color:#a5d6ff;">&quot;time&quot;</span>: st[<span style="color:#a5d6ff;">&quot;duration&quot;</span>] / <span style="color:#79c0ff;">60.0</span>,
+                                         <span style="color:#a5d6ff;">&quot;text&quot;</span>: maneuver_text(st, li), <span style="color:#a5d6ff;">&quot;ETA&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;maneuverType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriDMTStraight&quot;</span>},
+                          <span style="color:#a5d6ff;">&quot;compressedGeometry&quot;</span>: compress(geom, out_wkid)})
+        feats.append({<span style="color:#a5d6ff;">&quot;attributes&quot;</span>: {<span style="color:#a5d6ff;">&quot;length&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;time&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;text&quot;</span>: <span style="color:#a5d6ff;">&quot;Arrive at Location %d&quot; </span>% (li + <span style="color:#79c0ff;">2</span>),
+                                     <span style="color:#a5d6ff;">&quot;ETA&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;maneuverType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriDMTStop&quot;</span>},
+                      <span style="color:#a5d6ff;">&quot;compressedGeometry&quot;</span>: compress([b], out_wkid)})
+
+    name = <span style="color:#a5d6ff;">&quot;Location 1 - Location %d&quot; </span>% <span style="color:#d2a8ff;">len</span>(stops)
+    stop_feats = []
+    <span style="color:#ff7b72;">for </span>i, (lon, lat, attrs) <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(stops):
+        x, y = from_wgs84(lon, lat, out_wkid)
+        a = {<span style="color:#a5d6ff;">&quot;ObjectID&quot;</span>: i + <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;Name&quot;</span>: attrs.get(<span style="color:#a5d6ff;">&quot;Name&quot;</span>, <span style="color:#a5d6ff;">&quot;Location %d&quot; </span>% (i + <span style="color:#79c0ff;">1</span>)), <span style="color:#a5d6ff;">&quot;RouteName&quot;</span>: name, <span style="color:#a5d6ff;">&quot;Sequence&quot;</span>: i + <span style="color:#79c0ff;">1</span>,
+             <span style="color:#a5d6ff;">&quot;Status&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;Cumul_TravelTime&quot;</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&quot;Cumul_Kilometers&quot;</span>: <span style="color:#79c0ff;">0</span>}
+        stop_feats.append({<span style="color:#a5d6ff;">&quot;attributes&quot;</span>: a, <span style="color:#a5d6ff;">&quot;geometry&quot;</span>: {<span style="color:#a5d6ff;">&quot;x&quot;</span>: x, <span style="color:#a5d6ff;">&quot;y&quot;</span>: y}})
+    <span style="color:#ff7b72;">return </span>{
+        <span style="color:#a5d6ff;">&quot;messages&quot;</span>: [],
+        <span style="color:#a5d6ff;">&quot;checksum&quot;</span>: uuid.uuid4().hex,
+        <span style="color:#a5d6ff;">&quot;routes&quot;</span>: {<span style="color:#a5d6ff;">&quot;fieldAliases&quot;</span>: {}, <span style="color:#a5d6ff;">&quot;geometryType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriGeometryPolyline&quot;</span>, <span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>: {<span style="color:#a5d6ff;">&quot;wkid&quot;</span>: out_wkid},
+                   <span style="color:#a5d6ff;">&quot;features&quot;</span>: [{<span style="color:#a5d6ff;">&quot;attributes&quot;</span>: {<span style="color:#a5d6ff;">&quot;ObjectID&quot;</span>: <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;Name&quot;</span>: name, <span style="color:#a5d6ff;">&quot;Total_TravelTime&quot;</span>: total_min,
+                                                <span style="color:#a5d6ff;">&quot;Total_Minutes&quot;</span>: total_min, <span style="color:#a5d6ff;">&quot;Total_Kilometers&quot;</span>: total_km,
+                                                <span style="color:#a5d6ff;">&quot;Total_Miles&quot;</span>: total_km / <span style="color:#79c0ff;">1.609344</span>, <span style="color:#a5d6ff;">&quot;Shape_Length&quot;</span>: total_km * <span style="color:#79c0ff;">1000</span>},
+                                 <span style="color:#a5d6ff;">&quot;geometry&quot;</span>: {<span style="color:#a5d6ff;">&quot;paths&quot;</span>: [[<span style="color:#d2a8ff;">list</span>(p) <span style="color:#ff7b72;">for </span>p <span style="color:#ff7b72;">in </span>path]]}}]},
+        <span style="color:#a5d6ff;">&quot;directions&quot;</span>: [{<span style="color:#a5d6ff;">&quot;routeId&quot;</span>: <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;routeName&quot;</span>: name,
+                        <span style="color:#a5d6ff;">&quot;summary&quot;</span>: {<span style="color:#a5d6ff;">&quot;totalLength&quot;</span>: total_km, <span style="color:#a5d6ff;">&quot;totalTime&quot;</span>: total_min, <span style="color:#a5d6ff;">&quot;totalDriveTime&quot;</span>: total_min,
+                                    <span style="color:#a5d6ff;">&quot;envelope&quot;</span>: envelope(path, out_wkid)},
+                        <span style="color:#a5d6ff;">&quot;features&quot;</span>: feats}],
+        <span style="color:#a5d6ff;">&quot;stops&quot;</span>: {<span style="color:#a5d6ff;">&quot;fieldAliases&quot;</span>: {}, <span style="color:#a5d6ff;">&quot;geometryType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriGeometryPoint&quot;</span>, <span style="color:#a5d6ff;">&quot;spatialReference&quot;</span>: {<span style="color:#a5d6ff;">&quot;wkid&quot;</span>: out_wkid},
+                  <span style="color:#a5d6ff;">&quot;features&quot;</span>: stop_feats},
+    }
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">solve_od</span>(params):
+    origins = parse_points(params.get(<span style="color:#a5d6ff;">&quot;origins&quot;</span>))
+    dests = parse_points(params.get(<span style="color:#a5d6ff;">&quot;destinations&quot;</span>))
+    m = table(origins, dests)
+    od = {<span style="color:#a5d6ff;">&quot;costAttributeNames&quot;</span>: [<span style="color:#a5d6ff;">&quot;TravelTime&quot;</span>, <span style="color:#a5d6ff;">&quot;Kilometers&quot;</span>]}
+    <span style="color:#ff7b72;">for </span>i, row <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(m):
+        od[<span style="color:#d2a8ff;">str</span>(i + <span style="color:#79c0ff;">1</span>)] = {<span style="color:#d2a8ff;">str</span>(k + <span style="color:#79c0ff;">1</span>): [c[<span style="color:#79c0ff;">0</span>], c[<span style="color:#79c0ff;">1</span>]] <span style="color:#ff7b72;">for </span>k, c <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(row) <span style="color:#ff7b72;">if </span>c[<span style="color:#79c0ff;">0</span>] <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>}
+    <span style="color:#ff7b72;">return </span>{<span style="color:#a5d6ff;">&quot;odCostMatrix&quot;</span>: od, <span style="color:#a5d6ff;">&quot;messages&quot;</span>: []}
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">submit_job</span>(params):
+    job = uuid.uuid4().hex
+    JOBS[job] = {<span style="color:#a5d6ff;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;esriJobExecuting&quot;</span>, <span style="color:#a5d6ff;">&quot;created&quot;</span>: time.time(), <span style="color:#a5d6ff;">&quot;lines&quot;</span>: <span style="color:#79c0ff;">None</span>}
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">run</span>():
+        <span style="color:#ff7b72;">try</span>:
+            origins = parse_points(params.get(<span style="color:#a5d6ff;">&quot;origins&quot;</span>))
+            dests = parse_points(params.get(<span style="color:#a5d6ff;">&quot;destinations&quot;</span>))
+            m = table(origins, dests)
+            lines, oid = [], <span style="color:#79c0ff;">1
+            </span><span style="color:#ff7b72;">for </span>i, row <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(m):
+                <span style="color:#ff7b72;">for </span>k, (mins, km) <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(row):
+                    <span style="color:#8b949e;"># Maximo&#x27;s job handler reads Total_Distance and treats it as minutes.
+                    </span>lines.append({<span style="color:#a5d6ff;">&quot;attributes&quot;</span>: {<span style="color:#a5d6ff;">&quot;ObjectID&quot;</span>: oid, <span style="color:#a5d6ff;">&quot;OriginOID&quot;</span>: i + <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;DestinationOID&quot;</span>: k + <span style="color:#79c0ff;">1</span>,
+                                                 <span style="color:#a5d6ff;">&quot;Total_Time&quot;</span>: mins, <span style="color:#a5d6ff;">&quot;Total_Distance&quot;</span>: mins <span style="color:#ff7b72;">if </span>mins <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">99999</span>,
+                                                 <span style="color:#a5d6ff;">&quot;Total_Kilometers&quot;</span>: km}})
+                    oid += <span style="color:#79c0ff;">1
+            </span>JOBS[job].update(status=<span style="color:#a5d6ff;">&quot;esriJobSucceeded&quot;</span>, lines=lines)
+        <span style="color:#ff7b72;">except </span>Exception <span style="color:#ff7b72;">as </span>e:  <span style="color:#8b949e;"># noqa
+            </span>JOBS[job].update(status=<span style="color:#a5d6ff;">&quot;esriJobFailed&quot;</span>, error=<span style="color:#d2a8ff;">str</span>(e))
+    threading.Thread(target=run, daemon=<span style="color:#79c0ff;">True</span>).start()
+    <span style="color:#ff7b72;">return </span>{<span style="color:#a5d6ff;">&quot;jobId&quot;</span>: job, <span style="color:#a5d6ff;">&quot;jobStatus&quot;</span>: <span style="color:#a5d6ff;">&quot;esriJobSubmitted&quot;</span>}
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">job_status</span>(job):
+    j = JOBS.get(job)
+    <span style="color:#ff7b72;">if not </span>j:
+        <span style="color:#ff7b72;">return </span>{<span style="color:#a5d6ff;">&quot;error&quot;</span>: {<span style="color:#a5d6ff;">&quot;code&quot;</span>: <span style="color:#79c0ff;">400</span>, <span style="color:#a5d6ff;">&quot;message&quot;</span>: <span style="color:#a5d6ff;">&quot;Invalid or missing input parameters.&quot;</span>, <span style="color:#a5d6ff;">&quot;details&quot;</span>: [<span style="color:#a5d6ff;">&quot;unknown job&quot;</span>]}}
+    res = {<span style="color:#a5d6ff;">&quot;jobId&quot;</span>: job, <span style="color:#a5d6ff;">&quot;jobStatus&quot;</span>: j[<span style="color:#a5d6ff;">&quot;status&quot;</span>], <span style="color:#a5d6ff;">&quot;messages&quot;</span>: []}
+    <span style="color:#ff7b72;">if </span>j[<span style="color:#a5d6ff;">&quot;status&quot;</span>] == <span style="color:#a5d6ff;">&quot;esriJobSucceeded&quot;</span>:
+        res[<span style="color:#a5d6ff;">&quot;results&quot;</span>] = {<span style="color:#a5d6ff;">&quot;Output_Origin_Destination_Lines&quot;</span>: {<span style="color:#a5d6ff;">&quot;paramUrl&quot;</span>: <span style="color:#a5d6ff;">&quot;results/Output_Origin_Destination_Lines&quot;</span>}}
+    <span style="color:#ff7b72;">if </span>j[<span style="color:#a5d6ff;">&quot;status&quot;</span>] == <span style="color:#a5d6ff;">&quot;esriJobFailed&quot;</span>:
+        res[<span style="color:#a5d6ff;">&quot;messages&quot;</span>] = [{<span style="color:#a5d6ff;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;esriJobMessageTypeError&quot;</span>, <span style="color:#a5d6ff;">&quot;description&quot;</span>: j.get(<span style="color:#a5d6ff;">&quot;error&quot;</span>, <span style="color:#a5d6ff;">&quot;failed&quot;</span>)}]
+    <span style="color:#ff7b72;">return </span>res
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">job_result</span>(job):
+    j = JOBS.get(job) <span style="color:#ff7b72;">or </span>{}
+    <span style="color:#ff7b72;">return </span>{<span style="color:#a5d6ff;">&quot;paramName&quot;</span>: <span style="color:#a5d6ff;">&quot;Output_Origin_Destination_Lines&quot;</span>, <span style="color:#a5d6ff;">&quot;dataType&quot;</span>: <span style="color:#a5d6ff;">&quot;GPFeatureRecordSetLayer&quot;</span>,
+            <span style="color:#a5d6ff;">&quot;value&quot;</span>: {<span style="color:#a5d6ff;">&quot;geometryType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriGeometryPolyline&quot;</span>, <span style="color:#a5d6ff;">&quot;features&quot;</span>: j.get(<span style="color:#a5d6ff;">&quot;lines&quot;</span>) <span style="color:#ff7b72;">or </span>[], <span style="color:#a5d6ff;">&quot;messages&quot;</span>: []}}
+
+ROUTE_INFO = {<span style="color:#a5d6ff;">&quot;currentVersion&quot;</span>: <span style="color:#79c0ff;">11.1</span>, <span style="color:#a5d6ff;">&quot;layerName&quot;</span>: <span style="color:#a5d6ff;">&quot;Route&quot;</span>, <span style="color:#a5d6ff;">&quot;layerType&quot;</span>: <span style="color:#a5d6ff;">&quot;esriNAServerRouteLayer&quot;</span>,
+              <span style="color:#a5d6ff;">&quot;impedance&quot;</span>: <span style="color:#a5d6ff;">&quot;TravelTime&quot;</span>, <span style="color:#a5d6ff;">&quot;directionsLengthUnits&quot;</span>: <span style="color:#a5d6ff;">&quot;esriNAUKilometers&quot;</span>,
+              <span style="color:#a5d6ff;">&quot;networkDataset&quot;</span>: {<span style="color:#a5d6ff;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;OpenStreetMap (OSRM)&quot;</span>}, <span style="color:#a5d6ff;">&quot;supportedTravelModes&quot;</span>: [
+                  {<span style="color:#a5d6ff;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Driving Time&quot;</span>, <span style="color:#a5d6ff;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;FEgifRtFndKNcJMJ&quot;</span>, <span style="color:#a5d6ff;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;AUTOMOBILE&quot;</span>, <span style="color:#a5d6ff;">&quot;impedanceAttributeName&quot;</span>: <span style="color:#a5d6ff;">&quot;TravelTime&quot;</span>}]}
+
+<span style="color:#8b949e;"># ------------------------------------------------------------------- HTTP ---
+
+</span><span style="color:#ff7b72;">class </span><span style="color:#ffa657;">H</span>(BaseHTTPRequestHandler):
+    server_version = <span style="color:#a5d6ff;">&quot;EsriOSRMAdapter/1.0&quot;
+
+    </span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">log_message</span>(<span style="color:#d2a8ff;">self</span>, fmt, *args):
+        <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;%s %s&quot; </span>% (<span style="color:#d2a8ff;">self</span>.address_string(), fmt % args), flush=<span style="color:#79c0ff;">True</span>)
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">_params</span>(<span style="color:#d2a8ff;">self</span>):
+        u = urllib.parse.urlparse(<span style="color:#d2a8ff;">self</span>.path)
+        p = {k: v[-<span style="color:#79c0ff;">1</span>] <span style="color:#ff7b72;">for </span>k, v <span style="color:#ff7b72;">in </span>urllib.parse.parse_qs(u.query, keep_blank_values=<span style="color:#79c0ff;">True</span>).items()}
+        <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">self</span>.command == <span style="color:#a5d6ff;">&quot;POST&quot;</span>:
+            n = <span style="color:#d2a8ff;">int</span>(<span style="color:#d2a8ff;">self</span>.headers.get(<span style="color:#a5d6ff;">&quot;Content-Length&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#79c0ff;">0</span>)
+            body = <span style="color:#d2a8ff;">self</span>.rfile.read(n).decode(<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, <span style="color:#a5d6ff;">&quot;replace&quot;</span>) <span style="color:#ff7b72;">if </span>n <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;&quot;
+            </span>ctype = <span style="color:#d2a8ff;">self</span>.headers.get(<span style="color:#a5d6ff;">&quot;Content-Type&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>)
+            <span style="color:#ff7b72;">if </span><span style="color:#a5d6ff;">&quot;json&quot; </span><span style="color:#ff7b72;">in </span>ctype <span style="color:#ff7b72;">and </span>body.strip().startswith(<span style="color:#a5d6ff;">&quot;{&quot;</span>):
+                p.update(json.loads(body))
+            <span style="color:#ff7b72;">else</span>:
+                p.update({k: v[-<span style="color:#79c0ff;">1</span>] <span style="color:#ff7b72;">for </span>k, v <span style="color:#ff7b72;">in </span>urllib.parse.parse_qs(body, keep_blank_values=<span style="color:#79c0ff;">True</span>).items()})
+        <span style="color:#ff7b72;">return </span>u.path.rstrip(<span style="color:#a5d6ff;">&quot;/&quot;</span>), p
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">_send</span>(<span style="color:#d2a8ff;">self</span>, obj, p, code=<span style="color:#79c0ff;">200</span>):
+        body = json.dumps(obj, indent=<span style="color:#79c0ff;">2 </span><span style="color:#ff7b72;">if </span>p.get(<span style="color:#a5d6ff;">&quot;f&quot;</span>) == <span style="color:#a5d6ff;">&quot;pjson&quot; </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">None</span>)
+        cb = p.get(<span style="color:#a5d6ff;">&quot;callback&quot;</span>)
+        <span style="color:#ff7b72;">if </span>cb:
+            body, ctype = <span style="color:#a5d6ff;">&quot;%s(%s);&quot; </span>% (cb, body), <span style="color:#a5d6ff;">&quot;application/javascript&quot;
+        </span><span style="color:#ff7b72;">else</span>:
+            ctype = <span style="color:#a5d6ff;">&quot;application/json; charset=utf-8&quot;
+        </span>data = body.encode()
+        <span style="color:#d2a8ff;">self</span>.send_response(code)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Content-Type&quot;</span>, ctype)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Content-Length&quot;</span>, <span style="color:#d2a8ff;">str</span>(<span style="color:#d2a8ff;">len</span>(data)))
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Origin&quot;</span>, <span style="color:#d2a8ff;">self</span>.headers.get(<span style="color:#a5d6ff;">&quot;Origin&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;*&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Credentials&quot;</span>, <span style="color:#a5d6ff;">&quot;true&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Headers&quot;</span>, <span style="color:#a5d6ff;">&quot;*&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.end_headers()
+        <span style="color:#d2a8ff;">self</span>.wfile.write(data)
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">do_OPTIONS</span>(<span style="color:#d2a8ff;">self</span>):
+        <span style="color:#d2a8ff;">self</span>.send_response(<span style="color:#79c0ff;">204</span>)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Origin&quot;</span>, <span style="color:#d2a8ff;">self</span>.headers.get(<span style="color:#a5d6ff;">&quot;Origin&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;*&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Methods&quot;</span>, <span style="color:#a5d6ff;">&quot;GET, POST, OPTIONS&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Headers&quot;</span>, <span style="color:#a5d6ff;">&quot;*&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.send_header(<span style="color:#a5d6ff;">&quot;Access-Control-Allow-Credentials&quot;</span>, <span style="color:#a5d6ff;">&quot;true&quot;</span>)
+        <span style="color:#d2a8ff;">self</span>.end_headers()
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">do_GET</span>(<span style="color:#d2a8ff;">self</span>):
+        <span style="color:#d2a8ff;">self</span>._route()
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">do_POST</span>(<span style="color:#d2a8ff;">self</span>):
+        <span style="color:#d2a8ff;">self</span>._route()
+
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">_route</span>(<span style="color:#d2a8ff;">self</span>):
+        path, p = <span style="color:#d2a8ff;">self</span>._params()
+        <span style="color:#ff7b72;">try</span>:
+            <span style="color:#ff7b72;">if </span>path <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;&quot;</span>, <span style="color:#a5d6ff;">&quot;/healthz&quot;</span>):
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send({<span style="color:#a5d6ff;">&quot;ok&quot;</span>: <span style="color:#79c0ff;">True</span>, <span style="color:#a5d6ff;">&quot;osrm&quot;</span>: OSRM}, p)
+            <span style="color:#ff7b72;">if </span>path == <span style="color:#a5d6ff;">&quot;/arcgis/rest/info&quot;</span>:
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send({<span style="color:#a5d6ff;">&quot;currentVersion&quot;</span>: <span style="color:#79c0ff;">11.1</span>, <span style="color:#a5d6ff;">&quot;fullVersion&quot;</span>: <span style="color:#a5d6ff;">&quot;11.1.0&quot;</span>, <span style="color:#a5d6ff;">&quot;owningSystemUrl&quot;</span>: <span style="color:#a5d6ff;">&quot;&quot;</span>,
+                                   <span style="color:#a5d6ff;">&quot;authInfo&quot;</span>: {<span style="color:#a5d6ff;">&quot;isTokenBasedSecurity&quot;</span>: <span style="color:#79c0ff;">False</span>}}, p)
+            <span style="color:#ff7b72;">if </span>path.endswith(<span style="color:#a5d6ff;">&quot;/NAServer/Route/solve&quot;</span>):
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send(solve_route(p), p)
+            <span style="color:#ff7b72;">if </span>path.endswith(<span style="color:#a5d6ff;">&quot;/NAServer/Route&quot;</span>):
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send(ROUTE_INFO, p)
+            <span style="color:#ff7b72;">if </span>path.endswith(<span style="color:#a5d6ff;">&quot;/solveODCostMatrix&quot;</span>):
+                res = solve_od(p)
+                <span style="color:#ff7b72;">if </span>os.environ.get(<span style="color:#a5d6ff;">&quot;DEBUG&quot;</span>):
+                    <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;OD REQ&quot;</span>, json.dumps(p)[:<span style="color:#79c0ff;">1500</span>], flush=<span style="color:#79c0ff;">True</span>)
+                    <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;OD RES&quot;</span>, json.dumps(res)[:<span style="color:#79c0ff;">1500</span>], flush=<span style="color:#79c0ff;">True</span>)
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send(res, p)
+            <span style="color:#ff7b72;">if </span>path.endswith(<span style="color:#a5d6ff;">&quot;/submitJob&quot;</span>):
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send(submit_job(p), p)
+            <span style="color:#ff7b72;">if </span><span style="color:#a5d6ff;">&quot;/jobs/&quot; </span><span style="color:#ff7b72;">in </span>path:
+                tail = path.split(<span style="color:#a5d6ff;">&quot;/jobs/&quot;</span>, <span style="color:#79c0ff;">1</span>)[<span style="color:#79c0ff;">1</span>].split(<span style="color:#a5d6ff;">&quot;/&quot;</span>)
+                <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(tail) == <span style="color:#79c0ff;">1</span>:
+                    <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send(job_status(tail[<span style="color:#79c0ff;">0</span>]), p)
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send(job_result(tail[<span style="color:#79c0ff;">0</span>]), p)
+            <span style="color:#ff7b72;">if </span>path.endswith(<span style="color:#a5d6ff;">&quot;/NAServer/ODCostMatrix&quot;</span>) <span style="color:#ff7b72;">or </span>path.endswith(<span style="color:#a5d6ff;">&quot;/GenerateOriginDestinationCostMatrix&quot;</span>):
+                <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send({<span style="color:#a5d6ff;">&quot;currentVersion&quot;</span>: <span style="color:#79c0ff;">11.1</span>, <span style="color:#a5d6ff;">&quot;name&quot;</span>: path.rsplit(<span style="color:#a5d6ff;">&quot;/&quot;</span>, <span style="color:#79c0ff;">1</span>)[<span style="color:#79c0ff;">1</span>]}, p)
+            <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send({<span style="color:#a5d6ff;">&quot;error&quot;</span>: {<span style="color:#a5d6ff;">&quot;code&quot;</span>: <span style="color:#79c0ff;">404</span>, <span style="color:#a5d6ff;">&quot;message&quot;</span>: <span style="color:#a5d6ff;">&quot;Not found: &quot; </span>+ path, <span style="color:#a5d6ff;">&quot;details&quot;</span>: []}}, p, <span style="color:#79c0ff;">404</span>)
+        <span style="color:#ff7b72;">except </span>Exception <span style="color:#ff7b72;">as </span>e:  <span style="color:#8b949e;"># Esri clients expect a 200 with an error body
+            </span><span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">self</span>._send({<span style="color:#a5d6ff;">&quot;error&quot;</span>: {<span style="color:#a5d6ff;">&quot;code&quot;</span>: <span style="color:#79c0ff;">500</span>, <span style="color:#a5d6ff;">&quot;message&quot;</span>: <span style="color:#d2a8ff;">str</span>(e), <span style="color:#a5d6ff;">&quot;details&quot;</span>: []}}, p)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">reaper</span>():
+    <span style="color:#ff7b72;">while </span><span style="color:#79c0ff;">True</span>:
+        time.sleep(<span style="color:#79c0ff;">300</span>)
+        now = time.time()
+        <span style="color:#ff7b72;">for </span>k <span style="color:#ff7b72;">in </span>[k <span style="color:#ff7b72;">for </span>k, v <span style="color:#ff7b72;">in </span>JOBS.items() <span style="color:#ff7b72;">if </span>now - v[<span style="color:#a5d6ff;">&quot;created&quot;</span>] &gt; JOB_TTL]:
+            JOBS.pop(k, <span style="color:#79c0ff;">None</span>)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    threading.Thread(target=reaper, daemon=<span style="color:#79c0ff;">True</span>).start()
+    <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;Esri-OSRM adapter on :%d -&gt; %s&quot; </span>% (PORT, OSRM), flush=<span style="color:#79c0ff;">True</span>)
+    ThreadingHTTPServer((<span style="color:#a5d6ff;">&quot;0.0.0.0&quot;</span>, PORT), H).serve_forever()</pre></section><section class="s" id="s28"><div class="h"><div><b>Python</b> <small>168 lines</small></div><div class="a"><button data-c="c28">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/28-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c28"><span style="color:#8b949e;"># GISNTEMRES - correct travel time on Graphical Assignment emergency recommendations.
+#
+# Object launch point: SKDEMAVAILRES, before save, on add.
+#
+# Why: Scheduler 9.2 (ResourceFinder.getWOandTravelTimeForResoureList +
+# SKDAppService.saveSuggestResourceListtoEMWO) stores ONE shared map of travel
+# times under every technician, so every recommendation gets the same TRAVELTIME
+# and the list cannot be used to pick the nearest technician.
+#
+# This recomputes TRAVELTIME per technician, from where that technician really is:
+#   1. live position (LBSLOCATION, refobject LABOR) if newer than MAXAGE minutes
+#   2. else the work order they are working on now (active timer / assignment now)
+#   3. else their start location (LABOR.STARTLOCATION -&gt; service address)
+# and the road travel time to the emergency work order:
+#   a. SKDORIGINDESTMATRIX row FROM -&gt; TO (filled by Scheduler from the routing service)
+#   b. else ask the routing service (Map Manager SPATIALROUTE /solve) directly
+# and DISTANCEKM, the road distance for the same trip, from the routing service
+# (the travel-time matrix stores time only). Needs dbc/gisnt_emres_distance_1.0.0.dbc.
+</span><span style="color:#ff7b72;">from </span>psdi.server <span style="color:#ff7b72;">import </span>MXServer
+<span style="color:#ff7b72;">from </span>psdi.mbo <span style="color:#ff7b72;">import </span>SqlFormat
+<span style="color:#ff7b72;">from </span>java.net <span style="color:#ff7b72;">import </span>URL, URLEncoder
+<span style="color:#ff7b72;">from </span>java.io <span style="color:#ff7b72;">import </span>BufferedReader, InputStreamReader
+<span style="color:#ff7b72;">from </span>java.util <span style="color:#ff7b72;">import </span>Date
+
+MAXAGE = <span style="color:#79c0ff;">30  </span><span style="color:#8b949e;"># minutes a GPS fix stays &quot;live&quot;
+
+</span>mx = MXServer.getMXServer()
+ui = mx.getSystemUserInfo()
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">one</span>(obj, where):
+    s = mx.getMboSet(obj, ui)
+    s.setWhere(where)
+    s.reset()
+    m = s.getMbo(<span style="color:#79c0ff;">0</span>)
+    <span style="color:#ff7b72;">return </span>s, m
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">q</span>(v):
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;&#x27;&quot; </span>+ <span style="color:#d2a8ff;">str</span>(v).replace(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;&#x27;&quot;</span>) + <span style="color:#a5d6ff;">&quot;&#x27;&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">lonlat</span>(addressable):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;WGS84 (lon, lat) of a work order / location, converted by Maximo itself
+    (honours the org&#x27;s COORDINATE setting and the base map&#x27;s projection).&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">try</span>:
+        c = mx.lookup(<span style="color:#a5d6ff;">&quot;SRVAD&quot;</span>).getLatLngFromAddressableMbo(addressable)
+    <span style="color:#ff7b72;">except</span>:
+        c = <span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">if </span>c <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">or </span>c.get(<span style="color:#a5d6ff;">&quot;lat&quot;</span>) <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">or </span>c.get(<span style="color:#a5d6ff;">&quot;lng&quot;</span>) <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">return </span>(<span style="color:#d2a8ff;">float</span>(<span style="color:#d2a8ff;">str</span>(c.get(<span style="color:#a5d6ff;">&quot;lng&quot;</span>))), <span style="color:#d2a8ff;">float</span>(<span style="color:#d2a8ff;">str</span>(c.get(<span style="color:#a5d6ff;">&quot;lat&quot;</span>))))
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">wo_point</span>(wo):
+    s, w = one(<span style="color:#a5d6ff;">&quot;WOSERVICEADDRESS&quot;</span>, <span style="color:#a5d6ff;">&quot;wonum=%s and siteid=%s&quot; </span>% (q(wo.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>)), q(wo.getString(<span style="color:#a5d6ff;">&quot;SITEID&quot;</span>))))
+    <span style="color:#ff7b72;">if </span>w <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">None
+    </span>pt = lonlat(wo)
+    <span style="color:#ff7b72;">if </span>pt <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">None
+    </span>key = (<span style="color:#a5d6ff;">&quot;SA&quot;</span>, w.getString(<span style="color:#a5d6ff;">&quot;SADDRESSCODE&quot;</span>)) <span style="color:#ff7b72;">if </span>w.getString(<span style="color:#a5d6ff;">&quot;SADDRESSCODE&quot;</span>) <span style="color:#ff7b72;">else </span>(<span style="color:#a5d6ff;">&quot;WO&quot;</span>, <span style="color:#d2a8ff;">str</span>(wo.getLong(<span style="color:#a5d6ff;">&quot;WORKORDERID&quot;</span>)))
+    <span style="color:#ff7b72;">return </span>key, pt
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">route_url</span>():
+    s, m = one(<span style="color:#a5d6ff;">&quot;MAPMANAGER&quot;</span>, <span style="color:#a5d6ff;">&quot;active=1 and mapprovider=&#x27;SPATIAL&#x27; and spatialroute is not null&quot;</span>)
+    <span style="color:#ff7b72;">return </span>m.getString(<span style="color:#a5d6ff;">&quot;SPATIALROUTE&quot;</span>) <span style="color:#ff7b72;">if </span>m <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">None
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">num_after</span>(txt, name):
+    i = txt.find(<span style="color:#a5d6ff;">&#x27;&quot;%s&quot;&#x27; </span>% name)
+    <span style="color:#ff7b72;">if </span>i &lt; <span style="color:#79c0ff;">0</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None
+    </span>j = txt.find(<span style="color:#a5d6ff;">&quot;:&quot;</span>, i) + <span style="color:#79c0ff;">1
+    </span>k = j
+    <span style="color:#ff7b72;">while </span>k &lt; <span style="color:#d2a8ff;">len</span>(txt) <span style="color:#ff7b72;">and </span>txt[k] <span style="color:#ff7b72;">in </span><span style="color:#a5d6ff;">&quot;0123456789.eE- &quot;</span>:
+        k += <span style="color:#79c0ff;">1
+    </span><span style="color:#ff7b72;">try</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">float</span>(txt[j:k])
+    <span style="color:#ff7b72;">except</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">road_trip</span>(a, b):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;(hours, km) for the road trip a -&gt; b from the routing service; either may be None.&quot;&quot;&quot;
+    </span>base = route_url()
+    <span style="color:#ff7b72;">if not </span>base:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">None
+    </span>stops = <span style="color:#a5d6ff;">&#x27;{&quot;features&quot;:[{&quot;geometry&quot;:{&quot;x&quot;:%f,&quot;y&quot;:%f}},{&quot;geometry&quot;:{&quot;x&quot;:%f,&quot;y&quot;:%f}}],&quot;spatialReference&quot;:{&quot;wkid&quot;:4326}}&#x27; </span>% (a[<span style="color:#79c0ff;">0</span>], a[<span style="color:#79c0ff;">1</span>], b[<span style="color:#79c0ff;">0</span>], b[<span style="color:#79c0ff;">1</span>])
+    u = URL(base + <span style="color:#a5d6ff;">&quot;/solve?f=json&amp;returnDirections=true&amp;stops=&quot; </span>+ URLEncoder.encode(stops, <span style="color:#a5d6ff;">&quot;UTF-8&quot;</span>))
+    c = u.openConnection()
+    c.setConnectTimeout(<span style="color:#79c0ff;">5000</span>)
+    c.setReadTimeout(<span style="color:#79c0ff;">20000</span>)
+    r = BufferedReader(InputStreamReader(c.getInputStream(), <span style="color:#a5d6ff;">&quot;UTF-8&quot;</span>))
+    body = []
+    line = r.readLine()
+    <span style="color:#ff7b72;">while </span>line <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        body.append(line)
+        line = r.readLine()
+    r.close()
+    txt = <span style="color:#a5d6ff;">&quot;&quot;</span>.join(body)
+    mins = num_after(txt, <span style="color:#a5d6ff;">&quot;totalTime&quot;</span>)
+    km = num_after(txt, <span style="color:#a5d6ff;">&quot;totalLength&quot;</span>)   <span style="color:#8b949e;"># directionsLengthUnits = kilometres
+    </span><span style="color:#ff7b72;">return </span>(<span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">if </span>mins <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span>mins / <span style="color:#79c0ff;">60.0</span>), km
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">matrix_hours</span>(frm, to, orgid):
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">col</span>(key, side):
+        <span style="color:#ff7b72;">if </span>key[<span style="color:#79c0ff;">0</span>] == <span style="color:#a5d6ff;">&quot;SA&quot;</span>:
+            <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;%sserviceaddress=%s&quot; </span>% (side, q(key[<span style="color:#79c0ff;">1</span>]))
+        <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;%sworkorder=%s&quot; </span>% (side, key[<span style="color:#79c0ff;">1</span>])
+    s, m = one(<span style="color:#a5d6ff;">&quot;SKDORIGINDESTMATRIX&quot;</span>, <span style="color:#a5d6ff;">&quot;orgid=%s and %s and %s&quot; </span>% (q(orgid), col(frm, <span style="color:#a5d6ff;">&quot;from&quot;</span>), col(to, <span style="color:#a5d6ff;">&quot;to&quot;</span>)))
+    <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">if </span>m <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span>m.getDouble(<span style="color:#a5d6ff;">&quot;TRAVELTIME&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">where_is</span>(laborcode, orgid):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;(origin key or None, (lon, lat) or None, how)&quot;&quot;&quot;
+    </span>s = mx.getMboSet(<span style="color:#a5d6ff;">&quot;LBSLOCATION&quot;</span>, ui)
+    s.setWhere(<span style="color:#a5d6ff;">&quot;refobject=&#x27;LABOR&#x27; and key1=%s&quot; </span>% q(laborcode))
+    s.setOrderBy(<span style="color:#a5d6ff;">&quot;lastupdate desc&quot;</span>)
+    s.reset()
+    p = s.getMbo(<span style="color:#79c0ff;">0</span>)
+    <span style="color:#ff7b72;">if </span>p <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and not </span>p.isNull(<span style="color:#a5d6ff;">&quot;LATITUDE&quot;</span>) <span style="color:#ff7b72;">and not </span>p.isNull(<span style="color:#a5d6ff;">&quot;LONGITUDE&quot;</span>):
+        when = p.getDate(<span style="color:#a5d6ff;">&quot;LASTUPDATE&quot;</span>)
+        <span style="color:#ff7b72;">if </span>when <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span>(Date().getTime() - when.getTime()) / <span style="color:#79c0ff;">60000.0 </span>&lt;= MAXAGE:
+            <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None</span>, (p.getDouble(<span style="color:#a5d6ff;">&quot;LONGITUDE&quot;</span>), p.getDouble(<span style="color:#a5d6ff;">&quot;LATITUDE&quot;</span>)), <span style="color:#a5d6ff;">&quot;live GPS&quot;
+    </span>s, lt = one(<span style="color:#a5d6ff;">&quot;LABTRANS&quot;</span>, <span style="color:#a5d6ff;">&quot;laborcode=%s and orgid=%s and timerstatus in (select value from synonymdomain where domainid=&#x27;TIMERSTATUS&#x27; and maxvalue=&#x27;ACTIVE&#x27;)&quot; </span>% (q(laborcode), q(orgid)))
+    cur = <span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">if </span>lt <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        s, cur = one(<span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;wonum=%s and siteid=%s&quot; </span>% (q(lt.getString(<span style="color:#a5d6ff;">&quot;REFWO&quot;</span>)), q(lt.getString(<span style="color:#a5d6ff;">&quot;SITEID&quot;</span>))))
+    <span style="color:#ff7b72;">if </span>cur <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        sf = SqlFormat(<span style="color:#a5d6ff;">&quot;laborcode=:1 and orgid=:2 and status in (select value from synonymdomain where domainid=&#x27;ASSTAT&#x27; and maxvalue in (&#x27;ASSIGNED&#x27;,&#x27;STARTED&#x27;)) and scheduledate &lt;= :3 and finishdate &gt;= :3&quot;</span>)
+        sf.setObject(<span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;ASSIGNMENT&quot;</span>, <span style="color:#a5d6ff;">&quot;LABORCODE&quot;</span>, laborcode)
+        sf.setObject(<span style="color:#79c0ff;">2</span>, <span style="color:#a5d6ff;">&quot;ASSIGNMENT&quot;</span>, <span style="color:#a5d6ff;">&quot;ORGID&quot;</span>, orgid)
+        sf.setTimestamp(<span style="color:#79c0ff;">3</span>, mx.getDate())
+        s, a = one(<span style="color:#a5d6ff;">&quot;ASSIGNMENT&quot;</span>, sf.format())
+        <span style="color:#ff7b72;">if </span>a <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+            s, cur = one(<span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;wonum=%s and siteid=%s&quot; </span>% (q(a.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>)), q(a.getString(<span style="color:#a5d6ff;">&quot;SITEID&quot;</span>))))
+    <span style="color:#ff7b72;">if </span>cur <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        key, pt = wo_point(cur)
+        <span style="color:#ff7b72;">if </span>pt <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+            <span style="color:#ff7b72;">return </span>key, pt, <span style="color:#a5d6ff;">&quot;current WO &quot; </span>+ cur.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>)
+    s, lab = one(<span style="color:#a5d6ff;">&quot;LABOR&quot;</span>, <span style="color:#a5d6ff;">&quot;laborcode=%s and orgid=%s&quot; </span>% (q(laborcode), q(orgid)))
+    <span style="color:#ff7b72;">if </span>lab <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span>lab.getString(<span style="color:#a5d6ff;">&quot;STARTLOCATION&quot;</span>):
+        s, loc = one(<span style="color:#a5d6ff;">&quot;LOCATIONS&quot;</span>, <span style="color:#a5d6ff;">&quot;location=%s and siteid=%s&quot; </span>% (q(lab.getString(<span style="color:#a5d6ff;">&quot;STARTLOCATION&quot;</span>)), q(lab.getString(<span style="color:#a5d6ff;">&quot;STARTLOCSITEID&quot;</span>))))
+        <span style="color:#ff7b72;">if </span>loc <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span>loc.getString(<span style="color:#a5d6ff;">&quot;SADDRESSCODE&quot;</span>):
+            pt = lonlat(loc)
+            <span style="color:#ff7b72;">if </span>pt <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                <span style="color:#ff7b72;">return </span>(<span style="color:#a5d6ff;">&quot;SA&quot;</span>, loc.getString(<span style="color:#a5d6ff;">&quot;SADDRESSCODE&quot;</span>)), pt, <span style="color:#a5d6ff;">&quot;start &quot; </span>+ lab.getString(<span style="color:#a5d6ff;">&quot;STARTLOCATION&quot;</span>)
+    <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;unknown&quot;
+
+</span>laborcode = mbo.getString(<span style="color:#a5d6ff;">&quot;LABORCODE&quot;</span>)
+<span style="color:#ff7b72;">if </span>laborcode:
+    s, asg = one(<span style="color:#a5d6ff;">&quot;ASSIGNMENT&quot;</span>, <span style="color:#a5d6ff;">&quot;assignmentid=%d&quot; </span>% mbo.getLong(<span style="color:#a5d6ff;">&quot;ASSIGNMENTID&quot;</span>))
+    <span style="color:#ff7b72;">if </span>asg <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        s, wo = one(<span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;wonum=%s and siteid=%s&quot; </span>% (q(asg.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>)), q(asg.getString(<span style="color:#a5d6ff;">&quot;SITEID&quot;</span>))))
+        to_key, to_pt = wo_point(wo) <span style="color:#ff7b72;">if </span>wo <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span>(<span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">None</span>)
+        <span style="color:#ff7b72;">if </span>to_pt <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+            orgid = wo.getString(<span style="color:#a5d6ff;">&quot;ORGID&quot;</span>)
+            frm_key, frm_pt, how = where_is(laborcode, orgid)
+            hrs = <span style="color:#79c0ff;">None
+            </span>km = <span style="color:#79c0ff;">None
+            </span><span style="color:#ff7b72;">if </span>frm_key <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                hrs = matrix_hours(frm_key, to_key, orgid)
+            <span style="color:#ff7b72;">if </span>frm_pt <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                <span style="color:#ff7b72;">try</span>:
+                    r_hrs, km = road_trip(frm_pt, to_pt)
+                <span style="color:#ff7b72;">except</span>:
+                    r_hrs, km = <span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">None
+                </span><span style="color:#ff7b72;">if </span>hrs <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+                    hrs = r_hrs
+            <span style="color:#ff7b72;">if </span>hrs <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                mbo.setValue(<span style="color:#a5d6ff;">&quot;TRAVELTIME&quot;</span>, hrs, <span style="color:#79c0ff;">11</span>L)
+            <span style="color:#ff7b72;">if </span>km <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span>mbo.getThisMboSet().getMboSetInfo().getAttribute(<span style="color:#a5d6ff;">&quot;DISTANCEKM&quot;</span>) <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                mbo.setValue(<span style="color:#a5d6ff;">&quot;DISTANCEKM&quot;</span>, <span style="color:#d2a8ff;">round</span>(km, <span style="color:#79c0ff;">2</span>), <span style="color:#79c0ff;">11</span>L)
+            service.log(<span style="color:#a5d6ff;">&quot;GISNTEMRES %s -&gt; WO %s: %s h, %s km (%s)&quot; </span>% (laborcode, wo.getString(<span style="color:#a5d6ff;">&quot;WONUM&quot;</span>), hrs, km, how))</pre></section><section class="s" id="s29"><div class="h"><div><b>Python</b> <small>120 lines</small></div><div class="a"><button data-c="c29">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-graphical-assignment-nearest-technician-travel-time-routes-without-arcgis-routing/29-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c29"><span style="color:#a5d6ff;">&quot;&quot;&quot;Generate dbc/gisnt_emres_traveltime_&lt;ver&gt;.dbc from emres_traveltime.py.
+
+Ships automation script GISNTEMRES and its object launch point (SKDEMAVAILRES,
+before save on add) as a guarded, re-runnable DBC for DB2, Oracle and SQL Server.
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>os
+<span style="color:#ff7b72;">import </span>sys
+
+VER = sys.argv[<span style="color:#79c0ff;">1</span>] <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(sys.argv) &gt; <span style="color:#79c0ff;">1 </span><span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;1.0.2&quot;
+</span>HERE = os.path.dirname(os.path.abspath(__file__))
+SRC = <span style="color:#d2a8ff;">open</span>(os.path.join(HERE, <span style="color:#a5d6ff;">&quot;emres_traveltime.py&quot;</span>), encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>).read().replace(<span style="color:#a5d6ff;">&quot;\r\n&quot;</span>, <span style="color:#a5d6ff;">&quot;\n&quot;</span>)
+OUT = os.path.join(HERE, <span style="color:#a5d6ff;">&quot;..&quot;</span>, <span style="color:#a5d6ff;">&quot;dbc&quot;</span>, <span style="color:#a5d6ff;">&quot;gisnt_emres_traveltime_%s.dbc&quot; </span>% VER)
+NAME, LP, DESC = <span style="color:#a5d6ff;">&quot;GISNTEMRES&quot;</span>, <span style="color:#a5d6ff;">&quot;GISNTEMRES&quot;</span>, <span style="color:#a5d6ff;">&quot;Correct travel time on GA emergency recommendations&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">lit</span>(s):
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;&#x27;&quot; </span>+ s.replace(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;&#x27;&quot;</span>) + <span style="color:#a5d6ff;">&quot;&#x27;&quot;
+
+</span><span style="color:#ff7b72;">import </span>re
+
+<span style="color:#8b949e;"># DBC freeform collapses every whitespace run, even inside string literals, so the
+# source is rebuilt from pieces: newline = NL function, runs of 2+ spaces = SP(n).
+</span>DIALECT = {
+    <span style="color:#a5d6ff;">&quot;db2&quot;</span>:       {<span style="color:#a5d6ff;">&quot;cat&quot;</span>: <span style="color:#a5d6ff;">&quot; || &quot;</span>, <span style="color:#a5d6ff;">&quot;nl&quot;</span>: <span style="color:#a5d6ff;">&quot;CHR(10)&quot;</span>,  <span style="color:#a5d6ff;">&quot;sp&quot;</span>: <span style="color:#a5d6ff;">&quot;REPEAT(&#x27; &#x27;, %d)&quot;</span>, <span style="color:#a5d6ff;">&quot;head&quot;</span>: <span style="color:#a5d6ff;">&quot;CAST(%s AS CLOB)&quot;</span>},
+    <span style="color:#a5d6ff;">&quot;oracle&quot;</span>:    {<span style="color:#a5d6ff;">&quot;cat&quot;</span>: <span style="color:#a5d6ff;">&quot; || &quot;</span>, <span style="color:#a5d6ff;">&quot;nl&quot;</span>: <span style="color:#a5d6ff;">&quot;CHR(10)&quot;</span>,  <span style="color:#a5d6ff;">&quot;sp&quot;</span>: <span style="color:#a5d6ff;">&quot;RPAD(&#x27; &#x27;, %d)&quot;</span>,   <span style="color:#a5d6ff;">&quot;head&quot;</span>: <span style="color:#a5d6ff;">&quot;TO_CLOB(%s)&quot;</span>},
+    <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>: {<span style="color:#a5d6ff;">&quot;cat&quot;</span>: <span style="color:#a5d6ff;">&quot; + &quot;</span>,  <span style="color:#a5d6ff;">&quot;nl&quot;</span>: <span style="color:#a5d6ff;">&quot;CHAR(10)&quot;</span>, <span style="color:#a5d6ff;">&quot;sp&quot;</span>: <span style="color:#a5d6ff;">&quot;SPACE(%d)&quot;</span>,       <span style="color:#a5d6ff;">&quot;head&quot;</span>: <span style="color:#a5d6ff;">&quot;CAST(%s AS NVARCHAR(MAX))&quot;</span>},
+}
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">source_expr</span>(src, db):
+    d = DIALECT[db]
+    parts = []
+    <span style="color:#ff7b72;">for </span>i, line <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(src.split(<span style="color:#a5d6ff;">&quot;\n&quot;</span>)):
+        <span style="color:#ff7b72;">if </span>i:
+            parts.append(d[<span style="color:#a5d6ff;">&quot;nl&quot;</span>])
+        <span style="color:#ff7b72;">for </span>tok <span style="color:#ff7b72;">in </span>re.split(<span style="color:#a5d6ff;">r&quot;( {2,})&quot;</span>, line):
+            <span style="color:#ff7b72;">if not </span>tok:
+                <span style="color:#ff7b72;">continue
+            if </span>tok.startswith(<span style="color:#a5d6ff;">&quot;  &quot;</span>) <span style="color:#ff7b72;">and </span>tok.strip() == <span style="color:#a5d6ff;">&quot;&quot;</span>:
+                parts.append(d[<span style="color:#a5d6ff;">&quot;sp&quot;</span>] % <span style="color:#d2a8ff;">len</span>(tok))
+            <span style="color:#ff7b72;">else</span>:
+                parts.append(lit(tok))
+    <span style="color:#ff7b72;">if </span>db == <span style="color:#a5d6ff;">&quot;oracle&quot;</span>:   <span style="color:#8b949e;"># keep each literal under Oracle&#x27;s 4000-char limit and CLOB-typed
+        </span>parts = [<span style="color:#a5d6ff;">&quot;TO_CLOB(%s)&quot; </span>% p <span style="color:#ff7b72;">if </span>p.startswith(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>) <span style="color:#ff7b72;">else </span>p <span style="color:#ff7b72;">for </span>p <span style="color:#ff7b72;">in </span>parts]
+    <span style="color:#ff7b72;">else</span>:
+        parts[<span style="color:#79c0ff;">0</span>] = d[<span style="color:#a5d6ff;">&quot;head&quot;</span>] % parts[<span style="color:#79c0ff;">0</span>]
+    <span style="color:#ff7b72;">return </span>d[<span style="color:#a5d6ff;">&quot;cat&quot;</span>].join(parts)
+
+now = {<span style="color:#a5d6ff;">&quot;db2&quot;</span>: <span style="color:#a5d6ff;">&quot;current timestamp&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>: <span style="color:#a5d6ff;">&quot;sysdate&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>: <span style="color:#a5d6ff;">&quot;getdate()&quot;</span>}
+seq = {<span style="color:#a5d6ff;">&quot;db2&quot;</span>: <span style="color:#a5d6ff;">&quot;nextval for %s&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>: <span style="color:#a5d6ff;">&quot;%s.nextval&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>: <span style="color:#a5d6ff;">&quot;next value for %s&quot;</span>}
+src = {db: source_expr(SRC, db) <span style="color:#ff7b72;">for </span>db <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;db2&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>)}
+dual = {<span style="color:#a5d6ff;">&quot;db2&quot;</span>: <span style="color:#a5d6ff;">&quot; from sysibm.sysdummy1&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>: <span style="color:#a5d6ff;">&quot; from dual&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>: <span style="color:#a5d6ff;">&quot;&quot;</span>}
+
+blocks = []
+<span style="color:#ff7b72;">for </span>db <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;db2&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>):
+    blocks.append(<span style="color:#a5d6ff;">&#x27;      &lt;sql target=&quot;%s&quot;&gt;&lt;![CDATA[insert into autoscript (autoscript, status, createddate, statusdate, changedate, changeby, &#x27;
+                  &#x27;autoscriptid, hasld, langcode, scriptlanguage, userdefined, loglevel, interface, active, description, version, source) &#x27;
+                  &#x27;select %s, \&#x27;Active\&#x27;, %s, %s, %s, \&#x27;MAXADMIN\&#x27;, %s, 0, \&#x27;EN\&#x27;, \&#x27;jython\&#x27;, 1, \&#x27;ERROR\&#x27;, 0, 1, %s, %s, %s%s]]&gt;&lt;/sql&gt;&#x27;
+                  </span>% (db, lit(NAME), now[db], now[db], now[db], seq[db] % <span style="color:#a5d6ff;">&quot;autoscriptseq&quot;</span>, lit(DESC), lit(VER), src[db],
+                     dual[db] + <span style="color:#a5d6ff;">&quot; where not exists (select 1 from autoscript where autoscript=%s)&quot; </span>% lit(NAME)))
+script_sql = <span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(blocks)
+
+<span style="color:#8b949e;"># Upgrade an older install in place (keeps the launch point and its settings).
+</span>upd = []
+<span style="color:#ff7b72;">for </span>db <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;db2&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>):
+    upd.append(<span style="color:#a5d6ff;">&#x27;      &lt;sql target=&quot;%s&quot;&gt;&lt;![CDATA[update autoscript set source = %s, version = %s, changedate = %s, &#x27;
+               &#x27;changeby = \&#x27;MAXADMIN\&#x27; where autoscript = %s]]&gt;&lt;/sql&gt;&#x27; </span>% (db, src[db], lit(VER), now[db], lit(NAME)))
+upd_sql = <span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(upd)
+
+lp = []
+<span style="color:#ff7b72;">for </span>db <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;db2&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle&quot;</span>, <span style="color:#a5d6ff;">&quot;sqlserver&quot;</span>):
+    lp.append(<span style="color:#a5d6ff;">&#x27;      &lt;sql target=&quot;%s&quot;&gt;&lt;![CDATA[insert into scriptlaunchpoint (launchpointname, autoscript, launchpointtype, objectname, objectevent, &#x27;
+              &#x27;active, description, scriptlaunchpointid) select %s, %s, \&#x27;OBJECT\&#x27;, \&#x27;SKDEMAVAILRES\&#x27;, 2, 1, \&#x27;Before save on add\&#x27;, %s%s]]&gt;&lt;/sql&gt;&#x27;
+              </span>% (db, lit(LP), lit(NAME), seq[db] % <span style="color:#a5d6ff;">&quot;scriptlaunchpointseq&quot;</span>,
+                 dual[db] + <span style="color:#a5d6ff;">&quot; where not exists (select 1 from scriptlaunchpoint where launchpointname=%s)&quot; </span>% lit(LP)))
+lp_sql = <span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(lp)
+
+dbc = <span style="color:#a5d6ff;">&quot;&quot;&quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE script SYSTEM &quot;script.dtd&quot;&gt;
+
+&lt;!--
+  Nearest-technician fix for Graphical Assignment emergency work.
+
+  Scheduler 9.2 (ResourceFinder.getWOandTravelTimeForResoureList and
+  SKDAppService.saveSuggestResourceListtoEMWO) stores one shared map of travel
+  times under every technician, so every row of &quot;Emergency Work Resource
+  Availability&quot; shows the same Travel Time and the list cannot be used to pick
+  the nearest technician.
+
+  GISNTEMRES runs before each recommendation row is saved and replaces its
+  TRAVELTIME with the road travel time from where that technician really is:
+  live GPS (LBSLOCATION, under 30 minutes old), else the work order they are on,
+  else their start location; taken from SKDORIGINDESTMATRIX, or asked of the
+  routing service configured in Map Manager (SPATIALROUTE) when the pair is
+  missing. It also sets DISTANCEKM (road kilometres for the same trip, from the
+  routing service) once dbc/gisnt_emres_distance_1.0.0.dbc has added that field.
+
+  Generated from gis-nearest-tech/emres_traveltime.py by gen_dbc.py.
+  Guarded: installs, or upgrades an older version in place; does nothing when
+  this version is already installed.
+--&gt;
+&lt;script author=&quot;mc&quot; scriptname=&quot;gisnt_emres_traveltime_%(ver)s&quot;&gt;
+  &lt;description&gt;GISNTEMRES - correct travel time and distance on emergency recommendations&lt;/description&gt;
+  &lt;check tag=&quot;INFO&quot; group=&quot;scriptrun&quot; key=&quot;ScriptNotNeeded&quot; default=&quot;GISNTEMRES %(ver)s already installed; skipped.&quot; skip_script=&quot;true&quot;&gt;
+    &lt;check_query query=&quot;select 1 from autoscript where autoscript=&#x27;%(name)s&#x27; and version=&#x27;%(ver)s&#x27;&quot;/&gt;
+  &lt;/check&gt;
+  &lt;statements&gt;
+    &lt;freeform description=&quot;upgrade autoscript %(name)s&quot;&gt;
+%(upd_sql)s
+    &lt;/freeform&gt;
+    &lt;freeform description=&quot;autoscript %(name)s&quot;&gt;
+%(script_sql)s
+    &lt;/freeform&gt;
+    &lt;freeform description=&quot;launch point %(lp)s (SKDEMAVAILRES, before save on add)&quot;&gt;
+%(lp_sql)s
+    &lt;/freeform&gt;
+  &lt;/statements&gt;
+&lt;/script&gt;
+&quot;&quot;&quot; </span>% {<span style="color:#a5d6ff;">&quot;ver&quot;</span>: VER, <span style="color:#a5d6ff;">&quot;name&quot;</span>: NAME, <span style="color:#a5d6ff;">&quot;lp&quot;</span>: LP, <span style="color:#a5d6ff;">&quot;script_sql&quot;</span>: script_sql, <span style="color:#a5d6ff;">&quot;upd_sql&quot;</span>: upd_sql, <span style="color:#a5d6ff;">&quot;lp_sql&quot;</span>: lp_sql}
+
+<span style="color:#d2a8ff;">open</span>(OUT, <span style="color:#a5d6ff;">&quot;w&quot;</span>, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;\n&quot;</span>).write(dbc)
+<span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;wrote&quot;</span>, os.path.normpath(OUT), <span style="color:#d2a8ff;">len</span>(dbc), <span style="color:#a5d6ff;">&quot;bytes&quot;</span>)</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

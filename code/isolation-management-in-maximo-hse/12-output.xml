@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script SYSTEM "script.dtd">
+<script author="isolation-guide" scriptname="iso_retest_nullable">
+  <description>Isolation guide lab: PLUSGPTWLCKTGOP.RETESTREQUIRED is cleared by the product
+  on every save, so it cannot be a required column</description>
+  <statements>
+    <modify_attribute object="PLUSGPTWLCKTGOP" attribute="RETESTREQUIRED" required="false" />
+  </statements>
+</script>

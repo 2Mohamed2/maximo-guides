@@ -1,0 +1,7 @@
+app-source.zip (368 entries)
+  package.json        dependencies and build scripts
+  src/app.xml         the application description
+  src/*Controller.js  about 37 controllers: WorkOrderDetailsController, SchedulePageController, ...
+  src/assets/
+  public/i18n/        29 label files
+  ibm-config/         63 files: IBM's original, kept for comparison

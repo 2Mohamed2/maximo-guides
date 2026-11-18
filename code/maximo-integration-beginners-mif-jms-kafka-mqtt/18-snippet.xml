@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="Manage all bundle: client of the JMS server bundle">
+  <featureManager>
+    <feature>jndi-1.0</feature>
+    <feature>wasJmsClient-2.0</feature>
+    <feature>jmsMdb-3.2</feature>
+    <feature>mdb-3.2</feature>
+  </featureManager>
+  <!-- one connection factory for all MIF queues, pointing at the JMS server pod through its service -->
+  <jmsQueueConnectionFactory jndiName="jms/maximo/int/cf/intcf" connectionManagerRef="mifjmsconfact">
+    <properties.wasJms remoteServerAddress="instdb2-wsp-jms.mas-instdb2-manage.svc:7276:BootstrapBasicMessaging"/>
+  </jmsQueueConnectionFactory>
+  <connectionManager id="mifjmsconfact" maxPoolSize="20"/>
+  <!-- JNDI name used by the queue records in Manage  ->  queue defined on the JMS server -->
+  <jmsQueue id="jms/maximo/int/queues/sqout" jndiName="jms/maximo/int/queues/sqout">
+    <properties.wasJms queueName="sqoutbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/sqin" jndiName="jms/maximo/int/queues/sqin">
+    <properties.wasJms queueName="sqinbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/cqin" jndiName="jms/maximo/int/queues/cqin">
+    <properties.wasJms queueName="cqinbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/cqinerr" jndiName="jms/maximo/int/queues/cqinerr">
+    <properties.wasJms queueName="cqinerrbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/cqout" jndiName="jms/maximo/int/queues/cqout">
+    <properties.wasJms queueName="cqoutbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/cqouterr" jndiName="jms/maximo/int/queues/cqouterr">
+    <properties.wasJms queueName="cqouterrbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/notf" jndiName="jms/maximo/int/queues/notf">
+    <properties.wasJms queueName="notfbd"/>
+  </jmsQueue>
+  <jmsQueue id="jms/maximo/int/queues/notferr" jndiName="jms/maximo/int/queues/notferr">
+    <properties.wasJms queueName="notferrbd"/>
+  </jmsQueue>
+  <!-- consumers of the continuous queues: message-driven beans inside the Manage server -->
+  <jmsActivationSpec id="maximo-all/mboejb/JMSContQueueProcessor-1" maxEndpoints="5">
+    <properties.wasJms destinationRef="jms/maximo/int/queues/cqin" destinationType="javax.jms.Queue"
+                       remoteServerAddress="instdb2-wsp-jms.mas-instdb2-manage.svc:7276:BootstrapBasicMessaging"/>
+  </jmsActivationSpec>
+  <jmsActivationSpec id="maximo-all/mboejb/JMSContQueueProcessor-2" maxEndpoints="1">
+    <properties.wasJms destinationRef="jms/maximo/int/queues/cqinerr" destinationType="javax.jms.Queue"
+                       remoteServerAddress="instdb2-wsp-jms.mas-instdb2-manage.svc:7276:BootstrapBasicMessaging"/>
+  </jmsActivationSpec>
+  <!-- the same two again for cqout and cqouterr: JMSContOutQueueProcessor-1 and -2 -->
+</server>

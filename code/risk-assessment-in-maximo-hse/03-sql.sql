@@ -1,0 +1,1 @@
+select c.consqnum, c.severity, c.envimpact, l.likelihood, l.riskrank, l.riskpriority from plusgrisklist l join plusgconsq c on c.plusgconsqid=l.plusgconsqid order by c.envimpact, c.displaysequence, c.consqnum, l.rowsequence

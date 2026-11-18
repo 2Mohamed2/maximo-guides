@@ -1,0 +1,15 @@
+<ns2:continuationToken><ns2:tokenString>2b97372d:1a17d7daa81:-7f8b</ns2:tokenString></ns2:continuationToken>
+<ns2:totalResults>137</ns2:totalResults>
+<ns2:queryResponseHelpers>
+  <ns2:QueryResponseHelper>
+    <ns2:boId>10002100</ns2:boId>
+    <ns2:recordId>10336440</ns2:recordId>
+    <ns2:queryResponseColumns>
+      <ns2:QueryResponseColumn>
+        <ns2:displayValue>BLD-NA016</ns2:displayValue>
+        <ns2:label>ID</ns2:label>
+        <ns2:name>triIdTX</ns2:name>
+        <ns2:section>RecordInformation</ns2:section>
+        <ns2:value>BLD-NA016</ns2:value>
+      </ns2:QueryResponseColumn>
+      ...

@@ -1,0 +1,4 @@
+worker.cache.worker_tools_cache - Filtered tools | original=27 | filtered=18 | tools=['alm_mcp__aicfg_ibmdocs',
+ 'alm_mcp__aicfg_insight', 'alm_mcp__aicfgasmd_assistant', 'alm_mcp__aicfgasmdtors_assistant',
+ 'alm_mcp__os_mxapiasset_entermeterreading', 'alm_mcp__os_mxapiasset_reportdowntime', ...,
+ 'alm_mcp__os_mxapiwoschedule_scheduleworkorder', ...]

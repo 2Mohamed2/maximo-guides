@@ -1,0 +1,9 @@
+container             image                                         role
+om-db2server          icr.io/cpopen/ibm-oms/db2:11.5.9.0            database OMDB, port 50000
+om-mqserver           icr.io/cpopen/ibm-oms/mq-core:9.3.0.28        queue manager OM_QMGR, port 1414
+om-runtime            om-base:25.3.9.1                              runtime, agentserver.sh, extensions
+om-appserver          icr.io/cpopen/ibm-oms/liberty-core:25.0.0.5   smcfs.ear, port 9443
+om-orderhub-base      om-orderhub-base:25.3.9.1                     Order Hub UI (nginx), port 7443
+om-orderhub-ext       om-orderhub-ext                               Order Hub custom pages, port 8443
+om-call-center-base   om-call-center-base:25.3.9.1                  Call Center UI (nginx), port 6443
+om-call-center-ext    om-call-center-ext:25.3.9.1                   Call Center custom pages, port 6444

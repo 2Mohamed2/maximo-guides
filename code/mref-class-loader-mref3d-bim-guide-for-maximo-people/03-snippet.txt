@@ -1,0 +1,10 @@
+{ "building": 10336477,
+  "leases":   [ 95 leases:  id, name, status, type, annual rent, expiry ],
+  "projects": [ 75 capital projects: status, budget, committed, dates ],
+  "energy":   [ {"year":2012,"use":1902824,"cost":86845},
+                {"year":2013,"use":1333385,"cost":76302},
+                {"year":2014,"use":1060894,"cost":57000} ],
+  "costs":    { "period":"2014-10-01", "operating":271388, "maintenance":83956,
+                "utilities":26929, "energy":12187, "rent":340819 },
+  "maintenance": { "counts":[ Planned 871, Completed 391, Active 125, Closed 9 ], … },
+  "asOf": "2026-10-03T04:44:46Z" }

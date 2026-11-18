@@ -1,0 +1,4 @@
+desired output = output low + (input − input low) × output span / input span
+
+DS-4101:  output low 4 mA, input low 0 psi, output span 16 mA, input span 300 psi
+          150 psi → 4 + 150 × 16 / 300 = 12.000 mA        225 psi → 16.000 mA

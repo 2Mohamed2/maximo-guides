@@ -1,0 +1,5 @@
+GET :8081/arcgis/rest/services/World/Route/NAServer/Route/solve
+    ?f=json&stops=-71.235575,42.376414;-71.070072,42.360005&outSR=4326&returnDirections=true
+
+Total_Minutes 21.22, Total_Kilometers 17.28, Total_Miles 10.73
+"Start at Location 1", "Turn left onto Warren Street", "Continue onto Belmont Street", ...

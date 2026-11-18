@@ -1,0 +1,4 @@
+OHL_SAG_EXCESS =
+    (CLEARANCE_RESIDUAL_M < -0.6)
+    & (TC_SAG_DIFF_K < -12)
+    & (TC_RESIDUAL_K > -10)

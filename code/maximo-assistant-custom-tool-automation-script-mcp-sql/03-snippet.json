@@ -1,0 +1,7 @@
+{
+  "name": "script_runsqlquery",
+  "title": "Run SQL query",
+  "description": "Run a read-only SQL SELECT on the Maximo database and return the rows (max 200).",
+  "annotations": { "readOnlyHint": true, "destructiveHint": false, "toolType": "AUTOSCRIPT", "custom": true },
+  "inputSchema": { "type": "object", "properties": { "query": { "type": "string" } } }
+}

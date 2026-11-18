@@ -1,0 +1,3 @@
+Name                 ID        Description          Area     LegalName             CommonName
+Riverside Office     BLD-2001  Regional office      48500    Riverside Office LLC  Riverside
+Harbour Warehouse    BLD-2002  Distribution centre  120000   Harbour Storage Inc   Harbour

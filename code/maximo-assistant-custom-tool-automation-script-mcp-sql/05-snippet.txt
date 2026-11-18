@@ -1,0 +1,3 @@
+Filtered tools | original=18 | filtered=6 | tools=['alm_mcp__aicfg_ibmdocs', 'alm_mcp__aicfg_insight',
+  'alm_mcp__aicfgasmd_assistant', 'alm_mcp__aicfgasmdtors_assistant', 'alm_mcp__script_runsqlquery',
+  'internal_mcp__textual_data_analyzer']

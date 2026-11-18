@@ -1,0 +1,5 @@
+<ws:getAssociatedRecords>
+  <ws:recordId>10336477</ws:recordId>
+  <ws:associationString>Has Request Class</ws:associationString>
+  <ws:maxResults>2000</ws:maxResults>
+</ws:getAssociatedRecords>

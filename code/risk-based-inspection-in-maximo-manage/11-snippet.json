@@ -1,0 +1,16 @@
+{
+  "assetnum": "V-1101",
+  "assetmeter": [
+    {
+      "meterreading_collectionref": "http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-/int_assetmeter/0-390/meterreading",
+      "_rowstamp": "[0 0 0 0 0 44 9 3]",
+      "lastreadingdate": "2026-11-16T14:00:00+00:00",
+      "localref": "http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-/int_assetmeter/0-390",
+      "metername": "WALL-THK",
+      "measurement_collectionref": "http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-/int_assetmeter/0-390/measurement",
+      "href": "http://childkey#QVNTRVQvQVNTRVRNRVRFUi9WLTExMDEvMC9XQUxMLVRISy9CRURGT1JE",
+      "lastreading": "12.8"
+    }
+  ],
+  "href": "http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-"
+}

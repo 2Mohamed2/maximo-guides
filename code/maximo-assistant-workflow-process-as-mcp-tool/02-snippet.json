@@ -1,0 +1,8 @@
+{
+  "name": "wf_test_wf_1",
+  "title": "Start work order review",
+  "description": "Start the review workflow on a work order: creates a review task for the person who starts it.",
+  "annotations": { "readOnlyHint": false, "destructiveHint": true, "toolType": "WFPROCESS", "custom": true },
+  "inputSchema": { "type": "object", "required": ["href"],
+                   "properties": { "href": { "type": "string", "description": "WORKORDER reference uri" } } }
+}

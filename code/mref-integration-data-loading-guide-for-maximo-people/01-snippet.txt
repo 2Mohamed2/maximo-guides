@@ -1,0 +1,4 @@
+triIdTX   triNameTX   …   triRevitUniqueIdTX                        triAreaNU   Parent
+L1_102    L1_102      …   ed5f18b3-e093-46ec-8ada-…-0005b0b7        246.64      \Locations\Offices\North America\Administration Building (BIM)\L1
+L1_103    L1_103      …   ed5f18b3-e093-46ec-8ada-…-0005b0b9        248.00      \Locations\Offices\North America\Administration Building (BIM)\L1
+… 51 rows in all

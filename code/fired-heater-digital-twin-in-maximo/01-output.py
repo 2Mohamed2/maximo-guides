@@ -1,0 +1,2 @@
+EFF_FLUEGAS_PCT =
+    (100 - STACK_LOSS_PCT - 1.5)

@@ -1,0 +1,2 @@
+triNameTX	triIdTX	triDescriptionTX	triCityTX	triCountryTX	triGisLatitudeNU	triGisLongitudeNU	triNumberOfFloorsNU	Parent
+Siège social	MA-HQ-0001	Siège · en propriété · Casablanca-Settat · démo	Casablanca	Maroc	33.565	-7.655	24	\Locations\Patrimoine Demo Bank Maroc

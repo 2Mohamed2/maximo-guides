@@ -1,0 +1,18 @@
+<featureManager>
+    <feature>wasJmsSecurity-1.0</feature>
+    <feature>wasJmsServer-1.0</feature>                       <!-- this pod IS the messaging server -->
+</featureManager>
+<wasJmsEndpoint host="*" wasJmsSSLPort="7286" wasJmsPort="7276" />   <!-- Manage connects here -->
+<messagingEngine>
+    <fileStore path="/jmsstore"/>                             <!-- where messages are kept -->
+    <queue id="sqoutbd"   maintainStrictOrder="true" maxMessageDepth="500000"
+           failedDeliveryPolicy="KEEP_TRYING" maxRedeliveryCount="-1"/>
+    <queue id="sqinbd"    maintainStrictOrder="true" maxMessageDepth="500000"
+           failedDeliveryPolicy="KEEP_TRYING" maxRedeliveryCount="-1"/>
+    <queue id="cqinerrbd" maxMessageDepth="500000" failedDeliveryPolicy="KEEP_TRYING"/>
+    <queue id="cqinbd"    maxMessageDepth="500000" exceptionDestination="cqinerrbd"/>
+    <queue id="cqouterrbd" maxMessageDepth="500000" failedDeliveryPolicy="KEEP_TRYING"/>
+    <queue id="cqoutbd"   maxMessageDepth="500000" exceptionDestination="cqouterrbd"/>
+    <queue id="notferrbd" maxMessageDepth="100000" failedDeliveryPolicy="KEEP_TRYING"/>
+    <queue id="notfbd"    maxMessageDepth="100000" exceptionDestination="notferrbd"/>
+</messagingEngine>

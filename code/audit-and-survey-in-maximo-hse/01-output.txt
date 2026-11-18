@@ -1,0 +1,2 @@
+BMXAA4176E - Attribute ORIGRESULTNUM does not exist. Gather the logs from the <HOME> directory
+and determine the process or app referencing the invalid attribute.

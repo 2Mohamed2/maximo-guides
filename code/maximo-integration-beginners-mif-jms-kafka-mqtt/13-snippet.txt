@@ -1,0 +1,12 @@
+// A legacy system posts one line of text: temperature,pressure,vibration,flow
+const p = String(msg.payload).trim().split(',').map(Number);
+if (p.length !== 4 || p.some(isNaN)) {
+    msg.statusCode = 400;
+    msg.payload = { error: 'expected: temperature,pressure,vibration,flow' };
+    return [null, msg];
+}
+const reading = { temperature: p[0], pressure: p[1], vibration: p[2], flow: p[3] };
+const toIot = { topic: 'iot-2/evt/status/fmt/json', payload: reading };
+msg.statusCode = 202;
+msg.payload = { accepted: true, device: 'PUMP-001', reading: reading };
+return [toIot, msg];

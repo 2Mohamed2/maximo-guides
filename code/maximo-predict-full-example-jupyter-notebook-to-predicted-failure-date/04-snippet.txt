@@ -1,0 +1,2 @@
+model_instance_id = group.register()
+group.enable(enabled=True, schedule={"starting_at": "05:00:01", "every": "5min"})

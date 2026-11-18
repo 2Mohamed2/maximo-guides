@@ -1,0 +1,12 @@
+<PublishMXASSET xmlns="http://www.ibm.com/maximo" creationDateTime="2026-10-13T06:18:18+00:00"
+                messageID="1453117918722980361594" event="1">
+  <MXASSETSet>
+    <ASSET action="Add">
+      <ASSETNUM>PUMP-001</ASSETNUM>
+      <DESCRIPTION>Cooling water pump 1</DESCRIPTION>
+      <SITEID>BEDFORD</SITEID>
+      <STATUS>NOT READY</STATUS>
+      ... about 200 more fields ...
+    </ASSET>
+  </MXASSETSet>
+</PublishMXASSET>

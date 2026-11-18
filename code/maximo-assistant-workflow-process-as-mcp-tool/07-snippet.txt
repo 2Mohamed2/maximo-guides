@@ -1,0 +1,2 @@
+Filtered tools | original=19 | filtered=7 | tools=[..., 'alm_mcp__script_runsqlquery', 'alm_mcp__wf_test_wf_1',
+  'internal_mcp__textual_data_analyzer']

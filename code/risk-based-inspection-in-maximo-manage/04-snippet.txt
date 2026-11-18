@@ -1,0 +1,2 @@
+β_i = (1 − D_Si·Art − SR) / sqrt( (D_Si·Art·0.20)² + ((1 − D_Si·Art)·0.20)² + (SR·0.05)² )
+P_f,i = Φ(−β_i)     (Φ = standard normal cumulative distribution)

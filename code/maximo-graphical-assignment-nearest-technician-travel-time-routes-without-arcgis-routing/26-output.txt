@@ -1,0 +1,5 @@
+LABORCODE  TRAVELTIME  DISTANCEKM
+RUH-T2     0.18        4.62
+RUH-T4     0.27        10.62
+RUH-T1     0.40        27.42
+RUH-T3     0.43        26.74

@@ -1,0 +1,5 @@
+tool     : wf_test_wf_1
+arguments: { "href": "/os/mxapiwodetail/_QkVERk9SRC8xMjcx" }
+answer   : {"wonum":"1271","siteid":"BEDFORD","description":"HVAC overheating","status":"WAPPR",
+            "status_description":"Waiting on approval","assetnum":"11200","location":"BR200",
+            "failurecode":"HVAC","wopriority":3, ...}

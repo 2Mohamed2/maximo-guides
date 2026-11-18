@@ -1,0 +1,22 @@
+{
+  "routes": {
+    "geometryType": "esriGeometryPolyline",
+    "spatialReference": {"wkid": 4326},
+    "features": [{
+      "attributes": {
+        "Name": "Location 1 - Location 2",
+        "Total_TravelTime": 6.678,
+        "Total_Minutes": 6.678,
+        "Total_Kilometers": 5.3135,
+        "Total_Miles": 3.3017,
+        "Shape_Length": 5313.5
+      },
+      "geometry": {"paths": [[[46.675293, 24.71363], [46.675168, 24.713579], "... 113 points along the roads"]]}
+    }]
+  },
+  "directions": [{
+    "summary": {"totalLength": 5.3135, "totalTime": 6.678, "totalDriveTime": 6.678},
+    "features": ["Start at Location 1", "Continue onto …", "Turn … onto …", "Arrive at Location 2"]
+  }],
+  "stops": {"features": ["Location 1", "Location 2"]}
+}

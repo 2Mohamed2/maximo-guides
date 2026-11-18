@@ -1,0 +1,9 @@
+{
+  "description": "Power loss at station 4200-JCS-031500: 3 meters Last Gasp",
+  "description_longdescription": "Opened from IBM Cloud Pak for AIOps incident 4lia-aaae (priority P2).<br>Probable cause: MTR-4200-0101 Last Gasp.<br>Also affected: MTR-4200-0102, MTR-4200-0103.<br>Policy: SMOC Lab - meter Last Gasp becomes an incident.",
+  "siteid": "BEDFORD",
+  "location": "4200-JCS-031500",
+  "assetnum": "MTR-4200-0101",
+  "reportedpriority": 2,
+  "externalrecid": "4lia-aaae"
+}

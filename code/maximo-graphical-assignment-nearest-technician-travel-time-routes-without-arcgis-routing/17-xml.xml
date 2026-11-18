@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script SYSTEM "script.dtd">
+
+<!--
+  Point Maximo's routing services at the self-hosted OSRM router (via the
+  Esri-compatible adapter in gis-nearest-tech/), instead of ArcGIS Online's
+  licensed Route and OD Cost Matrix services.
+
+  What uses each field (read from the Manage 9.2 code):
+    SPATIALROUTE           browser RouteTask -> route line + itinerary on the
+                           Dispatch / Work Center maps; ResourceFinder -> travel
+                           time from a technician's live GPS position
+    SPATIALDISTANCEMATRIX  SpatialTravelTimeMatrix, direct mode (<= 10 points)
+    SPATIALJOBMATRIX       SpatialTravelTimeMatrix, async GP job (> 10 points)
+    USEPROXY               browser sends every map service call through
+                           /maximo/webclient/pluss/proxy.jsp, so the adapter is
+                           reached on its internal cluster address and nothing
+                           is exposed to the internet (no CORS, no TLS trust)
+
+  The adapter answers in Esri's JSON shapes, so no Maximo code or presentation
+  changes. Travel times are real road times on the OpenStreetMap network.
+
+  ADAPTER points at the in-cluster service. For an on-premises install change it
+  to wherever the adapter runs; the Maximo server must reach it.
+
+  Guarded: only rewrites values that are empty or still on arcgis.com, so it is
+  re-runnable and never stamps over an ArcGIS Server someone configured since.
+  MAPNAME: the active Spatial map (LBS_DEMO on this instance).
+-->
+<script author="mc" scriptname="mas_map_osrm_routing_1.0.0">
+  <description>Route, travel-time matrix and proxy settings for self-hosted OSRM routing</description>
+  <statements>
+
+    <freeform description="Route service -&gt; OSRM adapter">
+      <sql target="all">
+        UPDATE mapmanager
+           SET spatialroute = 'http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/NAServer/Route'
+         WHERE mapname = 'LBS_DEMO'
+           AND (spatialroute IS NULL OR spatialroute LIKE '%arcgis.com%')
+      </sql>
+    </freeform>
+
+    <freeform description="Travel-time matrix (direct) -&gt; OSRM adapter">
+      <sql target="all">
+        UPDATE mapmanager
+           SET spatialdistancematrix = 'http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/NAServer/ODCostMatrix/solveODCostMatrix'
+         WHERE mapname = 'LBS_DEMO'
+           AND (spatialdistancematrix IS NULL OR spatialdistancematrix LIKE '%arcgis.com%')
+      </sql>
+    </freeform>
+
+    <freeform description="Travel-time matrix (async job, more than 10 points) -&gt; OSRM adapter">
+      <sql target="all">
+        UPDATE mapmanager
+           SET spatialjobmatrix = 'http://esri-adapter.gis-routing.svc:8080/arcgis/rest/services/World/GPServer/GenerateOriginDestinationCostMatrix'
+         WHERE mapname = 'LBS_DEMO'
+           AND (spatialjobmatrix IS NULL OR spatialjobmatrix LIKE '%arcgis.com%')
+      </sql>
+    </freeform>
+
+    <freeform description="Browser map calls go through Maximo's proxy">
+      <sql target="all">
+        UPDATE mapmanager
+           SET useproxy = 1
+         WHERE mapname = 'LBS_DEMO'
+           AND useproxy = 0
+      </sql>
+    </freeform>
+
+  </statements>
+</script>

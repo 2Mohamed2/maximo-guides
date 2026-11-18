@@ -1,0 +1,11 @@
+S_TRISPACE
+  DC_JOB_NUMBER    which job this row belongs to
+  DC_CID           groups the rows that belong together
+  DC_SEQUENCE_ID   the order of the row inside the job
+  DC_STATE         the state of the row
+  DC_ACTION        what to do with it: insert, update…
+  DC_PATH          the hierarchy path of the PARENT (the floor)
+  DC_GUI_NAME      the form to use: triSpace
+  DC_PROJECT       the project, when the record belongs to one
+  TRIIDTX  TRINAMETX  TRIAREANU  TRIAREAUO  TRICAPACITYNU  TRISTATUSCL
+  TRIRESERVECALENDARTX  TRIRESERVEROOMTYPELI  TRIUSAGEUNITLI  …   (19 columns in all)

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script SYSTEM "script.dtd">
+<!--
+  Contractor API: the Maximo side of an API Connect front door.
+
+    CONTRWO    object structure: WORKORDER only, 13 fields, secured by its own application CONTRWO
+    CONTRWO    sigoptions READ (read work orders) and COMPLETE (report completion through the
+               CONTRACTOR_COMPLETE script, which checks this option itself)
+    CONTRAPI   security group for the integration user API Connect signs in as: CONTRWO READ + COMPLETE,
+               all sites, nothing else
+    WORKORDER_NDX_VENDOR  index on WORKORDER (VENDOR, SITEID, STATUS): every gateway query filters on vendor
+
+  Field list in MAXINTOBJCOLS: with EXCLUDEBYDEFAULT = 1 on the WORKORDER detail row, the rows listed as
+  EXCLUDE are the fields that are INCLUDED (same encoding as IBM's MXAPIWOCHANGESTATUS).
+
+  Install: copy to tools/maximo/en/script in the maxinst pod, then from tools/maximo/internal
+           ./runscriptfile.sh -cscript -fcontractor_api_1.0.0
+  Re-runnable: every insert uses ignore_duplicates.
+  After install: reload the INTOBJECT cache (or restart the Manage server bundle) so the new structure is served.
+-->
+<script author="CONTRAPI" scriptname="contractor_api_1.0.0">
+  <description>Contractor API: CONTRWO object structure, CONTRAPI security group, vendor index.</description>
+  <statements>
+
+    <!-- 1. the application that secures the object structure -->
+    <insert table="MAXAPPS" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="APP" string="CONTRWO"/>
+        <columnvalue column="DESCRIPTION" string="Contractor API work orders"/>
+        <columnvalue column="APPTYPE" string="OS"/>
+        <columnvalue column="LOCKENABLED" boolean="false"/>
+        <columnvalue column="HASLD" boolean="false"/>
+        <columnvalue column="LANGCODE" string="EN"/>
+        <columnvalue column="SKIPNAVIGATION" boolean="false"/>
+      </insertrow>
+    </insert>
+    <add_sigoption app="CONTRWO" optionname="READ" description="Read contractor work orders" esigenabled="false" visible="true"/>
+    <add_sigoption app="CONTRWO" optionname="COMPLETE" description="Report contractor work as complete" esigenabled="false" visible="true" prerequisite="READ"/>
+
+    <!-- 2. the object structure -->
+    <insert table="MAXINTOBJECT" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="DESCRIPTION" string="Contractor API work orders"/>
+        <columnvalue column="SELFREFERENCING" boolean="false"/>
+        <columnvalue column="USERDEFINED" boolean="true"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+        <columnvalue column="LANGCODE" string="EN"/>
+        <columnvalue column="HASLD" boolean="false"/>
+        <columnvalue column="QUERYONLY" boolean="true"/>
+        <columnvalue column="CONFIGURABLE" boolean="true"/>
+        <columnvalue column="FLATSUPPORTED" boolean="false"/>
+        <columnvalue column="USEWITH" string="INTEGRATION"/>
+        <columnvalue column="ALIASCONFLICT" boolean="false"/>
+        <columnvalue column="AUTHAPP" string="CONTRWO"/>
+        <columnvalue column="MODULE" string="WO"/>
+        <columnvalue column="LOADQUERYFROMAPP" boolean="false"/>
+        <columnvalue column="PRIMARYAPI" boolean="false"/>
+        <columnvalue column="COMPLETEHIERARCHY" boolean="false"/>
+        <columnvalue column="GRAPHTYPE" boolean="false"/>
+        <columnvalue column="USEFORASSISTANT" boolean="false"/>
+        <columnvalue column="TRACKREQUESTS" boolean="false"/>
+        <columnvalue column="USEWITHPRODUCT" number="0"/>
+      </insertrow>
+    </insert>
+    <insert table="MAXINTOBJDETAIL" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="OBJECTORDER" number="1"/>
+        <columnvalue column="PROCESSORDER" number="1"/>
+        <columnvalue column="USERDEFINED" boolean="true"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+        <columnvalue column="OBJECTID" number="1"/>
+        <columnvalue column="HIERARCHYPATH" string="WORKORDER"/>
+        <columnvalue column="EXCLUDEPARENTKEY" boolean="false"/>
+        <columnvalue column="DELETEONCREATE" boolean="false"/>
+        <columnvalue column="PROPAGATEEVENT" boolean="false"/>
+        <columnvalue column="INVOKEEXECUTE" boolean="false"/>
+        <columnvalue column="SKIPKEYUPDATE" boolean="false"/>
+        <columnvalue column="EXCLUDEBYDEFAULT" boolean="true"/>
+        <columnvalue column="SKIPDELETEONREPLACE" boolean="false"/>
+      </insertrow>
+    </insert>
+    <insert table="MAXINTOBJCOLS" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="WONUM"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="DESCRIPTION"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="STATUS"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="STATUSDATE"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="SITEID"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="LOCATION"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="ASSETNUM"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="WORKTYPE"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="WOPRIORITY"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="VENDOR"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="TARGSTARTDATE"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="TARGCOMPDATE"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="INTOBJECTNAME" string="CONTRWO"/>
+        <columnvalue column="OBJECTNAME" string="WORKORDER"/>
+        <columnvalue column="NAME" string="REPORTDATE"/>
+        <columnvalue column="INTOBJFLDTYPE" string="EXCLUDE"/>
+        <columnvalue column="CHANGEBY" string="MAXADMIN"/>
+        <columnvalue column="CHANGEDATE" date="sysdate"/>
+      </insertrow>
+    </insert>
+
+    <!-- 3. the security group the API Connect integration user belongs to -->
+    <insert table="MAXGROUP" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="GROUPNAME" string="CONTRAPI"/>
+        <columnvalue column="DESCRIPTION" string="Contractor API gateway (API Connect)"/>
+        <columnvalue column="INDEPENDENT" boolean="true"/>
+        <columnvalue column="AUTHALLSITES" boolean="true"/>
+        <columnvalue column="AUTHALLGLS" boolean="false"/>
+        <columnvalue column="AUTHALLSTOREROOMS" boolean="false"/>
+        <columnvalue column="AUTHLABORALL" boolean="false"/>
+        <columnvalue column="AUTHLABORCREW" boolean="false"/>
+        <columnvalue column="AUTHLABORSELF" boolean="false"/>
+        <columnvalue column="AUTHLABORSUPER" boolean="false"/>
+        <columnvalue column="LANGCODE" string="EN"/>
+        <columnvalue column="AUTHPERSONGROUP" boolean="false"/>
+        <columnvalue column="HASLD" boolean="false"/>
+        <columnvalue column="NULLREPFAC" boolean="true"/>
+        <columnvalue column="AUTHALLREPFACS" boolean="false"/>
+        <columnvalue column="SIDENAV" boolean="false"/>
+      </insertrow>
+    </insert>
+    <insert table="APPLICATIONAUTH" ignore_duplicates="true">
+      <insertrow>
+        <columnvalue column="GROUPNAME" string="CONTRAPI"/>
+        <columnvalue column="APP" string="CONTRWO"/>
+        <columnvalue column="OPTIONNAME" string="READ"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="GROUPNAME" string="CONTRAPI"/>
+        <columnvalue column="APP" string="CONTRWO"/>
+        <columnvalue column="OPTIONNAME" string="COMPLETE"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="GROUPNAME" string="MAXADMIN"/>
+        <columnvalue column="APP" string="CONTRWO"/>
+        <columnvalue column="OPTIONNAME" string="READ"/>
+      </insertrow>
+      <insertrow>
+        <columnvalue column="GROUPNAME" string="MAXADMIN"/>
+        <columnvalue column="APP" string="CONTRWO"/>
+        <columnvalue column="OPTIONNAME" string="COMPLETE"/>
+      </insertrow>
+    </insert>
+
+    <!-- 4. every gateway query filters on the vendor -->
+    <specify_index name="WORKORDER_NDX_VENDOR" object="WORKORDER" unique="false">
+      <indexkey column="VENDOR"/>
+      <indexkey column="SITEID"/>
+      <indexkey column="STATUS"/>
+    </specify_index>
+
+  </statements>
+</script>

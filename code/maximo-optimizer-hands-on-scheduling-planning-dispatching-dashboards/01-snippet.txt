@@ -1,0 +1,5 @@
+siteid='BEDFORD' and istask=0 and historyflag=0
+and status in ('APPR','WSCH')
+and targstartdate >= '2026-10-19' and targstartdate < '2026-11-14'
+and exists (select 1 from wplabor l
+            where l.wonum=workorder.wonum and l.siteid=workorder.siteid)

@@ -1,0 +1,5 @@
+DEPOSIT_EXPECTED_M =
+    2.58
+    * (RUN_VOLUME_M3 / 60 * SETTLED_TURBIDITY_AVG_NTU * 1.5 / 1000)
+    * (FLOW_M3H / 60 / 8)
+    * np.power(10, 247.8 / (WATER_TEMP_C + 133.15) - 1.618022)

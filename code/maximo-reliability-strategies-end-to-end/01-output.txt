@@ -1,0 +1,5 @@
+S = 7   (duty unit lost, output limited until the standby starts)
+O = 6   (once in 1-3 years: two oil-related bearing failures in three years)
+D = 8   (rarely detected: nobody looks at the oil between quarterly changes)
+
+RPNi = 7 x 6 x 8 = 336

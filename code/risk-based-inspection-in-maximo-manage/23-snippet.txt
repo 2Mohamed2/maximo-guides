@@ -1,0 +1,7 @@
+# RBI.DAMAGEINIT - a damage mechanism row added on the screen takes its keys from the assessment.
+from psdi.mbo import MboConstants
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+o = mbo.getOwner()
+if mbo.toBeAdded() and o is not None and o.getName() == "RBIASSESS":
+    for k in ("ASSESSNUM", "SITEID", "ORGID"):
+        mbo.setValue(k, o.getString(k), F)

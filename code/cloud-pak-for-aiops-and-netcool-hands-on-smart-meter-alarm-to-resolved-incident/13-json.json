@@ -1,0 +1,11 @@
+{
+  "ticketid": "1560",
+  "status": "NEW",
+  "status_description": "New",
+  "description": "Power loss at station 4200-JCS-031500: 3 meters Last Gasp",
+  "assetnum": "MTR-4200-0101",
+  "location": "4200-JCS-031500",
+  "reportedpriority": 2,
+  "reportedpriority_description": "High",
+  "externalrecid": "4lia-aaae"
+}

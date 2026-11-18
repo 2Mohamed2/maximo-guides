@@ -1,0 +1,2 @@
+<text-input value="{page.state.name}" required="true"
+    invalid="{page.state.nameInvalid}" invalid-text="{page.state.nameInvalidText}"/>

@@ -1,0 +1,2 @@
+with oil analysis only:          7 x 6 x 3 = 126
+with oil analysis + oil change:  RPNf = 7 x 4 x 3 = 84

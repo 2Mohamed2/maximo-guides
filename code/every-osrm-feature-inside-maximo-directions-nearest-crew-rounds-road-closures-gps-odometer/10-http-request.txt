@@ -1,0 +1,1 @@
+GET /osrm/car/tile/v1/driving/tile(x,y,z).mvt

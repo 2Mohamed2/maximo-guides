@@ -1,0 +1,143 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Stack plans in Maximo Real Estate and Facilities: see every floor, the</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Stack plans in Maximo Real Estate and Facilities: see every floor, then move departments before anyone moves a desk</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/11/07/mref-stack-plans-hands-on">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on">github.com/2Mohamed2/maximo-guides/code/mref-stack-plans-hands-on</a>.</p><section class="s" id="s1"><div class="h"><div><b>Data Integrator file (tab-delimited)</b> <small>2 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on/01-data-integrator-file-tab-delimited.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1">triNameTX	triIdTX	triDescriptionTX	triCityTX	triCountryTX	Parent
+Patrimoine Demo Bank Maroc	PRP-MA01	Agences, directions régionales, data centers et centres fiduciaires de Demo Bank au Maroc (démo, données illustratives)	Casablanca	Maroc	\Locations</pre></section><section class="s" id="s2"><div class="h"><div><b>Data Integrator file (tab-delimited)</b> <small>2 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on/02-data-integrator-file-tab-delimited.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2">triNameTX	triIdTX	triDescriptionTX	triCityTX	triCountryTX	triGisLatitudeNU	triGisLongitudeNU	triNumberOfFloorsNU	Parent
+Siège social	MA-HQ-0001	Siège · en propriété · Casablanca-Settat · démo	Casablanca	Maroc	33.565	-7.655	24	\Locations\Patrimoine Demo Bank Maroc</pre></section><section class="s" id="s3"><div class="h"><div><b>Data Integrator file (tab-delimited)</b> <small>5 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on/03-data-integrator-file-tab-delimited.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">triNameTX	triIdTX	triDescriptionTX	triLevelNU	Parent
+Niveau 01	MA-HQ-0001-L01	Siège social - niveau 1 - Opérations	1	\Locations\Patrimoine Demo Bank Maroc\Siège social
+Niveau 02	MA-HQ-0001-L02	Siège social - niveau 2 - Opérations	2	\Locations\Patrimoine Demo Bank Maroc\Siège social
+Niveau 03	MA-HQ-0001-L03	Siège social - niveau 3 - Opérations	3	\Locations\Patrimoine Demo Bank Maroc\Siège social
+Niveau 04	MA-HQ-0001-L04	Siège social - niveau 4 - Digital et SI	4	\Locations\Patrimoine Demo Bank Maroc\Siège social</pre></section><section class="s" id="s4"><div class="h"><div><b>Data Integrator file (tab-delimited)</b> <small>7 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on/04-data-integrator-file-tab-delimited.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4">triNameTX	triIdTX	triDescriptionTX	triAreaNU	triAreaUO	Parent
+L01-PLATEAU	MA-HQ-0001-L01-WS	Opérations | Plateau ouvert, 168 postes	3000	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 01
+L01-NOYAU	MA-HQ-0001-L01-CORE	Noyau | Ascenseurs, escaliers, gaines, sanitaires	600	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 01
+L02-PLATEAU	MA-HQ-0001-L02-WS	Opérations | Plateau ouvert, 168 postes	3000	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 02
+L02-NOYAU	MA-HQ-0001-L02-CORE	Noyau | Ascenseurs, escaliers, gaines, sanitaires	600	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 02
+L03-PLATEAU	MA-HQ-0001-L03-WS	Opérations | Plateau ouvert, 168 postes	3000	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 03
+L03-NOYAU	MA-HQ-0001-L03-CORE	Noyau | Ascenseurs, escaliers, gaines, sanitaires	600	square-meters	\Locations\Patrimoine Demo Bank Maroc\Siège social\Niveau 03</pre></section><section class="s" id="s5"><div class="h"><div><b>Data Integrator file (tab-delimited)</b> <small>11 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on/05-data-integrator-file-tab-delimited.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">triNameTX	triIdTX	triDescriptionTX	Parent
+Demo Bank Maroc	ORG-MA	Demo Bank Maroc (demo)	\Organizations
+Banque de détail	ORG-MA-01	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Banque de l’entreprise	ORG-MA-02	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Salle des marchés	ORG-MA-03	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Risques et conformité	ORG-MA-04	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Digital et SI	ORG-MA-05	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Opérations	ORG-MA-06	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Finances	ORG-MA-07	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Capital humain	ORG-MA-08	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Direction générale	ORG-MA-09	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc</pre></section><section class="s" id="s6"><div class="h"><div><b>JSON</b> <small>121 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/mref-stack-plans-hands-on/06-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6">{
+  <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">38750.04</span>,
+  <span style="color:#7ee787;">&quot;assignableArea&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+  <span style="color:#7ee787;">&quot;assignableSpaceSupply&quot;</span>: {
+    <span style="color:#7ee787;">&quot;Open Team Seating&quot;</span>: {
+      <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+      <span style="color:#7ee787;">&quot;assignable&quot;</span>: <span style="color:#79c0ff;">true</span>,
+      <span style="color:#7ee787;">&quot;count&quot;</span>: <span style="color:#79c0ff;">1</span>,
+      <span style="color:#7ee787;">&quot;spaceClass&quot;</span>: <span style="color:#a5d6ff;">&quot;Open Team Seating&quot;</span>,
+      <span style="color:#7ee787;">&quot;spaceClassId&quot;</span>: <span style="color:#a5d6ff;">&quot;10243766&quot;</span>,
+      <span style="color:#7ee787;">&quot;uom&quot;</span>: <span style="color:#a5d6ff;">&quot;square-feet&quot;
+    </span>}
+  },
+  <span style="color:#7ee787;">&quot;building&quot;</span>: {
+    <span style="color:#7ee787;">&quot;value&quot;</span>: <span style="color:#a5d6ff;">&quot;Siège social&quot;</span>,
+    <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291002&quot;
+  </span>},
+  <span style="color:#7ee787;">&quot;drawingId&quot;</span>: <span style="color:#79c0ff;">-1</span>,
+  <span style="color:#7ee787;">&quot;grossArea&quot;</span>: <span style="color:#79c0ff;">0</span>,
+  <span style="color:#7ee787;">&quot;hasAssignableDiscrepancy&quot;</span>: <span style="color:#79c0ff;">false</span>,
+  <span style="color:#7ee787;">&quot;hasDiscrepancy&quot;</span>: <span style="color:#79c0ff;">false</span>,
+  <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;&quot;</span>,
+  <span style="color:#7ee787;">&quot;level&quot;</span>: <span style="color:#79c0ff;">0</span>,
+  <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Niveau 14&quot;</span>,
+  <span style="color:#7ee787;">&quot;path&quot;</span>: <span style="color:#a5d6ff;">&quot;\\Locations\\&quot;</span>,
+  <span style="color:#7ee787;">&quot;rentableArea&quot;</span>: <span style="color:#79c0ff;">-6458.34</span>,
+  <span style="color:#7ee787;">&quot;spaceSupply&quot;</span>: {
+    <span style="color:#7ee787;">&quot;Vertical Penetration&quot;</span>: {
+      <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">6458.34</span>,
+      <span style="color:#7ee787;">&quot;assignable&quot;</span>: <span style="color:#79c0ff;">false</span>,
+      <span style="color:#7ee787;">&quot;count&quot;</span>: <span style="color:#79c0ff;">1</span>,
+      <span style="color:#7ee787;">&quot;spaceClass&quot;</span>: <span style="color:#a5d6ff;">&quot;Vertical Penetration&quot;</span>,
+      <span style="color:#7ee787;">&quot;spaceClassId&quot;</span>: <span style="color:#a5d6ff;">&quot;13810610&quot;</span>,
+      <span style="color:#7ee787;">&quot;uom&quot;</span>: <span style="color:#a5d6ff;">&quot;square-feet&quot;
+    </span>},
+    <span style="color:#7ee787;">&quot;Open Team Seating&quot;</span>: {
+      <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+      <span style="color:#7ee787;">&quot;assignable&quot;</span>: <span style="color:#79c0ff;">true</span>,
+      <span style="color:#7ee787;">&quot;count&quot;</span>: <span style="color:#79c0ff;">1</span>,
+      <span style="color:#7ee787;">&quot;spaceClass&quot;</span>: <span style="color:#a5d6ff;">&quot;Open Team Seating&quot;</span>,
+      <span style="color:#7ee787;">&quot;spaceClassId&quot;</span>: <span style="color:#a5d6ff;">&quot;10243766&quot;</span>,
+      <span style="color:#7ee787;">&quot;uom&quot;</span>: <span style="color:#a5d6ff;">&quot;square-feet&quot;
+    </span>}
+  },
+  <span style="color:#7ee787;">&quot;stacks&quot;</span>: [
+    {
+      <span style="color:#7ee787;">&quot;areaAllocated&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+      <span style="color:#7ee787;">&quot;assignableSpacesAreaAllocated&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+      <span style="color:#7ee787;">&quot;assignableSpaceClassMap&quot;</span>: {},
+      <span style="color:#7ee787;">&quot;building&quot;</span>: {
+        <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291002&quot;</span>,
+        <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Siège social&quot;
+      </span>},
+      <span style="color:#7ee787;">&quot;floor&quot;</span>: {
+        <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">-6458.34</span>,
+        <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291159&quot;</span>,
+        <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Niveau 14&quot;
+      </span>},
+      <span style="color:#7ee787;">&quot;org&quot;</span>: <span style="color:#a5d6ff;">&quot;Banque de l’entreprise&quot;</span>,
+      <span style="color:#7ee787;">&quot;orgColor&quot;</span>: <span style="color:#a5d6ff;">&quot;#1192E8&quot;</span>,
+      <span style="color:#7ee787;">&quot;orgId&quot;</span>: <span style="color:#a5d6ff;">&quot;ORG-MA-02&quot;</span>,
+      <span style="color:#7ee787;">&quot;orgPath&quot;</span>: {
+        <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#79c0ff;">16331381</span>,
+        <span style="color:#7ee787;">&quot;value&quot;</span>: <span style="color:#a5d6ff;">&quot;\\Organizations\\Demo Bank Maroc\\Banque de l’entreprise&quot;
+      </span>},
+      <span style="color:#7ee787;">&quot;uom&quot;</span>: <span style="color:#a5d6ff;">&quot;square-feet&quot;</span>,
+      <span style="color:#7ee787;">&quot;assignableSpaces&quot;</span>: {
+        <span style="color:#7ee787;">&quot;Open Team Seating&quot;</span>: {
+          <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+          <span style="color:#7ee787;">&quot;assignable&quot;</span>: <span style="color:#79c0ff;">true</span>,
+          <span style="color:#7ee787;">&quot;building&quot;</span>: {
+            <span style="color:#7ee787;">&quot;value&quot;</span>: <span style="color:#a5d6ff;">&quot;Siège social&quot;</span>,
+            <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291002&quot;
+          </span>},
+          <span style="color:#7ee787;">&quot;count&quot;</span>: <span style="color:#79c0ff;">1</span>,
+          <span style="color:#7ee787;">&quot;floor&quot;</span>: {
+            <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Niveau 14&quot;</span>,
+            <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291159&quot;</span>,
+            <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">38750.04
+          </span>},
+          <span style="color:#7ee787;">&quot;spaceClass&quot;</span>: <span style="color:#a5d6ff;">&quot;Open Team Seating&quot;</span>,
+          <span style="color:#7ee787;">&quot;spaceClassId&quot;</span>: <span style="color:#a5d6ff;">&quot;10243766&quot;</span>,
+          <span style="color:#7ee787;">&quot;spaceClassIdField&quot;</span>: <span style="color:#a5d6ff;">&quot;175&quot;</span>,
+          <span style="color:#7ee787;">&quot;uom&quot;</span>: <span style="color:#a5d6ff;">&quot;square-feet&quot;
+        </span>}
+      },
+      <span style="color:#7ee787;">&quot;originBldg&quot;</span>: {
+        <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291002&quot;</span>,
+        <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Siège social&quot;
+      </span>},
+      <span style="color:#7ee787;">&quot;originFloor&quot;</span>: {
+        <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">-6458.34</span>,
+        <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291159&quot;</span>,
+        <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Niveau 14&quot;
+      </span>},
+      <span style="color:#7ee787;">&quot;spaces&quot;</span>: {
+        <span style="color:#7ee787;">&quot;Open Team Seating&quot;</span>: {
+          <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">32291.7</span>,
+          <span style="color:#7ee787;">&quot;assignable&quot;</span>: <span style="color:#79c0ff;">true</span>,
+          <span style="color:#7ee787;">&quot;building&quot;</span>: {
+            <span style="color:#7ee787;">&quot;value&quot;</span>: <span style="color:#a5d6ff;">&quot;Siège social&quot;</span>,
+            <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291002&quot;
+          </span>},
+          <span style="color:#7ee787;">&quot;count&quot;</span>: <span style="color:#79c0ff;">1</span>,
+          <span style="color:#7ee787;">&quot;floor&quot;</span>: {
+            <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;Niveau 14&quot;</span>,
+            <span style="color:#7ee787;">&quot;id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291159&quot;</span>,
+            <span style="color:#7ee787;">&quot;area&quot;</span>: <span style="color:#79c0ff;">38750.04
+          </span>},
+          <span style="color:#7ee787;">&quot;spaceClass&quot;</span>: <span style="color:#a5d6ff;">&quot;Open Team Seating&quot;</span>,
+          <span style="color:#7ee787;">&quot;spaceClassId&quot;</span>: <span style="color:#a5d6ff;">&quot;10243766&quot;</span>,
+          <span style="color:#7ee787;">&quot;spaceClassIdField&quot;</span>: <span style="color:#a5d6ff;">&quot;175&quot;</span>,
+          <span style="color:#7ee787;">&quot;uom&quot;</span>: <span style="color:#a5d6ff;">&quot;square-feet&quot;
+        </span>}
+      },
+      <span style="color:#7ee787;">&quot;assignableSpacesPercentage&quot;</span>: <span style="color:#79c0ff;">83.33333333333334</span>,
+      <span style="color:#7ee787;">&quot;percentage&quot;</span>: <span style="color:#79c0ff;">83.33333333333334
+    </span>}
+  ],
+  <span style="color:#7ee787;">&quot;_id&quot;</span>: <span style="color:#a5d6ff;">&quot;16291159&quot;
+</span>}</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

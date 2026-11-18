@@ -1,0 +1,3 @@
+mcp_server - INFO - Newer timestamp detected. Refreshing tools...
+mcp_server - INFO - Annotations: {'nonAgenticFlow': False, 'custom': False, ..., 'title': 'Schedule work order', ...}
+mcp_server - INFO - Tool Refresh Complete: 18 tools active

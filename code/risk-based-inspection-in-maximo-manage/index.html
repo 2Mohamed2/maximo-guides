@@ -1,0 +1,590 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Risk-based inspection in Maximo Manage: from wall-thickness readings t</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Risk-based inspection in Maximo Manage: from wall-thickness readings to a risk-targeted inspection work order, built with configuration only</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/11/18/risk-based-inspection-in-maximo-manage">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage">github.com/2Mohamed2/maximo-guides/code/risk-based-inspection-in-maximo-manage</a>.</p><section class="s" id="s1"><div class="h"><div><b>Code</b> <small>1 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/01-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1">PoF(t) = gff × FMS × Df(t)</pre></section><section class="s" id="s2"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/02-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2">Long-term rate  = (16.0 − 12.9) / 17.95 y (2008-05-01 to 2026-04-14)  = 0.173 mm/y
+Short-term rate = (14.1 − 12.9) /  3.93 y (2022-05-10 to 2026-04-14)  = 0.305 mm/y
+Governing rate Cr = max(0.173, 0.305)                                  = 0.305 mm/y
+Age since the last reading (to the RBI date 2026-11-18)                = 0.597 y
+Thickness at the RBI date = 12.9 − 0.305 × 0.597                       = 12.72 mm
+Remaining life = (12.72 − 11.2) / 0.305                                = 5.0 years</pre></section><section class="s" id="s3"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/03-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">Art (fraction of the wall lost since the reading) = Cr × age / t_rdi
+    = 0.305 × 0.597 / 12.9                                   = 0.0141
+
+Flow stress FS = (YS + TS) / 2 × E × 1.1 = (260 + 485) / 2 × 1.0 × 1.1 = 409.75 MPa
+Strength ratio SR = (S × E / FS) × (t_min / t_rdi)
+    = (138 × 1.0 / 409.75) × (11.2 / 12.9)                   = 0.292</pre></section><section class="s" id="s4"><div class="h"><div><b>Code</b> <small>2 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/04-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4">β_i = (1 − D_Si·Art − SR) / sqrt( (D_Si·Art·0.20)² + ((1 − D_Si·Art)·0.20)² + (SR·0.05)² )
+P_f,i = Φ(−β_i)     (Φ = standard normal cumulative distribution)</pre></section><section class="s" id="s5"><div class="h"><div><b>Code</b> <small>2 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/05-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">0.7 × 0.5 = 0.350     0.2 × 0.3 = 0.060     0.1 × 0.2 = 0.020     sum 0.430
+posterior    0.814                 0.140                 0.047</pre></section><section class="s" id="s6"><div class="h"><div><b>Code</b> <small>3 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/06-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6">Df_thin = Σ posterior_i × P_f,i / 1.56E-4
+   at the RBI date:  (0.814×2.27E-4 + 0.140×2.47E-4 + 0.047×2.97E-4) / 1.56E-4 = 1.5
+   at the plan date:                                                        = 36.7</pre></section><section class="s" id="s7"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c7">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/07-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c7">CUI      Art = <span style="color:#79c0ff;">0.10 </span>× <span style="color:#79c0ff;">12.88 </span>/ <span style="color:#79c0ff;">12.9 </span>= <span style="color:#79c0ff;">0.0998</span>, no inspections         Df = <span style="color:#79c0ff;">24.9   </span>(plan date <span style="color:#79c0ff;">189.3</span>)
+EXTCORR  Art = <span style="color:#79c0ff;">0.02 </span>× <span style="color:#79c0ff;">18.55 </span>/ <span style="color:#79c0ff;">12.9</span>, one C inspection                Df =  <span style="color:#79c0ff;">1.8   </span>(plan date   <span style="color:#79c0ff;">2.0</span>)
+Df_total = <span style="color:#d2a8ff;">max</span>(thin <span style="color:#79c0ff;">1.5</span>, ext/CUI <span style="color:#79c0ff;">24.9</span>) + SCC <span style="color:#79c0ff;">0 </span>+ HTHA/fatigue <span style="color:#79c0ff;">0      </span>= <span style="color:#79c0ff;">24.9  </span>→  PoF category <span style="color:#79c0ff;">3
+           </span>at the plan date: <span style="color:#d2a8ff;">max</span>(<span style="color:#79c0ff;">36.7</span>, <span style="color:#79c0ff;">189.3</span>)                         = <span style="color:#79c0ff;">189.3 </span>→  PoF category <span style="color:#79c0ff;">4
+</span>FMS = <span style="color:#79c0ff;">10</span>^(−<span style="color:#79c0ff;">0.02 </span>× <span style="color:#79c0ff;">50 </span>+ <span style="color:#79c0ff;">1</span>) = <span style="color:#79c0ff;">1.0
+</span>PoF = gff × FMS × Df = <span style="color:#79c0ff;">3.06E-5 </span>× <span style="color:#79c0ff;">1.0 </span>× <span style="color:#79c0ff;">24.9                          </span>= <span style="color:#79c0ff;">7.61E-4 </span>per year</pre></section><section class="s" id="s8"><div class="h"><div><b>Code</b> <small>3 lines</small></div><div class="a"><button data-c="c8">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/08-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c8">FC = FC_cmd <span style="color:#79c0ff;">350 000 </span>+ FC_affa <span style="color:#79c0ff;">0 </span>+ <span style="color:#79c0ff;">12 </span>days × <span style="color:#79c0ff;">180 000 </span>+ FC_inj <span style="color:#79c0ff;">0 </span>+ FC_environ <span style="color:#79c0ff;">250 000 </span>= <span style="color:#79c0ff;">2 760 000  </span>→  D
+Consequence area <span style="color:#79c0ff;">300 </span>m²  (<span style="color:#79c0ff;">929 </span>&gt; <span style="color:#79c0ff;">300 </span>&gt; <span style="color:#79c0ff;">92.9</span>)                                              →  C
+CoF category = worse of D <span style="color:#ff7b72;">and </span>C                                                          =  D</pre></section><section class="s" id="s9"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c9">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/09-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c9">Risk at the RBI date  = 7.61E-4 × 2 760 000              =  2 102 USD/y   cell 3D, medium-high
+Risk at the plan date = 3.06E-5 × 189.3 × 2 760 000      = 15 987 USD/y   cell 4D, HIGH
+Risk target 10 000 USD/y is crossed on                   = 2030-08-19     (monthly scan)
+Half the remaining life: 5.0 / 2 = 2.5 y from 2026-11-18 = 2029-05-14
+10-year cap from the last inspection 2026-04-14          = 2036-04-14
+Next inspection = earliest                               = 2029-05-14    (half remaining life governs)</pre></section><section class="s" id="s10"><div class="h"><div><b>Code</b> <small>16 lines</small></div><div class="a"><button data-c="c10">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/10-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c10">POST /maximo/api/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+properties: assetnum,assetmeter{metername,lastreading,lastreadingdate}
+
+{
+  &quot;assetmeter&quot;: [
+    {
+      &quot;metername&quot;: &quot;WALL-THK&quot;,
+      &quot;linearassetmeterid&quot;: 0,
+      &quot;newreading&quot;: &quot;12.8&quot;,
+      &quot;newreadingdate&quot;: &quot;2026-11-16T14:00:00&quot;,
+      &quot;inspector&quot;: &quot;WILSON&quot;
+    }
+  ]
+}</pre></section><section class="s" id="s11"><div class="h"><div><b>Code</b> <small>16 lines</small></div><div class="a"><button data-c="c11">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/11-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c11">{
+  <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;V-1101&quot;</span>,
+  <span style="color:#7ee787;">&quot;assetmeter&quot;</span>: [
+    {
+      <span style="color:#7ee787;">&quot;meterreading_collectionref&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-/int_assetmeter/0-390/meterreading&quot;</span>,
+      <span style="color:#7ee787;">&quot;_rowstamp&quot;</span>: <span style="color:#a5d6ff;">&quot;[0 0 0 0 0 44 9 3]&quot;</span>,
+      <span style="color:#7ee787;">&quot;lastreadingdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-16T14:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;localref&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-/int_assetmeter/0-390&quot;</span>,
+      <span style="color:#7ee787;">&quot;metername&quot;</span>: <span style="color:#a5d6ff;">&quot;WALL-THK&quot;</span>,
+      <span style="color:#7ee787;">&quot;measurement_collectionref&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-/int_assetmeter/0-390/measurement&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://childkey#QVNTRVQvQVNTRVRNRVRFUi9WLTExMDEvMC9XQUxMLVRISy9CRURGT1JE&quot;</span>,
+      <span style="color:#7ee787;">&quot;lastreading&quot;</span>: <span style="color:#a5d6ff;">&quot;12.8&quot;
+    </span>}
+  ],
+  <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxapiasset/_Vi0xMTAxL0JFREZPUkQ-&quot;
+</span>}</pre></section><section class="s" id="s12"><div class="h"><div><b>Code</b> <small>57 lines</small></div><div class="a"><button data-c="c12">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/12-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c12">POST /maximo/api/os/mxrbiassess?lean=1
+properties: assessnum,status,crst,corrrate,remlife,dftotal,dfplan,riskcellnow,riskcell,risk,finrisk,finriskplan,targetdate,nextinspdate,driver,inspeffreq,finriskmit,inspmethod
+
+{
+  &quot;assetnum&quot;: &quot;V-1101&quot;,
+  &quot;siteid&quot;: &quot;BEDFORD&quot;,
+  &quot;orgid&quot;: &quot;EAGLENA&quot;,
+  &quot;description&quot;: &quot;Crude feed separator - after Nov 2026 shutdown&quot;,
+  &quot;equiptype&quot;: &quot;VESSEL&quot;,
+  &quot;material&quot;: &quot;SA-516-70 carbon steel&quot;,
+  &quot;fluid&quot;: &quot;CRUDE&quot;,
+  &quot;installdate&quot;: &quot;2008-05-01T00:00:00&quot;,
+  &quot;assessdate&quot;: &quot;2026-11-18T00:00:00&quot;,
+  &quot;plandate&quot;: &quot;2031-11-18T00:00:00&quot;,
+  &quot;assessor&quot;: &quot;WILSON&quot;,
+  &quot;allowstress&quot;: 138,
+  &quot;yieldstr&quot;: 260,
+  &quot;tensilestr&quot;: 485,
+  &quot;jointeff&quot;: 1.0,
+  &quot;tmeter&quot;: &quot;WALL-THK&quot;,
+  &quot;tnom&quot;: 16,
+  &quot;tmin&quot;: 11.2,
+  &quot;crconf&quot;: &quot;MEDIUM&quot;,
+  &quot;thinnb&quot;: 1,
+  &quot;thinnc&quot;: 1,
+  &quot;lastinspdate&quot;: &quot;2026-11-16T00:00:00&quot;,
+  &quot;gff&quot;: 3.06e-05,
+  &quot;msscore&quot;: 500,
+  &quot;repaircost&quot;: 350000,
+  &quot;outagedays&quot;: 12,
+  &quot;lossperday&quot;: 180000,
+  &quot;envcost&quot;: 250000,
+  &quot;consarea&quot;: 300,
+  &quot;risktarget&quot;: 10000,
+  &quot;rbidamage&quot;: [
+    {
+      &quot;mechanism&quot;: &quot;CUI&quot;,
+      &quot;suscept&quot;: &quot;MEDIUM&quot;,
+      &quot;corrrate&quot;: 0.1,
+      &quot;startdate&quot;: &quot;2014-01-01T00:00:00&quot;,
+      &quot;nb&quot;: 1,
+      &quot;siteid&quot;: &quot;BEDFORD&quot;,
+      &quot;orgid&quot;: &quot;EAGLENA&quot;,
+      &quot;notes&quot;: &quot;Profile RT of the north side, cladding repaired Nov 2026 (effectiveness B)&quot;
+    },
+    {
+      &quot;mechanism&quot;: &quot;EXTCORR&quot;,
+      &quot;suscept&quot;: &quot;LOW&quot;,
+      &quot;corrrate&quot;: 0.02,
+      &quot;startdate&quot;: &quot;2008-05-01T00:00:00&quot;,
+      &quot;nc&quot;: 1,
+      &quot;siteid&quot;: &quot;BEDFORD&quot;,
+      &quot;orgid&quot;: &quot;EAGLENA&quot;,
+      &quot;notes&quot;: &quot;Painted skirt and supports, coastal atmosphere&quot;
+    }
+  ]
+}</pre></section><section class="s" id="s13"><div class="h"><div><b>Code</b> <small>24 lines</small></div><div class="a"><button data-c="c13">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/13-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c13">{
+  <span style="color:#7ee787;">&quot;corrrate&quot;</span>: <span style="color:#79c0ff;">0.173</span>,
+  <span style="color:#7ee787;">&quot;inspeffreq_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Poorly effective&quot;</span>,
+  <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Draft - being prepared&quot;</span>,
+  <span style="color:#7ee787;">&quot;remlife&quot;</span>: <span style="color:#79c0ff;">9.3</span>,
+  <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1011&quot;</span>,
+  <span style="color:#7ee787;">&quot;inspmethod&quot;</span>: <span style="color:#a5d6ff;">&quot;Strip damaged insulation; profile RT or pulsed eddy current (effectiveness D or better)&quot;</span>,
+  <span style="color:#7ee787;">&quot;finrisk&quot;</span>: <span style="color:#79c0ff;">738.6</span>,
+  <span style="color:#7ee787;">&quot;finriskmit&quot;</span>: <span style="color:#79c0ff;">3183.45</span>,
+  <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;3D&quot;</span>,
+  <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">4348.89</span>,
+  <span style="color:#7ee787;">&quot;driver&quot;</span>: <span style="color:#a5d6ff;">&quot;CUI&quot;</span>,
+  <span style="color:#7ee787;">&quot;inspeffreq&quot;</span>: <span style="color:#a5d6ff;">&quot;D&quot;</span>,
+  <span style="color:#7ee787;">&quot;dftotal&quot;</span>: <span style="color:#79c0ff;">8.7</span>,
+  <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Medium-high&quot;</span>,
+  <span style="color:#7ee787;">&quot;targetdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2034-12-18T00:00:00+00:00&quot;</span>,
+  <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;MEDHIGH&quot;</span>,
+  <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMTEvQkVERk9SRA--&quot;</span>,
+  <span style="color:#7ee787;">&quot;riskcellnow&quot;</span>: <span style="color:#a5d6ff;">&quot;2D&quot;</span>,
+  <span style="color:#7ee787;">&quot;dfplan&quot;</span>: <span style="color:#79c0ff;">51.5</span>,
+  <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2031-07-08T00:00:00+00:00&quot;</span>,
+  <span style="color:#7ee787;">&quot;crst&quot;</span>: <span style="color:#79c0ff;">0.169</span>,
+  <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;DRAFT&quot;
+</span>}</pre></section><section class="s" id="s14"><div class="h"><div><b>Code</b> <small>8 lines</small></div><div class="a"><button data-c="c14">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/14-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c14">POST /maximo/api/os/mxrbiassess/_UkJJLTEwMTEvQkVERk9SRA--?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+properties: assessnum,status
+
+{
+  &quot;status&quot;: &quot;APPR&quot;
+}</pre></section><section class="s" id="s15"><div class="h"><div><b>Code</b> <small>6 lines</small></div><div class="a"><button data-c="c15">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/15-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c15">{
+  <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Approved - drives the inspection plan&quot;</span>,
+  <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1011&quot;</span>,
+  <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMTEvQkVERk9SRA--&quot;</span>,
+  <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;APPR&quot;
+</span>}</pre></section><section class="s" id="s16"><div class="h"><div><b>Code</b> <small>1 lines</small></div><div class="a"><button data-c="c16">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/16-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c16">GET /maximo/api/os/mxrbiassess?lean=1&amp;oslc.select=assessnum,assetnum,status,riskcell,risk,finriskplan,nextinspdate,wonum&amp;oslc.orderBy=-assessnum&amp;oslc.pageSize=10</pre></section><section class="s" id="s17"><div class="h"><div><b>Code</b> <small>78 lines</small></div><div class="a"><button data-c="c17">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/17-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c17">{
+  <span style="color:#7ee787;">&quot;member&quot;</span>: [
+    {
+      <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;3D&quot;</span>,
+      <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Approved - drives the inspection plan&quot;</span>,
+      <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">4348.89</span>,
+      <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Medium-high&quot;</span>,
+      <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1011&quot;</span>,
+      <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;V-1101&quot;</span>,
+      <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;MEDHIGH&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMTEvQkVERk9SRA--&quot;</span>,
+      <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2031-07-08T00:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;APPR&quot;
+    </span>},
+    {
+      <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Superseded by a newer approved assessment&quot;</span>,
+      <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1009&quot;</span>,
+      <span style="color:#7ee787;">&quot;wonum&quot;</span>: <span style="color:#a5d6ff;">&quot;1386&quot;</span>,
+      <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;4D&quot;</span>,
+      <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">15987.08</span>,
+      <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;High&quot;</span>,
+      <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;V-1101&quot;</span>,
+      <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMDkvQkVERk9SRA--&quot;</span>,
+      <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2029-05-14T00:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;SUPERSEDED&quot;
+    </span>},
+    {
+      <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;2B&quot;</span>,
+      <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Draft - being prepared&quot;</span>,
+      <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">4.27</span>,
+      <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Low&quot;</span>,
+      <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1005&quot;</span>,
+      <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;T-1501&quot;</span>,
+      <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;LOW&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMDUvQkVERk9SRA--&quot;</span>,
+      <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2035-11-13T00:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;DRAFT&quot;
+    </span>},
+    {
+      <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;3D&quot;</span>,
+      <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Draft - being prepared&quot;</span>,
+      <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">1197.6</span>,
+      <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Medium-high&quot;</span>,
+      <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1004&quot;</span>,
+      <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;P-1401&quot;</span>,
+      <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;MEDHIGH&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMDQvQkVERk9SRA--&quot;</span>,
+      <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2035-06-24T00:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;DRAFT&quot;
+    </span>},
+    {
+      <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;1C&quot;</span>,
+      <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Draft - being prepared&quot;</span>,
+      <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">4.87</span>,
+      <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Low&quot;</span>,
+      <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1003&quot;</span>,
+      <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;E-1301&quot;</span>,
+      <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;LOW&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMDMvQkVERk9SRA--&quot;</span>,
+      <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2036-02-18T00:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;DRAFT&quot;
+    </span>},
+    {
+      <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Approved - drives the inspection plan&quot;</span>,
+      <span style="color:#7ee787;">&quot;assessnum&quot;</span>: <span style="color:#a5d6ff;">&quot;RBI-1002&quot;</span>,
+      <span style="color:#7ee787;">&quot;wonum&quot;</span>: <span style="color:#a5d6ff;">&quot;1387&quot;</span>,
+      <span style="color:#7ee787;">&quot;riskcell&quot;</span>: <span style="color:#a5d6ff;">&quot;4D&quot;</span>,
+      <span style="color:#7ee787;">&quot;finriskplan&quot;</span>: <span style="color:#79c0ff;">15357.37</span>,
+      <span style="color:#7ee787;">&quot;risk_description&quot;</span>: <span style="color:#a5d6ff;">&quot;High&quot;</span>,
+      <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;C-1201&quot;</span>,
+      <span style="color:#7ee787;">&quot;risk&quot;</span>: <span style="color:#a5d6ff;">&quot;HIGH&quot;</span>,
+      <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/oslc/os/mxrbiassess/_UkJJLTEwMDIvQkVERk9SRA--&quot;</span>,
+      <span style="color:#7ee787;">&quot;nextinspdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-18T00:00:00+00:00&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;APPR&quot;
+    </span>}
+  ]
+}</pre></section><section class="s" id="s18"><div class="h"><div><b>Code</b> <small>5 lines</small></div><div class="a"><button data-c="c18">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/18-snippet.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c18"><span style="color:#d2a8ff;">cd </span>/opt/IBM/SMP/maximo/tools/maximo/internal
+./runscriptfile.sh -cscript -frbi_01_schema
+./runscriptfile.sh -cscript -frbi_02_app
+./runscriptfile.sh -cscript -frbi_03_logic
+./runscriptfile.sh -cscript -frbi_04_api</pre></section><section class="s" id="s19"><div class="h"><div><b>Code</b> <small>167 lines</small></div><div class="a"><button data-c="c19">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/19-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c19"><span style="color:#8b949e;"># RBI calculation core, structured after API RP 581 (3rd edition) Part 1 and Part 2.
+# Pure functions only: this text is embedded in the RBI.CALC automation script (Jython 2.7)
+# and imported by the test harness (CPython 3), so keep it compatible with both.
+</span><span style="color:#ff7b72;">import </span>math
+
+<span style="color:#8b949e;"># ---- Standard constants -------------------------------------------------------------------------------
+# Values follow API RP 581 3rd edition (Part 2, thinning model; Part 1, risk categories).
+# VERIFY them against your licensed copy of API RP 581 before production use and keep them under change control.
+</span>DS = (<span style="color:#79c0ff;">1.0</span>, <span style="color:#79c0ff;">2.0</span>, <span style="color:#79c0ff;">4.0</span>)                       <span style="color:#8b949e;"># damage state factors: rate as measured, 2x, 4x
+</span>COV_DT, COV_SF, COV_P = <span style="color:#79c0ff;">0.20</span>, <span style="color:#79c0ff;">0.20</span>, <span style="color:#79c0ff;">0.05   </span><span style="color:#8b949e;"># coefficients of variation: thinning, flow stress, pressure
+</span>PRIOR = {<span style="color:#a5d6ff;">&quot;LOW&quot;</span>: (<span style="color:#79c0ff;">0.5</span>, <span style="color:#79c0ff;">0.3</span>, <span style="color:#79c0ff;">0.2</span>), <span style="color:#a5d6ff;">&quot;MEDIUM&quot;</span>: (<span style="color:#79c0ff;">0.7</span>, <span style="color:#79c0ff;">0.2</span>, <span style="color:#79c0ff;">0.1</span>), <span style="color:#a5d6ff;">&quot;HIGH&quot;</span>: (<span style="color:#79c0ff;">0.8</span>, <span style="color:#79c0ff;">0.15</span>, <span style="color:#79c0ff;">0.05</span>)}
+COND = {<span style="color:#a5d6ff;">&quot;A&quot;</span>: (<span style="color:#79c0ff;">0.9</span>, <span style="color:#79c0ff;">0.09</span>, <span style="color:#79c0ff;">0.01</span>), <span style="color:#a5d6ff;">&quot;B&quot;</span>: (<span style="color:#79c0ff;">0.7</span>, <span style="color:#79c0ff;">0.2</span>, <span style="color:#79c0ff;">0.1</span>), <span style="color:#a5d6ff;">&quot;C&quot;</span>: (<span style="color:#79c0ff;">0.5</span>, <span style="color:#79c0ff;">0.3</span>, <span style="color:#79c0ff;">0.2</span>), <span style="color:#a5d6ff;">&quot;D&quot;</span>: (<span style="color:#79c0ff;">0.4</span>, <span style="color:#79c0ff;">0.33</span>, <span style="color:#79c0ff;">0.27</span>)}
+NORM = <span style="color:#79c0ff;">1.56e-4                             </span><span style="color:#8b949e;"># thinning damage factor normalisation
+</span>POF_DF = (<span style="color:#79c0ff;">1.0</span>, <span style="color:#79c0ff;">10.0</span>, <span style="color:#79c0ff;">100.0</span>, <span style="color:#79c0ff;">1000.0</span>)        <span style="color:#8b949e;"># PoF category 1..5 upper limits on the damage factor
+</span>COF_FIN = (<span style="color:#79c0ff;">1e4</span>, <span style="color:#79c0ff;">1e5</span>, <span style="color:#79c0ff;">1e6</span>, <span style="color:#79c0ff;">1e7</span>)             <span style="color:#8b949e;"># CoF category A..E upper limits, financial (USD)
+</span>COF_AREA = (<span style="color:#79c0ff;">9.29</span>, <span style="color:#79c0ff;">92.9</span>, <span style="color:#79c0ff;">929.0</span>, <span style="color:#79c0ff;">9290.0</span>)     <span style="color:#8b949e;"># CoF category A..E upper limits, consequence area (m2) = 100..100000 ft2
+
+# ---- Screening values (company-configurable, not API tables) ------------------------------------------
+# API RP 581 gives mechanism-specific base damage factor tables for cracking, HTHA and fatigue.
+# These screening values stand in for them until you load the licensed tables.
+</span>SVI = {<span style="color:#a5d6ff;">&quot;HIGH&quot;</span>: <span style="color:#79c0ff;">50.0</span>, <span style="color:#a5d6ff;">&quot;MEDIUM&quot;</span>: <span style="color:#79c0ff;">10.0</span>, <span style="color:#a5d6ff;">&quot;LOW&quot;</span>: <span style="color:#79c0ff;">1.0</span>}           <span style="color:#8b949e;"># SCC severity index by susceptibility
+</span>BASE_OTHER = {<span style="color:#a5d6ff;">&quot;HIGH&quot;</span>: <span style="color:#79c0ff;">500.0</span>, <span style="color:#a5d6ff;">&quot;MEDIUM&quot;</span>: <span style="color:#79c0ff;">50.0</span>, <span style="color:#a5d6ff;">&quot;LOW&quot;</span>: <span style="color:#79c0ff;">5.0</span>}   <span style="color:#8b949e;"># HTHA / mechanical fatigue base damage factor
+</span>CREDIT = {<span style="color:#a5d6ff;">&quot;A&quot;</span>: <span style="color:#79c0ff;">0.1</span>, <span style="color:#a5d6ff;">&quot;B&quot;</span>: <span style="color:#79c0ff;">0.25</span>, <span style="color:#a5d6ff;">&quot;C&quot;</span>: <span style="color:#79c0ff;">0.5</span>, <span style="color:#a5d6ff;">&quot;D&quot;</span>: <span style="color:#79c0ff;">0.8</span>}          <span style="color:#8b949e;"># factor per past inspection, by effectiveness
+</span>MAX_INTERVAL = <span style="color:#79c0ff;">10.0                                          </span><span style="color:#8b949e;"># years, absolute cap on an inspection interval
+</span>RISK_LEVEL = ((<span style="color:#79c0ff;">4</span>, <span style="color:#a5d6ff;">&quot;LOW&quot;</span>), (<span style="color:#79c0ff;">6</span>, <span style="color:#a5d6ff;">&quot;MEDIUM&quot;</span>), (<span style="color:#79c0ff;">7</span>, <span style="color:#a5d6ff;">&quot;MEDHIGH&quot;</span>), (<span style="color:#79c0ff;">10</span>, <span style="color:#a5d6ff;">&quot;HIGH&quot;</span>))  <span style="color:#8b949e;"># matrix score = PoF cat + CoF index
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">_erf</span>(x):
+    <span style="color:#8b949e;"># Abramowitz-Stegun 7.1.26, |error| &lt; 1.5e-7; used when math.erf is missing (older Jython)
+    </span>t = <span style="color:#79c0ff;">1.0 </span>/ (<span style="color:#79c0ff;">1.0 </span>+ <span style="color:#79c0ff;">0.3275911 </span>* <span style="color:#d2a8ff;">abs</span>(x))
+    y = <span style="color:#79c0ff;">1.0 </span>- (((((<span style="color:#79c0ff;">1.061405429 </span>* t - <span style="color:#79c0ff;">1.453152027</span>) * t) + <span style="color:#79c0ff;">1.421413741</span>) * t - <span style="color:#79c0ff;">0.284496736</span>) * t + <span style="color:#79c0ff;">0.254829592</span>) * t * math.exp(-x * x)
+    <span style="color:#ff7b72;">return </span>y <span style="color:#ff7b72;">if </span>x &gt;= <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">else </span>-y
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">phi</span>(x):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Standard normal cumulative distribution.&quot;&quot;&quot;
+    </span>erf = <span style="color:#d2a8ff;">getattr</span>(math, <span style="color:#a5d6ff;">&quot;erf&quot;</span>, _erf)
+    <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">0.5 </span>* (<span style="color:#79c0ff;">1.0 </span>+ erf(x / math.sqrt(<span style="color:#79c0ff;">2.0</span>)))
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">posterior</span>(conf, counts):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Bayesian update of the damage-state priors with the inspections done (counts = dict A..D -&gt; n).&quot;&quot;&quot;
+    </span>pr = PRIOR.get(conf, PRIOR[<span style="color:#a5d6ff;">&quot;LOW&quot;</span>])
+    w = []
+    <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#79c0ff;">3</span>):
+        v = pr[i]
+        <span style="color:#ff7b72;">for </span>k <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;A&quot;</span>, <span style="color:#a5d6ff;">&quot;B&quot;</span>, <span style="color:#a5d6ff;">&quot;C&quot;</span>, <span style="color:#a5d6ff;">&quot;D&quot;</span>):
+            v *= COND[k][i] ** counts.get(k, <span style="color:#79c0ff;">0</span>)
+        w.append(v)
+    s = <span style="color:#d2a8ff;">sum</span>(w)
+    <span style="color:#ff7b72;">return </span>[x / s <span style="color:#ff7b72;">for </span>x <span style="color:#ff7b72;">in </span>w]
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">strength_ratio</span>(t_rdi, tmin, s_allow, joint, ys, ts):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;SR = (S*E / FS) * tmin / t_rdi with flow stress FS = (YS+TS)/2 * E * 1.1.&quot;&quot;&quot;
+    </span>fs = (ys + ts) / <span style="color:#79c0ff;">2.0 </span>* joint * <span style="color:#79c0ff;">1.1
+    </span><span style="color:#ff7b72;">return </span>(s_allow * joint / fs) * (tmin / t_rdi)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">df_thinning</span>(cr, age, t_rdi, sr, conf, counts):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Thinning damage factor: probability of failure over the three damage states, normalised.&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">if </span>cr &lt;= <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">or </span>t_rdi &lt;= <span style="color:#79c0ff;">0</span>:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">0.0</span>, <span style="color:#79c0ff;">0.0
+    </span>art = cr * age / t_rdi
+    post = posterior(conf, counts)
+    p = <span style="color:#79c0ff;">0.0
+    </span><span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#79c0ff;">3</span>):
+        d = DS[i]
+        num = <span style="color:#79c0ff;">1.0 </span>- d * art - sr
+        den = math.sqrt((d * art * COV_DT) ** <span style="color:#79c0ff;">2 </span>+ ((<span style="color:#79c0ff;">1.0 </span>- d * art) * COV_SF) ** <span style="color:#79c0ff;">2 </span>+ (sr * COV_P) ** <span style="color:#79c0ff;">2</span>)
+        p += post[i] * phi(-num / den)
+    <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">max</span>(p / NORM, <span style="color:#79c0ff;">0.1</span>), art
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">df_scc</span>(susc, age, counts):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Cracking: base from the severity index, reduced by inspections, grown with age^1.1.&quot;&quot;&quot;
+    </span>base = SVI.get(susc, <span style="color:#79c0ff;">0.0</span>)
+    <span style="color:#ff7b72;">for </span>k, n <span style="color:#ff7b72;">in </span>counts.items():
+        base *= CREDIT.get(k, <span style="color:#79c0ff;">1.0</span>) ** n
+    <span style="color:#ff7b72;">return </span>base * <span style="color:#d2a8ff;">max</span>(age, <span style="color:#79c0ff;">1.0</span>) ** <span style="color:#79c0ff;">1.1
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">df_other</span>(susc, counts):
+    base = BASE_OTHER.get(susc, <span style="color:#79c0ff;">0.0</span>)
+    <span style="color:#ff7b72;">for </span>k, n <span style="color:#ff7b72;">in </span>counts.items():
+        base *= CREDIT.get(k, <span style="color:#79c0ff;">1.0</span>) ** n
+    <span style="color:#ff7b72;">return </span>base
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">pof_category</span>(df):
+    <span style="color:#ff7b72;">for </span>i, lim <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(POF_DF):
+        <span style="color:#ff7b72;">if </span>df &lt;= lim:
+            <span style="color:#ff7b72;">return </span>i + <span style="color:#79c0ff;">1
+    </span><span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">5
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">cof_category</span>(value, limits):
+    <span style="color:#ff7b72;">for </span>i, lim <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(limits):
+        <span style="color:#ff7b72;">if </span>value &lt;= lim:
+            <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;ABCDE&quot;</span>[i]
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;E&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">risk_level</span>(pofcat, cofcat):
+    score = pofcat + <span style="color:#a5d6ff;">&quot;ABCDE&quot;</span>.index(cofcat) + <span style="color:#79c0ff;">1
+    </span><span style="color:#ff7b72;">for </span>lim, lvl <span style="color:#ff7b72;">in </span>RISK_LEVEL:
+        <span style="color:#ff7b72;">if </span>score &lt;= lim:
+            <span style="color:#ff7b72;">return </span>lvl
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;HIGH&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">fms</span>(score):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Management systems factor from the management systems evaluation score (0-1000).&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">10.0 </span>** (-<span style="color:#79c0ff;">0.02 </span>* (score / <span style="color:#79c0ff;">10.0</span>) + <span style="color:#79c0ff;">1.0</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">total_df</span>(eq, mechs, age_rd, extra=<span style="color:#79c0ff;">None</span>):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Damage factors at a time point.
+    eq: dict(cr, t_rdi, sr, conf, counts) for internal thinning; age_rd = years since the thickness reading.
+    mechs: list of dict(mech, susc, cr, age, counts); their &#x27;age&#x27; is already measured to the same time point.
+    extra: (mechanism, effectiveness) -&gt; one more inspection credited to that mechanism (mitigation case).
+    Combination rule (general thinning): max(internal, external/CUI) + cracking + HTHA + fatigue.&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">cnt</span>(c, mech):
+        c = <span style="color:#d2a8ff;">dict</span>(c)
+        <span style="color:#ff7b72;">if </span>extra <span style="color:#ff7b72;">and </span>extra[<span style="color:#79c0ff;">0</span>] == mech:
+            c[extra[<span style="color:#79c0ff;">1</span>]] = c.get(extra[<span style="color:#79c0ff;">1</span>], <span style="color:#79c0ff;">0</span>) + <span style="color:#79c0ff;">1
+        </span><span style="color:#ff7b72;">return </span>c
+    d_thin, art = df_thinning(eq[<span style="color:#a5d6ff;">&quot;cr&quot;</span>], age_rd, eq[<span style="color:#a5d6ff;">&quot;t_rdi&quot;</span>], eq[<span style="color:#a5d6ff;">&quot;sr&quot;</span>], eq[<span style="color:#a5d6ff;">&quot;conf&quot;</span>], cnt(eq[<span style="color:#a5d6ff;">&quot;counts&quot;</span>], <span style="color:#a5d6ff;">&quot;THINNING&quot;</span>))
+    rows, d_ext, d_scc, d_oth = [], <span style="color:#79c0ff;">0.0</span>, <span style="color:#79c0ff;">0.0</span>, <span style="color:#79c0ff;">0.0
+    </span><span style="color:#ff7b72;">for </span>m <span style="color:#ff7b72;">in </span>mechs:
+        c = cnt(m[<span style="color:#a5d6ff;">&quot;counts&quot;</span>], m[<span style="color:#a5d6ff;">&quot;mech&quot;</span>])
+        <span style="color:#ff7b72;">if </span>m[<span style="color:#a5d6ff;">&quot;mech&quot;</span>] <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;EXTCORR&quot;</span>, <span style="color:#a5d6ff;">&quot;CUI&quot;</span>):
+            d = df_thinning(m[<span style="color:#a5d6ff;">&quot;cr&quot;</span>], m[<span style="color:#a5d6ff;">&quot;age&quot;</span>], eq[<span style="color:#a5d6ff;">&quot;t_rdi&quot;</span>], eq[<span style="color:#a5d6ff;">&quot;sr&quot;</span>], <span style="color:#a5d6ff;">&quot;LOW&quot;</span>, c)[<span style="color:#79c0ff;">0</span>]
+            d_ext = <span style="color:#d2a8ff;">max</span>(d_ext, d)
+        <span style="color:#ff7b72;">elif </span>m[<span style="color:#a5d6ff;">&quot;mech&quot;</span>] == <span style="color:#a5d6ff;">&quot;SCC&quot;</span>:
+            d = df_scc(m[<span style="color:#a5d6ff;">&quot;susc&quot;</span>], m[<span style="color:#a5d6ff;">&quot;age&quot;</span>], c)
+            d_scc = <span style="color:#d2a8ff;">max</span>(d_scc, d)
+        <span style="color:#ff7b72;">else</span>:
+            d = df_other(m[<span style="color:#a5d6ff;">&quot;susc&quot;</span>], c)
+            d_oth += d
+        rows.append(d)
+    total = <span style="color:#d2a8ff;">max</span>(d_thin, d_ext) + d_scc + d_oth
+    <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">dict</span>(thin=d_thin, art=art, ext=d_ext, scc=d_scc, other=d_oth, total=total, rows=rows)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">plan</span>(eq, mechs, age_rd0, gff, fmsv, fc, target, plan_years, rl, since_insp):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Risk-target inspection planning on a monthly grid from the RBI date (t=0) to the plan date and beyond.
+    mechs carry age0 (their age at the RBI date). rl = remaining life at the RBI date (years);
+    since_insp = years from the last inspection to the RBI date.
+    Returns the inspection due time (years from the RBI date), what governs it, and the damage factors.&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">at</span>(t, extra=<span style="color:#79c0ff;">None</span>):
+        ms = [<span style="color:#d2a8ff;">dict</span>(m, age=m[<span style="color:#a5d6ff;">&quot;age0&quot;</span>] + t) <span style="color:#ff7b72;">for </span>m <span style="color:#ff7b72;">in </span>mechs]
+        <span style="color:#ff7b72;">return </span>total_df(eq, ms, age_rd0 + t, extra)
+    <span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">risk</span>(t, extra=<span style="color:#79c0ff;">None</span>):
+        <span style="color:#ff7b72;">return </span>gff * fmsv * at(t, extra)[<span style="color:#a5d6ff;">&quot;total&quot;</span>] * fc
+    t_target, t = <span style="color:#79c0ff;">None</span>, <span style="color:#79c0ff;">0.0
+    </span><span style="color:#ff7b72;">while </span>t &lt;= <span style="color:#79c0ff;">15.0</span>:
+        <span style="color:#ff7b72;">if </span>risk(t) &gt; target:
+            t_target = t
+            <span style="color:#ff7b72;">break
+        </span>t += <span style="color:#79c0ff;">1.0 </span>/ <span style="color:#79c0ff;">12.0
+    </span>cands = [(MAX_INTERVAL - since_insp, <span style="color:#a5d6ff;">&quot;maximum interval of %.0f y&quot; </span>% MAX_INTERVAL),
+             (rl / <span style="color:#79c0ff;">2.0</span>, <span style="color:#a5d6ff;">&quot;half the remaining life (API 510/570)&quot;</span>)]
+    <span style="color:#ff7b72;">if </span>t_target <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        cands.append((t_target, <span style="color:#a5d6ff;">&quot;risk target reached&quot;</span>))
+    due, why = <span style="color:#d2a8ff;">sorted</span>(cands, key=<span style="color:#ff7b72;">lambda </span>c: c[<span style="color:#79c0ff;">0</span>])[<span style="color:#79c0ff;">0</span>]
+    due = <span style="color:#d2a8ff;">max</span>(due, <span style="color:#79c0ff;">0.0</span>)
+    now, end = at(<span style="color:#79c0ff;">0.0</span>), at(plan_years)
+    drivers = [(<span style="color:#a5d6ff;">&quot;THINNING&quot;</span>, end[<span style="color:#a5d6ff;">&quot;thin&quot;</span>])] + [(m[<span style="color:#a5d6ff;">&quot;mech&quot;</span>], d) <span style="color:#ff7b72;">for </span>m, d <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">zip</span>(mechs, end[<span style="color:#a5d6ff;">&quot;rows&quot;</span>])]
+    driver = <span style="color:#d2a8ff;">sorted</span>(drivers, key=<span style="color:#ff7b72;">lambda </span>x: -x[<span style="color:#79c0ff;">1</span>])[<span style="color:#79c0ff;">0</span>][<span style="color:#79c0ff;">0</span>]
+    need, mit = <span style="color:#a5d6ff;">&quot;A&quot;</span>, <span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">for </span>eff <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;D&quot;</span>, <span style="color:#a5d6ff;">&quot;C&quot;</span>, <span style="color:#a5d6ff;">&quot;B&quot;</span>, <span style="color:#a5d6ff;">&quot;A&quot;</span>):
+        r = risk(plan_years, (driver, eff))
+        <span style="color:#ff7b72;">if </span>r &lt;= target:
+            need, mit = eff, r
+            <span style="color:#ff7b72;">break
+    if </span>mit <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        mit = risk(plan_years, (driver, <span style="color:#a5d6ff;">&quot;A&quot;</span>))
+    <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">dict</span>(now=now, end=end, risk_now=risk(<span style="color:#79c0ff;">0.0</span>), risk_plan=risk(plan_years), t_target=t_target, due=due,
+                why=why, driver=driver, need=need, risk_mit=mit)</pre></section><section class="s" id="s20"><div class="h"><div><b>Code</b> <small>157 lines</small></div><div class="a"><button data-c="c20">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/20-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c20"><span style="color:#8b949e;"># ---- Maximo glue: read the assessment, run the model above, write the results ----------------------------
+# Runs before every save of RBIASSESS (object launch point) and from Select Action &gt; Recalculate Risk.
+</span><span style="color:#ff7b72;">from </span>psdi.mbo <span style="color:#ff7b72;">import </span>MboConstants
+<span style="color:#ff7b72;">from </span>java.util <span style="color:#ff7b72;">import </span>Date, Calendar
+
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+YEAR_MS = <span style="color:#79c0ff;">365.25 </span>* <span style="color:#79c0ff;">24 </span>* <span style="color:#79c0ff;">3600 </span>* <span style="color:#79c0ff;">1000.0
+</span>METHOD = {<span style="color:#a5d6ff;">&quot;THINNING&quot;</span>: <span style="color:#a5d6ff;">&quot;UT thickness survey at all TMLs plus scanning of low points&quot;</span>,
+          <span style="color:#a5d6ff;">&quot;EXTCORR&quot;</span>: <span style="color:#a5d6ff;">&quot;External visual inspection with spot UT at supports&quot;</span>,
+          <span style="color:#a5d6ff;">&quot;CUI&quot;</span>: <span style="color:#a5d6ff;">&quot;Strip damaged insulation; profile RT or pulsed eddy current&quot;</span>,
+          <span style="color:#a5d6ff;">&quot;SCC&quot;</span>: <span style="color:#a5d6ff;">&quot;Wet fluorescent MT or TOFD at welds and nozzles&quot;</span>,
+          <span style="color:#a5d6ff;">&quot;HTHA&quot;</span>: <span style="color:#a5d6ff;">&quot;Phased-array UT and TOFD of welds for HTHA&quot;</span>,
+          <span style="color:#a5d6ff;">&quot;FATIGUE&quot;</span>: <span style="color:#a5d6ff;">&quot;MT/PT at small-bore connections plus vibration survey&quot;</span>}
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">years</span>(d1, d2):
+    <span style="color:#ff7b72;">return </span>(d2.getTime() - d1.getTime()) / YEAR_MS
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">add_years</span>(d, y):
+    cal = Calendar.getInstance()
+    cal.setTime(d)
+    cal.add(Calendar.DAY_OF_YEAR, <span style="color:#d2a8ff;">int</span>(<span style="color:#d2a8ff;">round</span>(y * <span style="color:#79c0ff;">365.25</span>)))
+    <span style="color:#ff7b72;">return </span>cal.getTime()
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">setv</span>(o, attr, val):
+    <span style="color:#ff7b72;">if </span>val <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        o.setValueNull(attr, F)
+    <span style="color:#ff7b72;">else</span>:
+        o.setValue(attr, val, F)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">counts</span>(o, attrs):
+    <span style="color:#ff7b72;">return </span><span style="color:#d2a8ff;">dict</span>((k, o.getInt(a)) <span style="color:#ff7b72;">for </span>k, a <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">zip</span>((<span style="color:#a5d6ff;">&quot;A&quot;</span>, <span style="color:#a5d6ff;">&quot;B&quot;</span>, <span style="color:#a5d6ff;">&quot;C&quot;</span>, <span style="color:#a5d6ff;">&quot;D&quot;</span>), attrs))
+
+<span style="color:#8b949e;"># Approved and superseded assessments are frozen records (API RP 580: the approved basis stays as approved).
+# The calculation runs on drafts, and once more on the save that approves the assessment.
+</span>_st = mbo.getString(<span style="color:#a5d6ff;">&quot;STATUS&quot;</span>)
+_frozen = _st == <span style="color:#a5d6ff;">&quot;SUPERSEDED&quot; </span><span style="color:#ff7b72;">or </span>(_st == <span style="color:#a5d6ff;">&quot;APPR&quot; </span><span style="color:#ff7b72;">and not </span>mbo.isModified(<span style="color:#a5d6ff;">&quot;STATUS&quot;</span>))
+<span style="color:#ff7b72;">if </span>_frozen <span style="color:#ff7b72;">and </span>launchPoint == <span style="color:#a5d6ff;">&quot;RBICALC&quot;</span>:
+    service.error(<span style="color:#a5d6ff;">&quot;rbi&quot;</span>, <span style="color:#a5d6ff;">&quot;frozen&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">_run</span>():
+    a = mbo
+    <span style="color:#ff7b72;">if </span>a.isNull(<span style="color:#a5d6ff;">&quot;ASSESSDATE&quot;</span>):
+        setv(a, <span style="color:#a5d6ff;">&quot;ASSESSDATE&quot;</span>, Date())
+    rbi = a.getDate(<span style="color:#a5d6ff;">&quot;ASSESSDATE&quot;</span>)
+    <span style="color:#ff7b72;">if </span>a.isNull(<span style="color:#a5d6ff;">&quot;PLANDATE&quot;</span>):
+        setv(a, <span style="color:#a5d6ff;">&quot;PLANDATE&quot;</span>, add_years(rbi, <span style="color:#79c0ff;">5.0</span>))
+    plan_y = <span style="color:#d2a8ff;">max</span>(years(rbi, a.getDate(<span style="color:#a5d6ff;">&quot;PLANDATE&quot;</span>)), <span style="color:#79c0ff;">0.0</span>)
+    tnom = a.getDouble(<span style="color:#a5d6ff;">&quot;TNOM&quot;</span>)
+    tmin = a.getDouble(<span style="color:#a5d6ff;">&quot;TMIN&quot;</span>)
+    inst = a.getDate(<span style="color:#a5d6ff;">&quot;INSTALLDATE&quot;</span>)
+    notes = []
+
+    <span style="color:#8b949e;"># 1. thickness history up to the RBI date, oldest first (gauge meter readings are MEASUREMENT rows)
+    </span>pts = []
+    rs = a.getMboSet(<span style="color:#a5d6ff;">&quot;$rbithk&quot;</span>, <span style="color:#a5d6ff;">&quot;MEASUREMENT&quot;</span>, <span style="color:#a5d6ff;">&quot;assetnum=:assetnum and siteid=:siteid and metername=:tmeter&quot;</span>)
+    rs.setOrderBy(<span style="color:#a5d6ff;">&quot;measuredate&quot;</span>)
+    rs.reset()
+    r = rs.moveFirst()
+    <span style="color:#ff7b72;">while </span>r <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        d = r.getDate(<span style="color:#a5d6ff;">&quot;MEASUREDATE&quot;</span>)
+        <span style="color:#ff7b72;">if </span>d <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and not </span>r.isNull(<span style="color:#a5d6ff;">&quot;MEASUREMENTVALUE&quot;</span>) <span style="color:#ff7b72;">and not </span>d.after(rbi):
+            pts.append((d, r.getDouble(<span style="color:#a5d6ff;">&quot;MEASUREMENTVALUE&quot;</span>)))
+        r = rs.moveNext()
+    setv(a, <span style="color:#a5d6ff;">&quot;NUMREADINGS&quot;</span>, <span style="color:#d2a8ff;">len</span>(pts))
+
+    <span style="color:#8b949e;"># 2. corrosion rates: long-term from nominal, short-term from the last two readings; the higher one governs
+    </span>crlt, crst = <span style="color:#79c0ff;">0.0</span>, <span style="color:#79c0ff;">0.0
+    </span><span style="color:#ff7b72;">if </span>pts:
+        dlast, tlast = pts[-<span style="color:#79c0ff;">1</span>]
+        <span style="color:#ff7b72;">if </span>inst <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span>years(inst, dlast) &gt; <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">and </span>tnom &gt; <span style="color:#79c0ff;">0</span>:
+            crlt = (tnom - tlast) / years(inst, dlast)
+        <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(pts) &gt; <span style="color:#79c0ff;">1 </span><span style="color:#ff7b72;">and </span>years(pts[-<span style="color:#79c0ff;">2</span>][<span style="color:#79c0ff;">0</span>], dlast) &gt; <span style="color:#79c0ff;">0</span>:
+            crst = (pts[-<span style="color:#79c0ff;">2</span>][<span style="color:#79c0ff;">1</span>] - tlast) / years(pts[-<span style="color:#79c0ff;">2</span>][<span style="color:#79c0ff;">0</span>], dlast)
+        setv(a, <span style="color:#a5d6ff;">&quot;TLAST&quot;</span>, tlast)
+        setv(a, <span style="color:#a5d6ff;">&quot;LASTREADDATE&quot;</span>, dlast)
+        <span style="color:#ff7b72;">if </span>a.isNull(<span style="color:#a5d6ff;">&quot;LASTINSPDATE&quot;</span>):
+            setv(a, <span style="color:#a5d6ff;">&quot;LASTINSPDATE&quot;</span>, dlast)
+    <span style="color:#ff7b72;">else</span>:
+        dlast, tlast = (inst <span style="color:#ff7b72;">or </span>rbi), tnom
+        setv(a, <span style="color:#a5d6ff;">&quot;TLAST&quot;</span>, <span style="color:#79c0ff;">None</span>)
+        setv(a, <span style="color:#a5d6ff;">&quot;LASTREADDATE&quot;</span>, <span style="color:#79c0ff;">None</span>)
+        notes.append(<span style="color:#a5d6ff;">&quot;No thickness readings: nominal thickness used.&quot;</span>)
+    cr = <span style="color:#d2a8ff;">max</span>(crlt, crst, <span style="color:#79c0ff;">0.0</span>)
+    age_rd0 = <span style="color:#d2a8ff;">max</span>(years(dlast, rbi), <span style="color:#79c0ff;">0.0</span>)
+    ttoday = tlast - cr * age_rd0
+    rl = <span style="color:#79c0ff;">99.0 </span><span style="color:#ff7b72;">if </span>cr &lt;= <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">else </span><span style="color:#d2a8ff;">max</span>(<span style="color:#79c0ff;">0.0</span>, <span style="color:#d2a8ff;">min</span>(<span style="color:#79c0ff;">99.0</span>, (ttoday - tmin) / cr))
+    <span style="color:#ff7b72;">for </span>k, v <span style="color:#ff7b72;">in </span>((<span style="color:#a5d6ff;">&quot;CRLT&quot;</span>, <span style="color:#d2a8ff;">round</span>(crlt, <span style="color:#79c0ff;">3</span>)), (<span style="color:#a5d6ff;">&quot;CRST&quot;</span>, <span style="color:#d2a8ff;">round</span>(crst, <span style="color:#79c0ff;">3</span>)), (<span style="color:#a5d6ff;">&quot;CORRRATE&quot;</span>, <span style="color:#d2a8ff;">round</span>(cr, <span style="color:#79c0ff;">3</span>)),
+                 (<span style="color:#a5d6ff;">&quot;TTODAY&quot;</span>, <span style="color:#d2a8ff;">round</span>(ttoday, <span style="color:#79c0ff;">2</span>)), (<span style="color:#a5d6ff;">&quot;REMLIFE&quot;</span>, <span style="color:#d2a8ff;">round</span>(rl, <span style="color:#79c0ff;">1</span>))):
+        setv(a, k, v)
+
+    <span style="color:#8b949e;"># 3. strength ratio from the design data (conservative S*E/FS = 1 when design data is missing)
+    </span>s_allow, ys, ts, joint = a.getDouble(<span style="color:#a5d6ff;">&quot;ALLOWSTRESS&quot;</span>), a.getDouble(<span style="color:#a5d6ff;">&quot;YIELDSTR&quot;</span>), a.getDouble(<span style="color:#a5d6ff;">&quot;TENSILESTR&quot;</span>), a.getDouble(<span style="color:#a5d6ff;">&quot;JOINTEFF&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#79c0ff;">1.0
+    </span><span style="color:#ff7b72;">if </span>s_allow &gt; <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">and </span>ys &gt; <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">and </span>ts &gt; <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">and </span>tlast &gt; <span style="color:#79c0ff;">0</span>:
+        sr = strength_ratio(tlast, tmin, s_allow, joint, ys, ts)
+    <span style="color:#ff7b72;">else</span>:
+        sr = tmin / tlast <span style="color:#ff7b72;">if </span>tlast &gt; <span style="color:#79c0ff;">0 </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">1.0
+        </span>notes.append(<span style="color:#a5d6ff;">&quot;Design stresses missing: SR = tmin / t_rdi.&quot;</span>)
+    setv(a, <span style="color:#a5d6ff;">&quot;SR&quot;</span>, <span style="color:#d2a8ff;">round</span>(sr, <span style="color:#79c0ff;">3</span>))
+
+    <span style="color:#8b949e;"># 4. damage mechanisms
+    </span>eq = <span style="color:#d2a8ff;">dict</span>(cr=cr, t_rdi=tlast, sr=sr, conf=a.getString(<span style="color:#a5d6ff;">&quot;CRCONF&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;LOW&quot;</span>,
+              counts=counts(a, (<span style="color:#a5d6ff;">&quot;THINNA&quot;</span>, <span style="color:#a5d6ff;">&quot;THINNB&quot;</span>, <span style="color:#a5d6ff;">&quot;THINNC&quot;</span>, <span style="color:#a5d6ff;">&quot;THINND&quot;</span>)))
+    mechs, rows = [], []
+    dm = a.getMboSet(<span style="color:#a5d6ff;">&quot;DAMAGE&quot;</span>)
+    d = dm.moveFirst()
+    <span style="color:#ff7b72;">while </span>d <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+        <span style="color:#ff7b72;">if not </span>d.toBeDeleted():
+            start = d.getDate(<span style="color:#a5d6ff;">&quot;STARTDATE&quot;</span>) <span style="color:#ff7b72;">or </span>inst <span style="color:#ff7b72;">or </span>rbi
+            mechs.append(<span style="color:#d2a8ff;">dict</span>(mech=d.getString(<span style="color:#a5d6ff;">&quot;MECHANISM&quot;</span>), susc=d.getString(<span style="color:#a5d6ff;">&quot;SUSCEPT&quot;</span>), cr=d.getDouble(<span style="color:#a5d6ff;">&quot;CORRRATE&quot;</span>),
+                              age0=<span style="color:#d2a8ff;">max</span>(years(start, rbi), <span style="color:#79c0ff;">0.0</span>), counts=counts(d, (<span style="color:#a5d6ff;">&quot;NA&quot;</span>, <span style="color:#a5d6ff;">&quot;NB&quot;</span>, <span style="color:#a5d6ff;">&quot;NC&quot;</span>, <span style="color:#a5d6ff;">&quot;ND&quot;</span>))))
+            rows.append(d)
+        d = dm.moveNext()
+
+    <span style="color:#8b949e;"># 5. probability, consequence, risk and the inspection plan
+    </span>gff = a.getDouble(<span style="color:#a5d6ff;">&quot;GFF&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#79c0ff;">3.06e-5
+    </span>fmsv = fms(a.getInt(<span style="color:#a5d6ff;">&quot;MSSCORE&quot;</span>))
+    fc = (a.getDouble(<span style="color:#a5d6ff;">&quot;REPAIRCOST&quot;</span>) + a.getDouble(<span style="color:#a5d6ff;">&quot;AFFACOST&quot;</span>) + a.getDouble(<span style="color:#a5d6ff;">&quot;OUTAGEDAYS&quot;</span>) * a.getDouble(<span style="color:#a5d6ff;">&quot;LOSSPERDAY&quot;</span>)
+          + a.getDouble(<span style="color:#a5d6ff;">&quot;INJCOST&quot;</span>) + a.getDouble(<span style="color:#a5d6ff;">&quot;ENVCOST&quot;</span>))
+    target = a.getDouble(<span style="color:#a5d6ff;">&quot;RISKTARGET&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#79c0ff;">10000.0
+    </span>last_insp = a.getDate(<span style="color:#a5d6ff;">&quot;LASTINSPDATE&quot;</span>) <span style="color:#ff7b72;">or </span>dlast
+    p = plan(eq, mechs, age_rd0, gff, fmsv, fc, target, plan_y, rl, <span style="color:#d2a8ff;">max</span>(years(last_insp, rbi), <span style="color:#79c0ff;">0.0</span>))
+    now, end = p[<span style="color:#a5d6ff;">&quot;now&quot;</span>], p[<span style="color:#a5d6ff;">&quot;end&quot;</span>]
+    <span style="color:#ff7b72;">for </span>row, dnow, dend <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">zip</span>(rows, now[<span style="color:#a5d6ff;">&quot;rows&quot;</span>], end[<span style="color:#a5d6ff;">&quot;rows&quot;</span>]):
+        setv(row, <span style="color:#a5d6ff;">&quot;DF&quot;</span>, <span style="color:#d2a8ff;">round</span>(dnow, <span style="color:#79c0ff;">1</span>))
+        setv(row, <span style="color:#a5d6ff;">&quot;DFPLAN&quot;</span>, <span style="color:#d2a8ff;">round</span>(dend, <span style="color:#79c0ff;">1</span>))
+        setv(row, <span style="color:#a5d6ff;">&quot;RECMETHOD&quot;</span>, METHOD.get(row.getString(<span style="color:#a5d6ff;">&quot;MECHANISM&quot;</span>), <span style="color:#a5d6ff;">&quot;&quot;</span>))
+    pc_now, pc_end = pof_category(now[<span style="color:#a5d6ff;">&quot;total&quot;</span>]), pof_category(end[<span style="color:#a5d6ff;">&quot;total&quot;</span>])
+    cfin, carea = cof_category(fc, COF_FIN), cof_category(a.getDouble(<span style="color:#a5d6ff;">&quot;CONSAREA&quot;</span>), COF_AREA)
+    cof = <span style="color:#d2a8ff;">max</span>(cfin, carea)
+    <span style="color:#ff7b72;">for </span>k, v <span style="color:#ff7b72;">in </span>((<span style="color:#a5d6ff;">&quot;ART&quot;</span>, <span style="color:#d2a8ff;">round</span>(now[<span style="color:#a5d6ff;">&quot;art&quot;</span>], <span style="color:#79c0ff;">4</span>)), (<span style="color:#a5d6ff;">&quot;FMS&quot;</span>, <span style="color:#d2a8ff;">round</span>(fmsv, <span style="color:#79c0ff;">3</span>)), (<span style="color:#a5d6ff;">&quot;DFTHIN&quot;</span>, <span style="color:#d2a8ff;">round</span>(now[<span style="color:#a5d6ff;">&quot;thin&quot;</span>], <span style="color:#79c0ff;">1</span>)),
+                 (<span style="color:#a5d6ff;">&quot;DFEXT&quot;</span>, <span style="color:#d2a8ff;">round</span>(now[<span style="color:#a5d6ff;">&quot;ext&quot;</span>], <span style="color:#79c0ff;">1</span>)), (<span style="color:#a5d6ff;">&quot;DFSCC&quot;</span>, <span style="color:#d2a8ff;">round</span>(now[<span style="color:#a5d6ff;">&quot;scc&quot;</span>], <span style="color:#79c0ff;">1</span>)), (<span style="color:#a5d6ff;">&quot;DFOTHER&quot;</span>, <span style="color:#d2a8ff;">round</span>(now[<span style="color:#a5d6ff;">&quot;other&quot;</span>], <span style="color:#79c0ff;">1</span>)),
+                 (<span style="color:#a5d6ff;">&quot;DFTOTAL&quot;</span>, <span style="color:#d2a8ff;">round</span>(now[<span style="color:#a5d6ff;">&quot;total&quot;</span>], <span style="color:#79c0ff;">1</span>)), (<span style="color:#a5d6ff;">&quot;POF&quot;</span>, gff * fmsv * now[<span style="color:#a5d6ff;">&quot;total&quot;</span>]), (<span style="color:#a5d6ff;">&quot;POFCATNOW&quot;</span>, pc_now),
+                 (<span style="color:#a5d6ff;">&quot;DFPLAN&quot;</span>, <span style="color:#d2a8ff;">round</span>(end[<span style="color:#a5d6ff;">&quot;total&quot;</span>], <span style="color:#79c0ff;">1</span>)), (<span style="color:#a5d6ff;">&quot;POFCAT&quot;</span>, pc_end), (<span style="color:#a5d6ff;">&quot;COFCOST&quot;</span>, <span style="color:#d2a8ff;">round</span>(fc, <span style="color:#79c0ff;">2</span>)), (<span style="color:#a5d6ff;">&quot;COFFIN&quot;</span>, cfin),
+                 (<span style="color:#a5d6ff;">&quot;COFAREA&quot;</span>, carea), (<span style="color:#a5d6ff;">&quot;COFCAT&quot;</span>, cof), (<span style="color:#a5d6ff;">&quot;FINRISK&quot;</span>, <span style="color:#d2a8ff;">round</span>(p[<span style="color:#a5d6ff;">&quot;risk_now&quot;</span>], <span style="color:#79c0ff;">2</span>)),
+                 (<span style="color:#a5d6ff;">&quot;RISKCELLNOW&quot;</span>, <span style="color:#a5d6ff;">&quot;%d%s&quot; </span>% (pc_now, cof)), (<span style="color:#a5d6ff;">&quot;FINRISKPLAN&quot;</span>, <span style="color:#d2a8ff;">round</span>(p[<span style="color:#a5d6ff;">&quot;risk_plan&quot;</span>], <span style="color:#79c0ff;">2</span>)),
+                 (<span style="color:#a5d6ff;">&quot;RISKCELL&quot;</span>, <span style="color:#a5d6ff;">&quot;%d%s&quot; </span>% (pc_end, cof)), (<span style="color:#a5d6ff;">&quot;RISK&quot;</span>, risk_level(pc_end, cof)), (<span style="color:#a5d6ff;">&quot;DRIVER&quot;</span>, p[<span style="color:#a5d6ff;">&quot;driver&quot;</span>]),
+                 (<span style="color:#a5d6ff;">&quot;INSPEFFREQ&quot;</span>, p[<span style="color:#a5d6ff;">&quot;need&quot;</span>]), (<span style="color:#a5d6ff;">&quot;FINRISKMIT&quot;</span>, <span style="color:#d2a8ff;">round</span>(p[<span style="color:#a5d6ff;">&quot;risk_mit&quot;</span>], <span style="color:#79c0ff;">2</span>)),
+                 (<span style="color:#a5d6ff;">&quot;INSPMETHOD&quot;</span>, (METHOD.get(p[<span style="color:#a5d6ff;">&quot;driver&quot;</span>], <span style="color:#a5d6ff;">&quot;&quot;</span>) + <span style="color:#a5d6ff;">&quot; (effectiveness %s or better)&quot; </span>% p[<span style="color:#a5d6ff;">&quot;need&quot;</span>])[:<span style="color:#79c0ff;">100</span>])):
+        setv(a, k, v)
+    setv(a, <span style="color:#a5d6ff;">&quot;TARGETDATE&quot;</span>, add_years(rbi, p[<span style="color:#a5d6ff;">&quot;t_target&quot;</span>]) <span style="color:#ff7b72;">if </span>p[<span style="color:#a5d6ff;">&quot;t_target&quot;</span>] <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">None</span>)
+    nxt = add_years(rbi, p[<span style="color:#a5d6ff;">&quot;due&quot;</span>])
+    setv(a, <span style="color:#a5d6ff;">&quot;NEXTINSPDATE&quot;</span>, nxt)
+    setv(a, <span style="color:#a5d6ff;">&quot;INSPINTERVAL&quot;</span>, <span style="color:#d2a8ff;">round</span>(<span style="color:#d2a8ff;">max</span>(years(last_insp, nxt), <span style="color:#79c0ff;">0.0</span>), <span style="color:#79c0ff;">1</span>))
+
+    note = (<span style="color:#a5d6ff;">&quot;Thinning: Cr = max(LT %.3f, ST %.3f) = %.3f mm/y, t_rdi %.2f mm, Art %.4f, SR %.3f, confidence %s, &quot;
+            &quot;remaining life %.1f y. Df now: thin %.1f, ext/CUI %.1f, cracking %.1f, HTHA/fatigue %.1f -&gt; total %.1f &quot;
+            &quot;(PoF cat %d); at plan date %.1f (cat %d). FMS %.3f, PoF %.2e /y. FC %.0f USD (%s), area %.0f m2 (%s) -&gt; CoF %s. &quot;
+            &quot;Risk %.0f USD/y now, %.0f at plan date vs target %.0f. Inspection due in %.1f y (%s); &quot;
+            &quot;%s inspection of effectiveness %s brings plan-date risk to %.0f USD/y. %s&quot;
+            </span>% (crlt, crst, cr, tlast, now[<span style="color:#a5d6ff;">&quot;art&quot;</span>], sr, eq[<span style="color:#a5d6ff;">&quot;conf&quot;</span>], rl, now[<span style="color:#a5d6ff;">&quot;thin&quot;</span>], now[<span style="color:#a5d6ff;">&quot;ext&quot;</span>], now[<span style="color:#a5d6ff;">&quot;scc&quot;</span>], now[<span style="color:#a5d6ff;">&quot;other&quot;</span>],
+               now[<span style="color:#a5d6ff;">&quot;total&quot;</span>], pc_now, end[<span style="color:#a5d6ff;">&quot;total&quot;</span>], pc_end, fmsv, gff * fmsv * now[<span style="color:#a5d6ff;">&quot;total&quot;</span>], fc, cfin,
+               a.getDouble(<span style="color:#a5d6ff;">&quot;CONSAREA&quot;</span>), carea, cof, p[<span style="color:#a5d6ff;">&quot;risk_now&quot;</span>], p[<span style="color:#a5d6ff;">&quot;risk_plan&quot;</span>], target, p[<span style="color:#a5d6ff;">&quot;due&quot;</span>], p[<span style="color:#a5d6ff;">&quot;why&quot;</span>],
+               p[<span style="color:#a5d6ff;">&quot;driver&quot;</span>], p[<span style="color:#a5d6ff;">&quot;need&quot;</span>], p[<span style="color:#a5d6ff;">&quot;risk_mit&quot;</span>], <span style="color:#a5d6ff;">&quot; &quot;</span>.join(notes)))
+    setv(a, <span style="color:#a5d6ff;">&quot;CALCNOTE&quot;</span>, note[:<span style="color:#79c0ff;">1000</span>])
+
+<span style="color:#ff7b72;">if not </span>_frozen:
+    _run()</pre></section><section class="s" id="s21"><div class="h"><div><b>Code</b> <small>12 lines</small></div><div class="a"><button data-c="c21">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/21-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c21"># RBI.APPROVE - when an assessment is approved, older approved assessments of the same asset are superseded.
+from psdi.mbo import MboConstants
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+if mbo.getString(&quot;STATUS&quot;) == &quot;APPR&quot;:
+    if mbo.getDouble(&quot;TMIN&quot;) &lt;= 0 or mbo.getDouble(&quot;TNOM&quot;) &lt;= mbo.getDouble(&quot;TMIN&quot;):
+        service.error(&quot;rbi&quot;, &quot;needthickness&quot;)
+    old = mbo.getMboSet(&quot;$rbiold&quot;, &quot;RBIASSESS&quot;,
+                        &quot;assetnum=:assetnum and siteid=:siteid and status=&#x27;APPR&#x27; and assessnum&lt;&gt;:assessnum&quot;)
+    o = old.moveFirst()
+    while o is not None:
+        o.setValue(&quot;STATUS&quot;, &quot;SUPERSEDED&quot;, F)
+        o = old.moveNext()</pre></section><section class="s" id="s22"><div class="h"><div><b>Code</b> <small>23 lines</small></div><div class="a"><button data-c="c22">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/22-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c22"># RBI.CREATEWO - create the inspection work order the approved assessment asks for.
+# Runs from Select Action &gt; Create Inspection Work Order and from the RBIDUE escalation.
+from psdi.mbo import MboConstants
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+a = mbo
+if a.getString(&quot;STATUS&quot;) != &quot;APPR&quot;:
+    service.error(&quot;rbi&quot;, &quot;notapproved&quot;)
+if not a.isNull(&quot;WONUM&quot;):
+    service.error(&quot;rbi&quot;, &quot;woexists&quot;, [a.getString(&quot;WONUM&quot;)])
+prio = {&quot;HIGH&quot;: 1, &quot;MEDHIGH&quot;: 2, &quot;MEDIUM&quot;: 3, &quot;LOW&quot;: 4}.get(a.getString(&quot;RISK&quot;), 3)
+wos = a.getMboSet(&quot;$rbinewwo&quot;, &quot;WORKORDER&quot;, &quot;1=0&quot;)
+wo = wos.add()
+wo.setValue(&quot;SITEID&quot;, a.getString(&quot;SITEID&quot;), F)
+wo.setValue(&quot;ASSETNUM&quot;, a.getString(&quot;ASSETNUM&quot;))
+wo.setValue(&quot;WORKTYPE&quot;, &quot;INSP&quot;)
+wo.setValue(&quot;DESCRIPTION&quot;, (&quot;RBI %s: %s&quot; % (a.getString(&quot;ASSETNUM&quot;), a.getString(&quot;INSPMETHOD&quot;)))[:100])
+wo.setValue(&quot;WOPRIORITY&quot;, prio)
+wo.setValue(&quot;TARGSTARTDATE&quot;, a.getDate(&quot;NEXTINSPDATE&quot;))
+wo.setValue(&quot;DESCRIPTION_LONGDESCRIPTION&quot;,
+            &quot;Raised by RBI assessment %s (risk %s %s, driver %s).\n\n%s&quot;
+            % (a.getString(&quot;ASSESSNUM&quot;), a.getString(&quot;RISKCELL&quot;), a.getString(&quot;RISK&quot;), a.getString(&quot;DRIVER&quot;),
+               a.getString(&quot;CALCNOTE&quot;)))
+a.setValue(&quot;WONUM&quot;, wo.getString(&quot;WONUM&quot;), F)</pre></section><section class="s" id="s23"><div class="h"><div><b>Code</b> <small>7 lines</small></div><div class="a"><button data-c="c23">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/risk-based-inspection-in-maximo-manage/23-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c23"># RBI.DAMAGEINIT - a damage mechanism row added on the screen takes its keys from the assessment.
+from psdi.mbo import MboConstants
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+o = mbo.getOwner()
+if mbo.toBeAdded() and o is not None and o.getName() == &quot;RBIASSESS&quot;:
+    for k in (&quot;ASSESSNUM&quot;, &quot;SITEID&quot;, &quot;ORGID&quot;):
+        mbo.setValue(k, o.getString(k), F)</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

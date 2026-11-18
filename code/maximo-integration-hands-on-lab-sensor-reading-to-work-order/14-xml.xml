@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SyncMXASSET xmlns="http://www.ibm.com/maximo">
+  <MXASSETSet>
+    <ASSET>
+      <ASSETNUM>PUMP-002</ASSETNUM>
+      <DESCRIPTION>Cooling water pump 2 (sent by the ERP)</DESCRIPTION>
+      <SITEID>BEDFORD</SITEID>
+    </ASSET>
+  </MXASSETSet>
+</SyncMXASSET>

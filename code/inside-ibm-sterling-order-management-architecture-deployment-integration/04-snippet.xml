@@ -1,0 +1,29 @@
+<!-- input -->
+<Order EnterpriseCode="Matrix-B" DocumentType="0001" OrderNo="OM12300011"/>
+
+<!-- output template: only these fields come back -->
+<OrderList>
+ <Order OrderNo="" EnterpriseCode="" Status="" PaymentStatus="">
+  <PriceInfo TotalAmount="" Currency=""/>
+  <OrderLines>
+   <OrderLine PrimeLineNo="" OrderedQty="" Status="" ShipNode="">
+    <Item ItemID="" ItemShortDesc=""/>
+   </OrderLine>
+  </OrderLines>
+ </Order>
+</OrderList>
+
+<!-- answer -->
+<OrderList LastOrderHeaderKey="OM12300011" LastRecordSet="Y" TotalOrderList="1">
+ <Order EnterpriseCode="Matrix-B" OrderNo="OM12300011" PaymentStatus="AUTHORIZED" Status="Included In Shipment">
+  <PriceInfo Currency="USD" TotalAmount="789.99"/>
+  <OrderLines>
+   <OrderLine OrderedQty="1.00" PrimeLineNo="1" ShipNode="Mtrx_Store_1" Status="Included In Shipment">
+    <Item ItemID="100001" ItemShortDesc="Tierra 42&quot; Plasma Television/ HDTV"/>
+   </OrderLine>
+   <OrderLine OrderedQty="1.00" PrimeLineNo="2" ShipNode="Mtrx_Store_1" Status="Included In Shipment">
+    <Item ItemID="100002" ItemShortDesc="Omega Progressive-Scan DVD Player with 1080p Upconversion"/>
+   </OrderLine>
+  </OrderLines>
+ </Order>
+</OrderList>

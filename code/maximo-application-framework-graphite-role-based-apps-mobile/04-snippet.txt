@@ -1,0 +1,10 @@
+techmobile bundle (145 entries)
+  index.html          the page a browser loads
+  assets/             104 files: the built JavaScript and styles, split into chunks
+  js/                 2 files
+  i18n/               29 files: the labels, one per language
+  data/               4 files
+  build.json          version 9.2.110, application ID, title, and the routes
+  manifest.json       name, icon and "standalone" display, as for any installable web app
+  loader.css, favicon.svg
+  app-source.zip      the source this bundle was built from

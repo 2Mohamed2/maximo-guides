@@ -1,0 +1,121 @@
+{
+  "area": 38750.04,
+  "assignableArea": 32291.7,
+  "assignableSpaceSupply": {
+    "Open Team Seating": {
+      "area": 32291.7,
+      "assignable": true,
+      "count": 1,
+      "spaceClass": "Open Team Seating",
+      "spaceClassId": "10243766",
+      "uom": "square-feet"
+    }
+  },
+  "building": {
+    "value": "Siège social",
+    "id": "16291002"
+  },
+  "drawingId": -1,
+  "grossArea": 0,
+  "hasAssignableDiscrepancy": false,
+  "hasDiscrepancy": false,
+  "id": "",
+  "level": 0,
+  "name": "Niveau 14",
+  "path": "\\Locations\\",
+  "rentableArea": -6458.34,
+  "spaceSupply": {
+    "Vertical Penetration": {
+      "area": 6458.34,
+      "assignable": false,
+      "count": 1,
+      "spaceClass": "Vertical Penetration",
+      "spaceClassId": "13810610",
+      "uom": "square-feet"
+    },
+    "Open Team Seating": {
+      "area": 32291.7,
+      "assignable": true,
+      "count": 1,
+      "spaceClass": "Open Team Seating",
+      "spaceClassId": "10243766",
+      "uom": "square-feet"
+    }
+  },
+  "stacks": [
+    {
+      "areaAllocated": 32291.7,
+      "assignableSpacesAreaAllocated": 32291.7,
+      "assignableSpaceClassMap": {},
+      "building": {
+        "id": "16291002",
+        "name": "Siège social"
+      },
+      "floor": {
+        "area": -6458.34,
+        "id": "16291159",
+        "name": "Niveau 14"
+      },
+      "org": "Banque de l’entreprise",
+      "orgColor": "#1192E8",
+      "orgId": "ORG-MA-02",
+      "orgPath": {
+        "id": 16331381,
+        "value": "\\Organizations\\Demo Bank Maroc\\Banque de l’entreprise"
+      },
+      "uom": "square-feet",
+      "assignableSpaces": {
+        "Open Team Seating": {
+          "area": 32291.7,
+          "assignable": true,
+          "building": {
+            "value": "Siège social",
+            "id": "16291002"
+          },
+          "count": 1,
+          "floor": {
+            "name": "Niveau 14",
+            "id": "16291159",
+            "area": 38750.04
+          },
+          "spaceClass": "Open Team Seating",
+          "spaceClassId": "10243766",
+          "spaceClassIdField": "175",
+          "uom": "square-feet"
+        }
+      },
+      "originBldg": {
+        "id": "16291002",
+        "name": "Siège social"
+      },
+      "originFloor": {
+        "area": -6458.34,
+        "id": "16291159",
+        "name": "Niveau 14"
+      },
+      "spaces": {
+        "Open Team Seating": {
+          "area": 32291.7,
+          "assignable": true,
+          "building": {
+            "value": "Siège social",
+            "id": "16291002"
+          },
+          "count": 1,
+          "floor": {
+            "name": "Niveau 14",
+            "id": "16291159",
+            "area": 38750.04
+          },
+          "spaceClass": "Open Team Seating",
+          "spaceClassId": "10243766",
+          "spaceClassIdField": "175",
+          "uom": "square-feet"
+        }
+      },
+      "assignableSpacesPercentage": 83.33333333333334,
+      "percentage": 83.33333333333334
+    }
+  ],
+  "_id": "16291159"
+}

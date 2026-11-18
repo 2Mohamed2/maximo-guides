@@ -1,0 +1,19 @@
+spec:
+  settings:
+    deployment:
+      defaultJMS: true
+      persistentVolumes:
+        - pvcName: manage-jms
+          mountPath: /jmsstore
+          size: 5Gi
+          storageClassName: <a ReadWriteMany storage class>
+          accessModes: [ReadWriteMany]
+      serverBundles:
+        - name: all
+          bundleType: all
+          isDefault: true
+          additionalServerConfig:
+            secretName: wsp-all-jms-client      # the client XML: connection factory, queues, activation specs
+        - name: jms
+          bundleType: standalonejms
+          replica: 1

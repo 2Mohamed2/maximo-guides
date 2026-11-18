@@ -1,0 +1,5 @@
+client id : d:<workspace>:DC_RACK:CABA3
+username  : use-token-auth
+password  : <device token from registration>
+topic     : iot-2/evt/rack/fmt/json
+payload   : {"d": {"inlet_temp": 24.6, "humidity": 41, "kw_a": 4.1, "kw_b": 4.0}}

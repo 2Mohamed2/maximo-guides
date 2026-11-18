@@ -1,0 +1,28 @@
+product: 1.0.0
+info:
+  name: maximo-contractor
+  title: Maximo Contractor
+  version: 1.0.0
+  summary: Work orders for contracted maintenance companies
+gateways:
+  - datapower-api-gateway
+apis:
+  contractor-workorders:
+    $ref: contractor-workorders_1.0.0.yaml
+visibility:
+  view:      { type: authenticated, enabled: true }
+  subscribe: { type: authenticated, enabled: true }
+plans:
+  trial:
+    title: Trial (sandbox)
+    description: For building and testing your app against test data.
+    approval: false
+    rate-limits:
+      per-minute: { value: 20/1minute }
+  contractor:
+    title: Contractor
+    description: Production access for contracted maintenance companies.
+    approval: true
+    rate-limits:
+      per-minute: { value: 120/1minute }
+      per-day:    { value: 20000/1day }

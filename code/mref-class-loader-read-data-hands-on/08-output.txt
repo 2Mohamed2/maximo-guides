@@ -1,0 +1,2 @@
+LocationReader.jar: 4,893 bytes, ['META-INF/MANIFEST.MF', 'com/tririga/custom/LocationReader.class']
+LocationReader_Web.zip: 2,282 bytes, ['index.html']

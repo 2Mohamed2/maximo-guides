@@ -1,0 +1,140 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Give the Maximo Assistant a tool of your own: an automation script, pu</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Give the Maximo Assistant a tool of your own: an automation script, published through MCP, that runs SQL queries</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/10/09/maximo-assistant-custom-tool-automation-script-mcp-sql">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-assistant-custom-tool-automation-script-mcp-sql">github.com/2Mohamed2/maximo-guides/code/maximo-assistant-custom-tool-automation-script-mcp-sql</a>.</p><section class="s" id="s1"><div class="h"><div><b>Code</b> <small>101 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-assistant-custom-tool-automation-script-mcp-sql/01-snippet.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1"><span style="color:#8b949e;"># Read-only SQL for the Maximo Assistant (MCP tool script_runsqlquery).
+# Input : query  - one SELECT (or WITH ... SELECT) statement
+# Output: responseBody - JSON {columns, rows, rowcount, truncated} or {error}
+</span><span style="color:#ff7b72;">from </span>psdi.server <span style="color:#ff7b72;">import </span>MXServer
+<span style="color:#ff7b72;">from </span>com.ibm.json.java <span style="color:#ff7b72;">import </span>JSONObject, JSONArray, OrderedJSONObject
+<span style="color:#ff7b72;">from </span>java.lang <span style="color:#ff7b72;">import </span>Exception <span style="color:#ff7b72;">as </span>JavaException
+<span style="color:#ff7b72;">from </span>java.util.regex <span style="color:#ff7b72;">import </span>Pattern
+
+MAXROWS = <span style="color:#79c0ff;">200
+</span>MAXCELL = <span style="color:#79c0ff;">500
+</span>BLOCKED = <span style="color:#a5d6ff;">r&quot;\b(insert|update|delete|merge|drop|alter|create|truncate|grant|revoke|call|rename|comment|lock|refresh|reorg|runstats|export|import|load)\b&quot;
+</span>SENSITIVE = (<span style="color:#a5d6ff;">&quot;password&quot;</span>, <span style="color:#a5d6ff;">&quot;apikey&quot;</span>, <span style="color:#a5d6ff;">&quot;apikeytoken&quot;</span>, <span style="color:#a5d6ff;">&quot;maxusrdbauthinfo&quot;</span>, <span style="color:#a5d6ff;">&quot;encryptedvalue&quot;</span>, <span style="color:#a5d6ff;">&quot;cryptokey&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">answer</span>(obj):
+    <span style="color:#ff7b72;">return </span>obj.serialize(<span style="color:#79c0ff;">True</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">fail</span>(msg):
+    o = OrderedJSONObject()
+    o.put(<span style="color:#a5d6ff;">&quot;error&quot;</span>, msg)
+    <span style="color:#ff7b72;">return </span>answer(o)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">run</span>(sql, userInfo):
+    mx = MXServer.getMXServer()
+    profile = mx.lookup(<span style="color:#a5d6ff;">&quot;SECURITY&quot;</span>).getProfile(userInfo)
+    <span style="color:#ff7b72;">if not </span>profile.hasAppOption(<span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>, <span style="color:#a5d6ff;">&quot;READ&quot;</span>):
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;Not authorized: running SQL from the assistant needs read access to the Automation Scripts application.&quot;</span>)
+    <span style="color:#ff7b72;">if </span>sql <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+        sql = <span style="color:#a5d6ff;">&quot;&quot;
+    </span>sql = (<span style="color:#a5d6ff;">u&quot;%s&quot; </span>% sql).strip()
+    <span style="color:#ff7b72;">while </span>sql.endswith(<span style="color:#a5d6ff;">&quot;;&quot;</span>):
+        sql = sql[:-<span style="color:#79c0ff;">1</span>].strip()
+    low = sql.lower()
+    <span style="color:#ff7b72;">if </span>low == <span style="color:#a5d6ff;">&quot;&quot;</span>:
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;No SQL statement was given.&quot;</span>)
+    <span style="color:#ff7b72;">if not </span>(low.startswith(<span style="color:#a5d6ff;">&quot;select&quot;</span>) <span style="color:#ff7b72;">or </span>low.startswith(<span style="color:#a5d6ff;">&quot;with&quot;</span>)):
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;Only SELECT statements can be run.&quot;</span>)
+    <span style="color:#ff7b72;">if </span><span style="color:#a5d6ff;">&quot;;&quot; </span><span style="color:#ff7b72;">in </span>sql <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;--&quot; </span><span style="color:#ff7b72;">in </span>sql <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;/*&quot; </span><span style="color:#ff7b72;">in </span>sql:
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;Only one statement without comments can be run.&quot;</span>)
+    <span style="color:#ff7b72;">if </span>Pattern.compile(BLOCKED).matcher(low).find():
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;The statement contains a keyword that changes data or structure; only read-only SELECT is allowed.&quot;</span>)
+    <span style="color:#ff7b72;">for </span>word <span style="color:#ff7b72;">in </span>SENSITIVE:
+        <span style="color:#ff7b72;">if </span>word <span style="color:#ff7b72;">in </span>low:
+            <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;The statement touches credential data (&quot; </span>+ word + <span style="color:#a5d6ff;">&quot;), which this tool does not return.&quot;</span>)
+    key = userInfo.getConnectionKey()
+    con = mx.getDBManager().getConnection(key)
+    st = <span style="color:#79c0ff;">None
+    </span>rs = <span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">try</span>:
+        st = con.createStatement()
+        st.setMaxRows(MAXROWS + <span style="color:#79c0ff;">1</span>)
+        st.setQueryTimeout(<span style="color:#79c0ff;">60</span>)
+        rs = st.executeQuery(sql)
+        md = rs.getMetaData()
+        n = md.getColumnCount()
+        names = []
+        cols = JSONArray()
+        <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(<span style="color:#79c0ff;">1</span>, n + <span style="color:#79c0ff;">1</span>):
+            nm = md.getColumnLabel(i)
+            names.append(nm)
+            cols.add(nm)
+        rows = JSONArray()
+        count = <span style="color:#79c0ff;">0
+        </span>truncated = <span style="color:#79c0ff;">False
+        </span><span style="color:#ff7b72;">while </span>rs.next():
+            <span style="color:#ff7b72;">if </span>count &gt;= MAXROWS:
+                truncated = <span style="color:#79c0ff;">True
+                </span><span style="color:#ff7b72;">break
+            </span>r = OrderedJSONObject()
+            <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(n):
+                v = rs.getString(i + <span style="color:#79c0ff;">1</span>)
+                <span style="color:#ff7b72;">if </span>v <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">and </span><span style="color:#d2a8ff;">len</span>(v) &gt; MAXCELL:
+                    v = v[:MAXCELL] + <span style="color:#a5d6ff;">&quot;...&quot;
+                </span>r.put(names[i], v)
+            rows.add(r)
+            count = count + <span style="color:#79c0ff;">1
+        </span>out = OrderedJSONObject()
+        out.put(<span style="color:#a5d6ff;">&quot;rowcount&quot;</span>, count)
+        out.put(<span style="color:#a5d6ff;">&quot;truncated&quot;</span>, truncated)
+        out.put(<span style="color:#a5d6ff;">&quot;columns&quot;</span>, cols)
+        out.put(<span style="color:#a5d6ff;">&quot;rows&quot;</span>, rows)
+        <span style="color:#ff7b72;">if </span>truncated:
+            out.put(<span style="color:#a5d6ff;">&quot;note&quot;</span>, <span style="color:#a5d6ff;">&quot;Only the first &quot; </span>+ <span style="color:#d2a8ff;">str</span>(MAXROWS) + <span style="color:#a5d6ff;">&quot; rows are returned. Add a filter or FETCH FIRST n ROWS ONLY.&quot;</span>)
+        <span style="color:#ff7b72;">return </span>answer(out)
+    <span style="color:#ff7b72;">except </span>JavaException, e:
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;SQL error: &quot; </span>+ <span style="color:#d2a8ff;">str</span>(e.getMessage()))
+    <span style="color:#ff7b72;">except </span>Exception, e:
+        <span style="color:#ff7b72;">return </span>fail(<span style="color:#a5d6ff;">&quot;Error: &quot; </span>+ <span style="color:#d2a8ff;">str</span>(e))
+    <span style="color:#ff7b72;">finally</span>:
+        <span style="color:#ff7b72;">try</span>:
+            <span style="color:#ff7b72;">if </span>rs <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                rs.close()
+        <span style="color:#ff7b72;">except</span>:
+            <span style="color:#ff7b72;">pass
+        try</span>:
+            <span style="color:#ff7b72;">if </span>st <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                st.close()
+        <span style="color:#ff7b72;">except</span>:
+            <span style="color:#ff7b72;">pass
+        </span>mx.getDBManager().freeConnection(key)
+
+responseBody = run(query, userInfo)</pre></section><section class="s" id="s2"><div class="h"><div><b>Code</b> <small>13 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-assistant-custom-tool-automation-script-mcp-sql/02-snippet.sql" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2"><span style="color:#ff7b72;">insert into </span>autoscript (autoscript, description, status, createddate, statusdate, changedate, changeby,
+       autoscriptid, hasld, langcode, scriptlanguage, userdefined, loglevel, interface, active, aitool, <span style="color:#ff7b72;">version</span>, <span style="color:#ff7b72;">source</span>)
+<span style="color:#ff7b72;">values </span>(<span style="color:#a5d6ff;">&#x27;RUNSQLQUERY&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Run a read-only SQL SELECT on the Maximo database and return the rows (max 200).&#x27;</span>,
+       <span style="color:#a5d6ff;">&#x27;Active&#x27;</span>, <span style="color:#ff7b72;">current timestamp</span>, <span style="color:#ff7b72;">current timestamp</span>, <span style="color:#ff7b72;">current timestamp</span>, <span style="color:#a5d6ff;">&#x27;MAXADMIN&#x27;</span>,
+       autoscriptseq.nextval, <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&#x27;EN&#x27;</span>, <span style="color:#a5d6ff;">&#x27;jython&#x27;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;ERROR&#x27;</span>, <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;1.0&#x27;</span>, &lt;script <span style="color:#ff7b72;">source</span>&gt;);
+
+<span style="color:#ff7b72;">insert into </span>autoscriptvars (autoscriptvarsid, autoscript, varname, varbindingtype, vartype, description,
+       allowoverride, literaldatatype, accessflag)
+<span style="color:#ff7b72;">values </span>(autoscriptvarsseq.nextval, <span style="color:#a5d6ff;">&#x27;RUNSQLQUERY&#x27;</span>, <span style="color:#a5d6ff;">&#x27;query&#x27;</span>, <span style="color:#a5d6ff;">&#x27;LITERAL&#x27;</span>, <span style="color:#a5d6ff;">&#x27;IN&#x27;</span>,
+       <span style="color:#a5d6ff;">&#x27;The SQL SELECT statement to run, exactly as the user wrote it. One statement, no semicolon.&#x27;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;ALN&#x27;</span>, <span style="color:#79c0ff;">0</span>);
+
+<span style="color:#ff7b72;">insert into </span>mcptool (name, <span style="color:#ff7b72;">type</span>, mcpreadonly, title, queryapiasresp, userdefined, mcptoolid, mcpdml)
+<span style="color:#ff7b72;">values </span>(<span style="color:#a5d6ff;">&#x27;RUNSQLQUERY&#x27;</span>, <span style="color:#a5d6ff;">&#x27;AUTOSCRIPT&#x27;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&#x27;Run SQL query&#x27;</span>, <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">1</span>, mcptoolseq.nextval, <span style="color:#79c0ff;">0</span>);</pre></section><section class="s" id="s3"><div class="h"><div><b>Code</b> <small>7 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-assistant-custom-tool-automation-script-mcp-sql/03-snippet.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">{
+  <span style="color:#7ee787;">&quot;name&quot;</span>: <span style="color:#a5d6ff;">&quot;script_runsqlquery&quot;</span>,
+  <span style="color:#7ee787;">&quot;title&quot;</span>: <span style="color:#a5d6ff;">&quot;Run SQL query&quot;</span>,
+  <span style="color:#7ee787;">&quot;description&quot;</span>: <span style="color:#a5d6ff;">&quot;Run a read-only SQL SELECT on the Maximo database and return the rows (max 200).&quot;</span>,
+  <span style="color:#7ee787;">&quot;annotations&quot;</span>: { <span style="color:#7ee787;">&quot;readOnlyHint&quot;</span>: <span style="color:#79c0ff;">true</span>, <span style="color:#7ee787;">&quot;destructiveHint&quot;</span>: <span style="color:#79c0ff;">false</span>, <span style="color:#7ee787;">&quot;toolType&quot;</span>: <span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>, <span style="color:#7ee787;">&quot;custom&quot;</span>: <span style="color:#79c0ff;">true </span>},
+  <span style="color:#7ee787;">&quot;inputSchema&quot;</span>: { <span style="color:#7ee787;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;object&quot;</span>, <span style="color:#7ee787;">&quot;properties&quot;</span>: { <span style="color:#7ee787;">&quot;query&quot;</span>: { <span style="color:#7ee787;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;string&quot; </span>} } }
+}</pre></section><section class="s" id="s4"><div class="h"><div><b>Code</b> <small>20 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-assistant-custom-tool-automation-script-mcp-sql/04-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4">query : select wonum, description, status, siteid from maximo.workorder w
+        where not exists (select 1 from maximo.wpmaterial m where m.wonum = w.wonum)
+        fetch first 3 rows only
+answer: {&quot;rowcount&quot;:3,&quot;truncated&quot;:false,&quot;columns&quot;:[&quot;WONUM&quot;,&quot;DESCRIPTION&quot;,&quot;STATUS&quot;,&quot;SITEID&quot;],
+         &quot;rows&quot;:[{&quot;WONUM&quot;:&quot;W102957_DT_US_1A999&quot;,&quot;DESCRIPTION&quot;:null,&quot;STATUS&quot;:&quot;CLOSE&quot;,&quot;SITEID&quot;:&quot;DETROIT&quot;}, ...]}
+
+query : select count(*) as n from workorder
+answer: {&quot;rowcount&quot;:1,&quot;truncated&quot;:false,&quot;columns&quot;:[&quot;N&quot;],&quot;rows&quot;:[{&quot;N&quot;:&quot;67501&quot;}]}
+
+query : update workorder set description=&#x27;x&#x27; where wonum=&#x27;1&#x27;
+answer: {&quot;error&quot;:&quot;Only SELECT statements can be run.&quot;}
+
+query : select userid, password from maxuser
+answer: {&quot;error&quot;:&quot;The statement touches credential data (password), which this tool does not return.&quot;}
+
+query : select wonum from workorder; delete from workorder
+answer: {&quot;error&quot;:&quot;Only one statement without comments can be run.&quot;}
+
+query : select nosuchcol from workorder
+answer: {&quot;error&quot;:&quot;SQL error: \&quot;NOSUCHCOL\&quot; is not valid in the context where it is used.. SQLCODE=-206, SQLSTATE=42703&quot;}</pre></section><section class="s" id="s5"><div class="h"><div><b>Code</b> <small>3 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/maximo-assistant-custom-tool-automation-script-mcp-sql/05-snippet.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">Filtered tools | original=18 | filtered=6 | tools=[&#x27;alm_mcp__aicfg_ibmdocs&#x27;, &#x27;alm_mcp__aicfg_insight&#x27;,
+  &#x27;alm_mcp__aicfgasmd_assistant&#x27;, &#x27;alm_mcp__aicfgasmdtors_assistant&#x27;, &#x27;alm_mcp__script_runsqlquery&#x27;,
+  &#x27;internal_mcp__textual_data_analyzer&#x27;]</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

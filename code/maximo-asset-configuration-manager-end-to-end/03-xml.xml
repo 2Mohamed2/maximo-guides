@@ -1,0 +1,5 @@
+<freeform description="BDI end point">
+  <sql target="sqlserver"><![CDATA[insert into plusabdilisteners (serverhost, listenerport, usessl, plusabdilistenersid)
+    select 'prod-bdi.example.com', 9543, 1, next value for plusabdilistenersseq
+    where not exists (select 1 from plusabdilisteners where serverhost = 'prod-bdi.example.com')]]></sql>
+</freeform>

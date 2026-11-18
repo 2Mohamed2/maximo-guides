@@ -1,0 +1,6 @@
+GET https://manage.example.com/maximo/api/os/contrwo?lean=1&oslc.pageSize=100
+    &oslc.select=wonum,description,status,wopriority,siteid,location,assetnum,worktype,targcompdate
+    &oslc.where=vendor%3D%22NORTHAIR%22%20and%20status%20in%20%5B%22APPR%22%2C%22WSCH%22%2C%22INPRG%22%2C%22WMATL%22%5D
+    &oslc.orderBy=%2Bwopriority
+apikey: (from the maximo-apikey property)
+Accept: application/json

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script SYSTEM "script.dtd">
+<script author="audit-guide"
+        scriptname="aud_template_origresultnum">
+  <description>
+    The Template action clears ORIGRESULTNUM, which
+    PLUSGAUDIT does not have (BMXAA4176E).
+    Add it as a non-persistent attribute.
+  </description>
+  <statements>
+    <add_attributes object="PLUSGAUDIT">
+      <attrdef attribute="ORIGRESULTNUM"
+               maxtype="UPPER"
+               length="12"
+               persistent="false"
+               haslongdesc="false"
+               required="false"
+               userdefined="false"
+               title="Originating Inspection"
+               remarks="Placeholder for the template routine" />
+    </add_attributes>
+  </statements>
+</script>

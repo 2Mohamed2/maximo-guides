@@ -1,0 +1,7 @@
+POST https://manage.example.com/maximo/api/script/contractor_complete
+apikey: (from the maximo-apikey property)
+x-contractor-vendor: NORTHAIR
+Content-Type: application/json
+
+{ "wonum": "8840", "completedAt": "2026-11-11T09:15:00+03:00",
+  "note": "Replaced fan belt and both bearings. Vibration 2.1 mm/s after the job. Next check in 90 days." }

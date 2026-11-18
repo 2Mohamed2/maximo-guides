@@ -1,0 +1,3 @@
+{ "from": "amira.haddad@example-hospital.org", "to": "servicedesk@example-hospital.org",
+  "subject": "Cannot open CT studies on the reading room PC",
+  "body": "Since this morning the CT studies take more than a minute to open in the viewer ..." }

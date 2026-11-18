@@ -1,0 +1,84 @@
+// MREF / TRIRIGA classic builders: open pop-up windows as in-page dialogs, and show
+// browser alert() boxes as an in-page message instead of a blocking box.
+// Paste into DevTools console on the builder page. Re-run after a full page reload.
+// confirm() questions are left as the normal browser box on purpose.
+(function installBuilderHelpers() {
+  const top_ = window;
+  // Some builders (Report Manager) are a <frameset> page that cannot show anything
+  // itself: then put messages and dialogs in its main frame.
+  const doc = (top_.document.body && top_.document.body.tagName === 'FRAMESET')
+    ? ((top_.frames.frameMain || top_.frames[0]).document) : top_.document;
+  const stack = [];                       // open dialogs, last = on top
+  const closeTop = () => { const ov = stack.pop(); if (ov) ov.remove(); };
+
+  // 1. alert() -> a message strip at the top of the page (also written to the console).
+  const toast = (msg) => {
+    console.info('[MREF alert]', msg);
+    const t = doc.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:200000;' +
+      'max-width:640px;padding:10px 16px;background:#fff8e1;border:1px solid #f1c21b;' +
+      'border-radius:6px;font:14px sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';
+    t.title = 'Click to close';
+    t.onclick = () => t.remove();
+    doc.body.appendChild(t);
+    setTimeout(() => t.remove(), 12000);
+  };
+
+  const findFrame = (w, name) => {
+    try {
+      for (const f of w.document.querySelectorAll('iframe,frame')) {
+        if (f.name === name) return f.contentWindow;
+        const hit = findFrame(f.contentWindow, name);
+        if (hit) return hit;
+      }
+    } catch (e) {}
+    return null;
+  };
+
+  // 2. A finished pop-up calls window.close(), sometimes on the top window:
+  //    close a dialog, never the tab.
+  top_.close = closeTop;
+
+  const hook = (w, ownDialog) => {
+    try {
+      w.alert = toast;
+      w.close = ownDialog
+        ? () => { const i = stack.indexOf(ownDialog); if (i >= 0) stack.splice(i, 1); ownDialog.remove(); }
+        : closeTop;
+      // 3. window.open() -> an iframe in a dialog stacked on top of the page and other dialogs.
+      w.open = function (url, name) {
+        // window.open(url, 'someFrame') where that frame already exists just means
+        // "load into that frame" (Report Manager tabs work this way): do exactly that.
+        const existing = name && findFrame(top_, name);
+        if (existing) { if (url) existing.location.href = url; return existing; }
+        const n = stack.length;
+        const ov = doc.createElement('div');
+        ov.style.cssText = `position:fixed;left:${3 + n * 2}%;top:${4 + n * 2}%;width:${94 - n * 4}%;` +
+          `height:${92 - n * 4}%;z-index:${100000 + n};background:#fff;border:2px solid #0f62fe;` +
+          'box-shadow:0 8px 30px rgba(0,0,0,.4)';
+        const x = doc.createElement('button');   // manual close, top-right corner
+        x.textContent = '×';
+        x.title = 'Close this dialog';
+        x.style.cssText = 'position:absolute;right:4px;top:2px;z-index:1;border:0;background:#0f62fe;' +
+          'color:#fff;font:16px sans-serif;width:24px;height:24px;cursor:pointer';
+        x.onclick = () => { const i = stack.indexOf(ov); if (i >= 0) stack.splice(i, 1); ov.remove(); };
+        const fr = doc.createElement('iframe');
+        fr.name = name || 'pop' + n;
+        fr.style.cssText = 'width:100%;height:100%;border:0';
+        ov.append(x, fr);
+        doc.body.appendChild(ov);
+        stack.push(ov);
+        // The pop-up talks back to the page that opened it through window.opener: keep that link.
+        fr.addEventListener('load', () => { try { fr.contentWindow.opener = w; hook(fr.contentWindow, ov); } catch (e) {} });
+        fr.src = url;
+        return fr.contentWindow;
+      };
+      // Builders are built from nested frames: patch every one of them.
+      [...w.document.querySelectorAll('iframe,frame')].forEach(f => hook(f.contentWindow, ownDialog));
+    } catch (e) { /* cross-origin frame: skip */ }
+  };
+  hook(window, null);
+  top_.__installBuilderHelpers = installBuilderHelpers;   // re-run after a builder panel reloads
+  return 'pop-ups open as dialogs; alerts show as a message at the top';
+})();

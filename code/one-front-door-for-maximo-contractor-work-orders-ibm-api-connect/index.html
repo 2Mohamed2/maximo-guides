@@ -1,0 +1,901 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: One front door for Maximo: opening work orders to contractors, partner</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>One front door for Maximo: opening work orders to contractors, partners and apps with IBM API Connect</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/11/11/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect">github.com/2Mohamed2/maximo-guides/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect</a>.</p><section class="s" id="s1"><div class="h"><div><b>HTTP</b> <small>4 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/01-http.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1">GET https://api.example.com/maximo-integration/production/contractor/v1/workorders?status=open
+X-IBM-Client-Id: 3f2c...e91
+X-IBM-Client-Secret: 9a1b...77c
+Accept: application/json</pre></section><section class="s" id="s2"><div class="h"><div><b>HTTP</b> <small>6 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/02-http.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2">GET https://manage.example.com/maximo/api/os/contrwo?lean=1&amp;oslc.pageSize=100
+    &amp;oslc.select=wonum,description,status,wopriority,siteid,location,assetnum,worktype,targcompdate
+    &amp;oslc.where=vendor%3D%22NORTHAIR%22%20and%20status%20in%20%5B%22APPR%22%2C%22WSCH%22%2C%22INPRG%22%2C%22WMATL%22%5D
+    &amp;oslc.orderBy=%2Bwopriority
+apikey: (from the maximo-apikey property)
+Accept: application/json</pre></section><section class="s" id="s3"><div class="h"><div><b>JSON</b> <small>14 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/03-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">{
+  <span style="color:#7ee787;">&quot;member&quot;</span>: [
+    { <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/api/os/contrwo/_QkVERk9SRC84ODM5&quot;</span>,
+      <span style="color:#7ee787;">&quot;wonum&quot;</span>: <span style="color:#a5d6ff;">&quot;8839&quot;</span>, <span style="color:#7ee787;">&quot;description&quot;</span>: <span style="color:#a5d6ff;">&quot;HVAC unit tripping on high head pressure&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;APPR&quot;</span>, <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;Approved&quot;</span>, <span style="color:#7ee787;">&quot;wopriority&quot;</span>: <span style="color:#79c0ff;">1</span>,
+      <span style="color:#7ee787;">&quot;siteid&quot;</span>: <span style="color:#a5d6ff;">&quot;BEDFORD&quot;</span>, <span style="color:#7ee787;">&quot;location&quot;</span>: <span style="color:#a5d6ff;">&quot;BR200&quot;</span>, <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;11200&quot;</span>,
+      <span style="color:#7ee787;">&quot;worktype&quot;</span>: <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#7ee787;">&quot;targcompdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-11T17:00:00+00:00&quot; </span>},
+    { <span style="color:#7ee787;">&quot;href&quot;</span>: <span style="color:#a5d6ff;">&quot;http://localhost/maximo/api/os/contrwo/_QkVERk9SRC84ODQx&quot;</span>,
+      <span style="color:#7ee787;">&quot;wonum&quot;</span>: <span style="color:#a5d6ff;">&quot;8841&quot;</span>, <span style="color:#7ee787;">&quot;description&quot;</span>: <span style="color:#a5d6ff;">&quot;Circulation fan vibration above 7 mm/s&quot;</span>,
+      <span style="color:#7ee787;">&quot;status&quot;</span>: <span style="color:#a5d6ff;">&quot;INPRG&quot;</span>, <span style="color:#7ee787;">&quot;status_description&quot;</span>: <span style="color:#a5d6ff;">&quot;In progress&quot;</span>, <span style="color:#7ee787;">&quot;wopriority&quot;</span>: <span style="color:#79c0ff;">2</span>,
+      <span style="color:#7ee787;">&quot;siteid&quot;</span>: <span style="color:#a5d6ff;">&quot;BEDFORD&quot;</span>, <span style="color:#7ee787;">&quot;location&quot;</span>: <span style="color:#a5d6ff;">&quot;BR240&quot;</span>, <span style="color:#7ee787;">&quot;assetnum&quot;</span>: <span style="color:#a5d6ff;">&quot;11240&quot;</span>,
+      <span style="color:#7ee787;">&quot;worktype&quot;</span>: <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#7ee787;">&quot;targcompdate&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-12T17:00:00+00:00&quot; </span>}
+  ]
+}</pre></section><section class="s" id="s4"><div class="h"><div><b>JSON</b> <small>11 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/04-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4">{
+  <span style="color:#7ee787;">&quot;items&quot;</span>: [
+    { <span style="color:#7ee787;">&quot;number&quot;</span>: <span style="color:#a5d6ff;">&quot;8839&quot;</span>, <span style="color:#7ee787;">&quot;title&quot;</span>: <span style="color:#a5d6ff;">&quot;HVAC unit tripping on high head pressure&quot;</span>,
+      <span style="color:#7ee787;">&quot;state&quot;</span>: <span style="color:#a5d6ff;">&quot;assigned&quot;</span>, <span style="color:#7ee787;">&quot;priority&quot;</span>: <span style="color:#79c0ff;">1</span>, <span style="color:#7ee787;">&quot;site&quot;</span>: <span style="color:#a5d6ff;">&quot;BEDFORD&quot;</span>, <span style="color:#7ee787;">&quot;location&quot;</span>: <span style="color:#a5d6ff;">&quot;BR200&quot;</span>,
+      <span style="color:#7ee787;">&quot;asset&quot;</span>: <span style="color:#a5d6ff;">&quot;11200&quot;</span>, <span style="color:#7ee787;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#7ee787;">&quot;dueBy&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-11T17:00:00+00:00&quot; </span>},
+    { <span style="color:#7ee787;">&quot;number&quot;</span>: <span style="color:#a5d6ff;">&quot;8841&quot;</span>, <span style="color:#7ee787;">&quot;title&quot;</span>: <span style="color:#a5d6ff;">&quot;Circulation fan vibration above 7 mm/s&quot;</span>,
+      <span style="color:#7ee787;">&quot;state&quot;</span>: <span style="color:#a5d6ff;">&quot;in_progress&quot;</span>, <span style="color:#7ee787;">&quot;priority&quot;</span>: <span style="color:#79c0ff;">2</span>, <span style="color:#7ee787;">&quot;site&quot;</span>: <span style="color:#a5d6ff;">&quot;BEDFORD&quot;</span>, <span style="color:#7ee787;">&quot;location&quot;</span>: <span style="color:#a5d6ff;">&quot;BR240&quot;</span>,
+      <span style="color:#7ee787;">&quot;asset&quot;</span>: <span style="color:#a5d6ff;">&quot;11240&quot;</span>, <span style="color:#7ee787;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#7ee787;">&quot;dueBy&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-12T17:00:00+00:00&quot; </span>}
+  ],
+  <span style="color:#7ee787;">&quot;count&quot;</span>: <span style="color:#79c0ff;">2
+</span>}</pre></section><section class="s" id="s5"><div class="h"><div><b>HTTP</b> <small>7 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/05-http.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5">POST https://manage.example.com/maximo/api/script/contractor_complete
+apikey: (from the maximo-apikey property)
+x-contractor-vendor: NORTHAIR
+Content-Type: application/json
+
+{ &quot;wonum&quot;: &quot;8840&quot;, &quot;completedAt&quot;: &quot;2026-11-11T09:15:00+03:00&quot;,
+  &quot;note&quot;: &quot;Replaced fan belt and both bearings. Vibration 2.1 mm/s after the job. Next check in 90 days.&quot; }</pre></section><section class="s" id="s6"><div class="h"><div><b>JSON</b> <small>1 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/06-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6">{ <span style="color:#7ee787;">&quot;number&quot;</span>: <span style="color:#a5d6ff;">&quot;8840&quot;</span>, <span style="color:#7ee787;">&quot;state&quot;</span>: <span style="color:#a5d6ff;">&quot;done&quot;</span>, <span style="color:#7ee787;">&quot;maximoStatus&quot;</span>: <span style="color:#a5d6ff;">&quot;COMP&quot; </span>}</pre></section><section class="s" id="s7"><div class="h"><div><b>JSON</b> <small>4 lines</small></div><div class="a"><button data-c="c7">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/07-json.json" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c7">{ <span style="color:#7ee787;">&quot;Error&quot;</span>: { <span style="color:#7ee787;">&quot;reasonCode&quot;</span>: <span style="color:#a5d6ff;">&quot;NOTALLOWED&quot;</span>,
+  <span style="color:#7ee787;">&quot;message&quot;</span>: <span style="color:#a5d6ff;">&quot;BMXAA4590E - Could not change Work Order 8840 status to COMP.\n\tBMXAA0032E - The status that you selected is the same as the current status. Select a different status.&quot; </span>} }
+
+x<span style="color:#79c0ff;">-</span>co<span style="color:#79c0ff;">ntra</span>c<span style="color:#79c0ff;">t</span>or<span style="color:#79c0ff;">-</span>ve<span style="color:#79c0ff;">n</span>dor: VOLTPRO, wo<span style="color:#79c0ff;">nu</span>m <span style="color:#79c0ff;">8839  -</span>&gt;  { <span style="color:#7ee787;">&quot;Error&quot;</span>: { <span style="color:#7ee787;">&quot;reasonCode&quot;</span>: <span style="color:#a5d6ff;">&quot;NOTFOUND&quot;</span>, <span style="color:#7ee787;">&quot;message&quot;</span>: <span style="color:#a5d6ff;">&quot;Not found&quot; </span>} }</pre></section><section class="s" id="s8"><div class="h"><div><b>YAML</b> <small>252 lines</small></div><div class="a"><button data-c="c8">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/08-yaml.yaml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c8"><span style="color:#7ee787;">openapi</span>: 3.0.0
+<span style="color:#7ee787;">info</span>:
+  <span style="color:#7ee787;">title</span>: Contractor work orders
+  <span style="color:#7ee787;">x-ibm-name</span>: contractor-workorders
+  <span style="color:#7ee787;">version</span>: 1.0.0
+  <span style="color:#7ee787;">description</span>: Work orders assigned to your company in our maintenance system.
+<span style="color:#7ee787;">servers</span>:
+  - <span style="color:#7ee787;">url</span>: /contractor/v1
+<span style="color:#7ee787;">security</span>:
+  - <span style="color:#7ee787;">clientId</span>: []
+    <span style="color:#7ee787;">clientSecret</span>: []
+<span style="color:#7ee787;">paths</span>:
+  <span style="color:#7ee787;">/workorders</span>:
+    <span style="color:#7ee787;">get</span>:
+      <span style="color:#7ee787;">operationId</span>: listWorkOrders
+      <span style="color:#7ee787;">summary</span>: List work orders assigned to your company
+      <span style="color:#7ee787;">parameters</span>:
+        - <span style="color:#7ee787;">name</span>: status
+          <span style="color:#7ee787;">in</span>: query
+          <span style="color:#7ee787;">required</span>: false
+          <span style="color:#7ee787;">schema</span>: {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> enum</span>: [open, done, all],<span style="color:#7ee787;"> default</span>: open }
+      <span style="color:#7ee787;">responses</span>:
+        <span style="color:#a5d6ff;">&#x27;200&#x27;</span>:
+          <span style="color:#7ee787;">description</span>: Work orders
+          <span style="color:#7ee787;">content</span>:
+            <span style="color:#7ee787;">application/json</span>:
+              <span style="color:#7ee787;">schema</span>: {<span style="color:#7ee787;"> $ref</span>: <span style="color:#a5d6ff;">&#x27;#/components/schemas/WorkOrderList&#x27; </span>}
+  /workorders/{number}:
+    <span style="color:#7ee787;">parameters</span>:
+      - <span style="color:#7ee787;">name</span>: number
+        <span style="color:#7ee787;">in</span>: path
+        <span style="color:#7ee787;">required</span>: true
+        <span style="color:#7ee787;">schema</span>: {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> pattern</span>: <span style="color:#a5d6ff;">&#x27;^[A-Z0-9-]{1,25}$&#x27; </span>}
+    <span style="color:#7ee787;">get</span>:
+      <span style="color:#7ee787;">operationId</span>: getWorkOrder
+      <span style="color:#7ee787;">summary</span>: Read one work order
+      <span style="color:#7ee787;">responses</span>:
+        <span style="color:#a5d6ff;">&#x27;200&#x27;</span>:
+          <span style="color:#7ee787;">description</span>: The work order
+          <span style="color:#7ee787;">content</span>:
+            <span style="color:#7ee787;">application/json</span>:
+              <span style="color:#7ee787;">schema</span>: {<span style="color:#7ee787;"> $ref</span>: <span style="color:#a5d6ff;">&#x27;#/components/schemas/WorkOrder&#x27; </span>}
+        <span style="color:#a5d6ff;">&#x27;404&#x27;</span>: {<span style="color:#7ee787;"> description</span>: Not found or not assigned to your company }
+  /workorders/{number}/completion:
+    <span style="color:#7ee787;">parameters</span>:
+      - <span style="color:#7ee787;">name</span>: number
+        <span style="color:#7ee787;">in</span>: path
+        <span style="color:#7ee787;">required</span>: true
+        <span style="color:#7ee787;">schema</span>: {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> pattern</span>: <span style="color:#a5d6ff;">&#x27;^[A-Z0-9-]{1,25}$&#x27; </span>}
+    <span style="color:#7ee787;">post</span>:
+      <span style="color:#7ee787;">operationId</span>: completeWorkOrder
+      <span style="color:#7ee787;">summary</span>: Report the work as complete
+      <span style="color:#7ee787;">requestBody</span>:
+        <span style="color:#7ee787;">required</span>: true
+        <span style="color:#7ee787;">content</span>:
+          <span style="color:#7ee787;">application/json</span>:
+            <span style="color:#7ee787;">schema</span>: {<span style="color:#7ee787;"> $ref</span>: <span style="color:#a5d6ff;">&#x27;#/components/schemas/Completion&#x27; </span>}
+      <span style="color:#7ee787;">responses</span>:
+        <span style="color:#a5d6ff;">&#x27;200&#x27;</span>: {<span style="color:#7ee787;"> description</span>: Completed }
+        <span style="color:#a5d6ff;">&#x27;400&#x27;</span>: {<span style="color:#7ee787;"> description</span>: completedAt or note missing }
+        <span style="color:#a5d6ff;">&#x27;404&#x27;</span>: {<span style="color:#7ee787;"> description</span>: Not found or not assigned to your company }
+        <span style="color:#a5d6ff;">&#x27;409&#x27;</span>: {<span style="color:#7ee787;"> description</span>: The work order cannot be completed from its current state }
+<span style="color:#7ee787;">components</span>:
+  <span style="color:#7ee787;">securitySchemes</span>:
+    <span style="color:#7ee787;">clientId</span>:     {<span style="color:#7ee787;"> type</span>: apiKey,<span style="color:#7ee787;"> in</span>: header,<span style="color:#7ee787;"> name</span>: X-IBM-Client-Id }
+    <span style="color:#7ee787;">clientSecret</span>: {<span style="color:#7ee787;"> type</span>: apiKey,<span style="color:#7ee787;"> in</span>: header,<span style="color:#7ee787;"> name</span>: X-IBM-Client-Secret }
+  <span style="color:#7ee787;">schemas</span>:
+    <span style="color:#7ee787;">WorkOrder</span>:
+      <span style="color:#7ee787;">type</span>: object
+      <span style="color:#7ee787;">properties</span>:
+        <span style="color:#7ee787;">number</span>:   {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> example</span>: <span style="color:#a5d6ff;">&#x27;8839&#x27; </span>}
+        <span style="color:#7ee787;">title</span>:    {<span style="color:#7ee787;"> type</span>: string }
+        <span style="color:#7ee787;">state</span>:    {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> enum</span>: [assigned, in_progress, done, other] }
+        <span style="color:#7ee787;">priority</span>: {<span style="color:#7ee787;"> type</span>: integer }
+        <span style="color:#7ee787;">site</span>:     {<span style="color:#7ee787;"> type</span>: string }
+        <span style="color:#7ee787;">location</span>: {<span style="color:#7ee787;"> type</span>: string }
+        <span style="color:#7ee787;">asset</span>:    {<span style="color:#7ee787;"> type</span>: string }
+        <span style="color:#7ee787;">type</span>:     {<span style="color:#7ee787;"> type</span>: string }
+        <span style="color:#7ee787;">dueBy</span>:    {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> format</span>: date-time }
+    <span style="color:#7ee787;">WorkOrderList</span>:
+      <span style="color:#7ee787;">type</span>: object
+      <span style="color:#7ee787;">properties</span>:
+        <span style="color:#7ee787;">items</span>: {<span style="color:#7ee787;"> type</span>: array,<span style="color:#7ee787;"> items</span>: {<span style="color:#7ee787;"> $ref</span>: <span style="color:#a5d6ff;">&#x27;#/components/schemas/WorkOrder&#x27; </span>} }
+        <span style="color:#7ee787;">count</span>: {<span style="color:#7ee787;"> type</span>: integer }
+    <span style="color:#7ee787;">Completion</span>:
+      <span style="color:#7ee787;">type</span>: object
+      <span style="color:#7ee787;">required</span>: [completedAt, note]
+      <span style="color:#7ee787;">properties</span>:
+        <span style="color:#7ee787;">completedAt</span>: {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> format</span>: date-time }
+        <span style="color:#7ee787;">note</span>:        {<span style="color:#7ee787;"> type</span>: string,<span style="color:#7ee787;"> maxLength</span>: 2000 }
+<span style="color:#7ee787;">x-ibm-configuration</span>:
+  <span style="color:#7ee787;">type</span>: rest
+  <span style="color:#7ee787;">phase</span>: realized
+  <span style="color:#7ee787;">enforced</span>: true
+  <span style="color:#7ee787;">testable</span>: true
+  <span style="color:#7ee787;">gateway</span>: datapower-api-gateway
+  <span style="color:#7ee787;">cors</span>: {<span style="color:#7ee787;"> enabled</span>: true }
+  <span style="color:#7ee787;">properties</span>:
+    <span style="color:#7ee787;">maximo-host</span>:
+      <span style="color:#7ee787;">value</span>: <span style="color:#a5d6ff;">&#x27;https://manage.example.com&#x27;
+      </span><span style="color:#7ee787;">encoded</span>: false
+      <span style="color:#7ee787;">description</span>: <span style="color:#a5d6ff;">&#x27;Manage base URL; set per catalog&#x27;
+    </span><span style="color:#7ee787;">maximo-apikey</span>:
+      <span style="color:#7ee787;">value</span>: <span style="color:#a5d6ff;">&#x27;&#x27;
+      </span><span style="color:#7ee787;">encoded</span>: false
+      <span style="color:#7ee787;">description</span>: <span style="color:#a5d6ff;">&#x27;API key of MXCONTRACTAPI; set per catalog&#x27;
+  </span><span style="color:#7ee787;">assembly</span>:
+    <span style="color:#7ee787;">execute</span>:
+      - <span style="color:#7ee787;">set-variable</span>:
+          <span style="color:#7ee787;">version</span>: 2.0.0
+          <span style="color:#7ee787;">title</span>: maximo-key
+          <span style="color:#7ee787;">actions</span>:
+            - <span style="color:#7ee787;">clear</span>: message.headers.authorization
+            - <span style="color:#7ee787;">clear</span>: message.headers.x-contractor-vendor
+            - <span style="color:#7ee787;">set</span>: message.headers.apikey
+              <span style="color:#7ee787;">value</span>: $(maximo-apikey)
+              <span style="color:#7ee787;">type</span>: string
+      - <span style="color:#7ee787;">gatewayscript</span>:
+          <span style="color:#7ee787;">version</span>: 2.0.0
+          <span style="color:#7ee787;">title</span>: build-query
+          <span style="color:#7ee787;">source</span>: |
+            // build-query: decide the Maximo call from the public call.
+            // The vendor comes from the caller&#x27;s consumer organization, never from the request.
+            var vendor = context.get(&#x27;client.org.name&#x27;) || &#x27;&#x27;;
+            var verb   = context.get(&#x27;request.verb&#x27;);
+            var path   = context.get(&#x27;request.path&#x27;);          // e.g. /contractor/v1/workorders/1203/completion
+            var rest   = path.replace(/^.*\/workorders/, &#x27;&#x27;);  // &#x27;&#x27;, &#x27;/1203&#x27; or &#x27;/1203/completion&#x27;
+
+            // A named rejection goes to the ClientError catch, which keeps this status code
+            function fail(code, reason, msg) {
+              context.reject(&#x27;ClientError&#x27;, msg);
+              context.message.statusCode = code + &#x27; &#x27; + reason;
+            }
+
+            if (!/^[A-Z0-9]{1,12}$/.test(vendor.toUpperCase())) {
+              fail(403, &#x27;Forbidden&#x27;, &#x27;This application is not linked to a contractor.&#x27;);
+            } else {
+              vendor = vendor.toUpperCase();
+              var SELECT = &#x27;wonum,description,status,wopriority,siteid,location,assetnum,worktype,targcompdate&#x27;;
+              var parts  = rest.split(&#x27;/&#x27;).filter(function (p) { return p; });
+              var number = parts[0] ? decodeURIComponent(parts[0]) : null;
+
+              if (number !== null &amp;&amp; !/^[A-Z0-9-]{1,25}$/.test(number)) {
+                fail(400, &#x27;Bad Request&#x27;, &#x27;Work order number may contain A-Z, 0-9 and - only.&#x27;);
+              } else if (verb === &#x27;GET&#x27; &amp;&amp; number === null) {
+                // Statuses as shown in Maximo. Add your own synonyms here (for example &quot;WAITCONTR&quot;).
+                var filter = { open: &#x27; and status in [&quot;APPR&quot;,&quot;WSCH&quot;,&quot;INPRG&quot;,&quot;WMATL&quot;]&#x27;,
+                               done: &#x27; and status in [&quot;COMP&quot;,&quot;CLOSE&quot;]&#x27;,
+                               all:  &#x27;&#x27; };
+                var q = (context.get(&#x27;request.parameters.status.values&#x27;) || [&#x27;open&#x27;])[0];
+                var where = &#x27;vendor=&quot;&#x27; + vendor + &#x27;&quot;&#x27; + (filter[q] !== undefined ? filter[q] : filter.open);
+                context.set(&#x27;maximoPath&#x27;, &#x27;/maximo/api/os/contrwo?lean=1&amp;oslc.pageSize=100&#x27;
+                  + &#x27;&amp;oslc.select=&#x27; + SELECT
+                  + &#x27;&amp;oslc.where=&#x27; + encodeURIComponent(where)
+                  + &#x27;&amp;oslc.orderBy=&#x27; + encodeURIComponent(&#x27;+wopriority&#x27;));
+                context.set(&#x27;apiMode&#x27;, &#x27;list&#x27;);
+              } else if (verb === &#x27;GET&#x27;) {
+                var w = &#x27;wonum=&quot;&#x27; + number + &#x27;&quot; and vendor=&quot;&#x27; + vendor + &#x27;&quot;&#x27;;
+                context.set(&#x27;maximoPath&#x27;, &#x27;/maximo/api/os/contrwo?lean=1&amp;oslc.select=&#x27; + SELECT
+                  + &#x27;&amp;oslc.where=&#x27; + encodeURIComponent(w));
+                context.set(&#x27;apiMode&#x27;, &#x27;one&#x27;);
+              } else if (verb === &#x27;POST&#x27; &amp;&amp; parts[1] === &#x27;completion&#x27;) {
+                context.message.body.readAsJSON(function (err, body) {
+                  if (err || !body || !body.note || !body.completedAt) {
+                    fail(400, &#x27;Bad Request&#x27;, &#x27;completedAt and note are required.&#x27;);
+                    return;
+                  }
+                  context.set(&#x27;maximoPath&#x27;, &#x27;/maximo/api/script/contractor_complete&#x27;);
+                  context.message.header.set(&#x27;x-contractor-vendor&#x27;, vendor);
+                  context.message.header.set(&#x27;Content-Type&#x27;, &#x27;application/json&#x27;);
+                  context.message.body.write({ wonum: number, completedAt: String(body.completedAt).substring(0, 30),
+                                               note: String(body.note).substring(0, 2000) });
+                  context.set(&#x27;apiMode&#x27;, &#x27;complete&#x27;);
+                });
+              } else {
+                fail(404, &#x27;Not Found&#x27;, &#x27;Unknown operation.&#x27;);
+              }
+            }
+
+      - <span style="color:#7ee787;">invoke</span>:
+          <span style="color:#7ee787;">version</span>: 2.0.0
+          <span style="color:#7ee787;">title</span>: call-maximo
+          <span style="color:#7ee787;">target-url</span>: $(maximo-host)$(maximoPath)
+          <span style="color:#7ee787;">verb</span>: keep
+          <span style="color:#7ee787;">timeout</span>: 10
+          <span style="color:#7ee787;">header-control</span>: {<span style="color:#7ee787;"> type</span>: allowlist,<span style="color:#7ee787;"> values</span>: [apikey, accept, content-type, x-contractor-vendor] }
+          <span style="color:#7ee787;">parameter-control</span>: {<span style="color:#7ee787;"> type</span>: allowlist,<span style="color:#7ee787;"> values</span>: [] }
+          <span style="color:#7ee787;">backend-type</span>: json
+      - <span style="color:#7ee787;">gatewayscript</span>:
+          <span style="color:#7ee787;">version</span>: 2.0.0
+          <span style="color:#7ee787;">title</span>: reshape
+          <span style="color:#7ee787;">source</span>: |
+            var mode = context.get(&#x27;apiMode&#x27;);
+            var STATE = { WAPPR: &#x27;other&#x27;, APPR: &#x27;assigned&#x27;, WSCH: &#x27;assigned&#x27;, INPRG: &#x27;in_progress&#x27;,
+                          COMP: &#x27;done&#x27;, CLOSE: &#x27;done&#x27;, CAN: &#x27;other&#x27;, WMATL: &#x27;in_progress&#x27; };
+
+            function pub(m) {
+              return { number: m.wonum, title: m.description || &#x27;&#x27;,
+                       state: STATE[m.status] || &#x27;other&#x27;, priority: m.wopriority,
+                       site: m.siteid, location: m.location, asset: m.assetnum,
+                       type: m.worktype, dueBy: m.targcompdate };
+            }
+            function answer(code, reason, body) {
+              context.set(&#x27;message.status.code&#x27;, code);
+              context.set(&#x27;message.status.reason&#x27;, reason);
+              context.message.header.set(&#x27;Content-Type&#x27;, &#x27;application/json&#x27;);
+              context.message.body.write(body);
+            }
+
+            context.message.body.readAsJSON(function (err, json) {
+              var status = context.get(&#x27;message.status.code&#x27;);
+              if (err || status &gt;= 400 || (json &amp;&amp; json.Error)) {
+                console.error(&#x27;maximo said &#x27; + status + &#x27;: &#x27; + JSON.stringify(json));
+                if (mode === &#x27;complete&#x27; &amp;&amp; json &amp;&amp; json.Error) {
+                  var r = json.Error.reasonCode || &#x27;&#x27;;
+                  if (r === &#x27;NOTFOUND&#x27;) return answer(404, &#x27;Not Found&#x27;, { error: &#x27;not_found&#x27; });
+                  if (r === &#x27;BADINPUT&#x27;) return answer(400, &#x27;Bad Request&#x27;, { error: &#x27;bad_input&#x27; });
+                  return answer(409, &#x27;Conflict&#x27;, { error: &#x27;not_allowed&#x27;, detail: json.Error.message });
+                }
+                return answer(502, &#x27;Bad Gateway&#x27;, { error: &#x27;upstream_error&#x27; });
+              }
+              if (mode === &#x27;list&#x27;) {
+                var items = (json.member || []).map(pub);
+                return answer(200, &#x27;OK&#x27;, { items: items, count: items.length });
+              }
+              if (mode === &#x27;one&#x27;) {
+                var m = (json.member || [])[0];
+                return m ? answer(200, &#x27;OK&#x27;, pub(m)) : answer(404, &#x27;Not Found&#x27;, { error: &#x27;not_found&#x27; });
+              }
+              return answer(200, &#x27;OK&#x27;, json);   // completion: the script already speaks the public shape
+            });
+
+    <span style="color:#7ee787;">catch</span>:
+      - <span style="color:#7ee787;">errors</span>: [ClientError]
+        <span style="color:#7ee787;">execute</span>:
+          - <span style="color:#7ee787;">gatewayscript</span>:
+              <span style="color:#7ee787;">version</span>: 2.0.0
+              <span style="color:#7ee787;">title</span>: client-error
+              <span style="color:#7ee787;">source</span>: |
+                // Status code was set by build-query; only the body is written here
+                context.message.header.set(&#x27;Content-Type&#x27;, &#x27;application/json&#x27;);
+                context.message.body.write({ error: context.get(&#x27;error.message&#x27;) });
+      - <span style="color:#7ee787;">default</span>:
+          - <span style="color:#7ee787;">gatewayscript</span>:
+              <span style="color:#7ee787;">version</span>: 2.0.0
+              <span style="color:#7ee787;">title</span>: clean-error
+              <span style="color:#7ee787;">source</span>: |
+                context.set(&#x27;message.status.code&#x27;, 502);
+                context.set(&#x27;message.status.reason&#x27;, &#x27;Bad Gateway&#x27;);
+                context.message.header.set(&#x27;Content-Type&#x27;, &#x27;application/json&#x27;);
+                context.message.body.write({ error: &#x27;upstream_error&#x27;,
+                  detail: &#x27;The maintenance system did not answer. Try again later.&#x27; });</pre></section><section class="s" id="s9"><div class="h"><div><b>YAML</b> <small>28 lines</small></div><div class="a"><button data-c="c9">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/09-yaml.yaml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c9"><span style="color:#7ee787;">product</span>: 1.0.0
+<span style="color:#7ee787;">info</span>:
+  <span style="color:#7ee787;">name</span>: maximo-contractor
+  <span style="color:#7ee787;">title</span>: Maximo Contractor
+  <span style="color:#7ee787;">version</span>: 1.0.0
+  <span style="color:#7ee787;">summary</span>: Work orders for contracted maintenance companies
+<span style="color:#7ee787;">gateways</span>:
+  - datapower-api-gateway
+<span style="color:#7ee787;">apis</span>:
+  <span style="color:#7ee787;">contractor-workorders</span>:
+    <span style="color:#7ee787;">$ref</span>: contractor-workorders_1.0.0.yaml
+<span style="color:#7ee787;">visibility</span>:
+  <span style="color:#7ee787;">view</span>:      {<span style="color:#7ee787;"> type</span>: authenticated,<span style="color:#7ee787;"> enabled</span>: true }
+  <span style="color:#7ee787;">subscribe</span>: {<span style="color:#7ee787;"> type</span>: authenticated,<span style="color:#7ee787;"> enabled</span>: true }
+<span style="color:#7ee787;">plans</span>:
+  <span style="color:#7ee787;">trial</span>:
+    <span style="color:#7ee787;">title</span>: Trial (sandbox)
+    <span style="color:#7ee787;">description</span>: For building and testing your app against test data.
+    <span style="color:#7ee787;">approval</span>: false
+    <span style="color:#7ee787;">rate-limits</span>:
+      <span style="color:#7ee787;">per-minute</span>: {<span style="color:#7ee787;"> value</span>: 20/1minute }
+  <span style="color:#7ee787;">contractor</span>:
+    <span style="color:#7ee787;">title</span>: Contractor
+    <span style="color:#7ee787;">description</span>: Production access for contracted maintenance companies.
+    <span style="color:#7ee787;">approval</span>: true
+    <span style="color:#7ee787;">rate-limits</span>:
+      <span style="color:#7ee787;">per-minute</span>: {<span style="color:#7ee787;"> value</span>: 120/1minute }
+      <span style="color:#7ee787;">per-day</span>:    {<span style="color:#7ee787;"> value</span>: 20000/1day }</pre></section><section class="s" id="s10"><div class="h"><div><b>JavaScript</b> <small>57 lines</small></div><div class="a"><button data-c="c10">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/10-javascript.js" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c10"><span style="color:#8b949e;">// build-query: decide the Maximo call from the public call.
+// The vendor comes from the caller&#x27;s consumer organization, never from the request.
+</span><span style="color:#ff7b72;">var </span>vendor = context.get(<span style="color:#a5d6ff;">&#x27;client.org.name&#x27;</span>) || <span style="color:#a5d6ff;">&#x27;&#x27;</span>;
+<span style="color:#ff7b72;">var </span>verb   = context.get(<span style="color:#a5d6ff;">&#x27;request.verb&#x27;</span>);
+<span style="color:#ff7b72;">var </span>path   = context.get(<span style="color:#a5d6ff;">&#x27;request.path&#x27;</span>);          <span style="color:#8b949e;">// e.g. /contractor/v1/workorders/1203/completion
+</span><span style="color:#ff7b72;">var </span>rest   = path.replace(<span style="color:#a5d6ff;">/^.*\/workorders/</span>, <span style="color:#a5d6ff;">&#x27;&#x27;</span>);  <span style="color:#8b949e;">// &#x27;&#x27;, &#x27;/1203&#x27; or &#x27;/1203/completion&#x27;
+
+// A named rejection goes to the ClientError catch, which keeps this status code
+</span><span style="color:#ff7b72;">function </span>fail(code, reason, msg) {
+  context.reject(<span style="color:#a5d6ff;">&#x27;ClientError&#x27;</span>, msg);
+  context.message.statusCode = code + <span style="color:#a5d6ff;">&#x27; &#x27; </span>+ reason;
+}
+
+<span style="color:#ff7b72;">if </span>(!<span style="color:#a5d6ff;">/^[A-Z0-9]{1,12}$/</span>.test(vendor.toUpperCase())) {
+  fail(<span style="color:#79c0ff;">403</span>, <span style="color:#a5d6ff;">&#x27;Forbidden&#x27;</span>, <span style="color:#a5d6ff;">&#x27;This application is not linked to a contractor.&#x27;</span>);
+} <span style="color:#ff7b72;">else </span>{
+  vendor = vendor.toUpperCase();
+  <span style="color:#ff7b72;">var </span>SELECT = <span style="color:#a5d6ff;">&#x27;wonum,description,status,wopriority,siteid,location,assetnum,worktype,targcompdate&#x27;</span>;
+  <span style="color:#ff7b72;">var </span>parts  = rest.split(<span style="color:#a5d6ff;">&#x27;/&#x27;</span>).filter(<span style="color:#ff7b72;">function </span>(p) { <span style="color:#ff7b72;">return </span>p; });
+  <span style="color:#ff7b72;">var </span>number = parts[<span style="color:#79c0ff;">0</span>] ? <span style="color:#d2a8ff;">decodeURIComponent</span>(parts[<span style="color:#79c0ff;">0</span>]) : <span style="color:#79c0ff;">null</span>;
+
+  <span style="color:#ff7b72;">if </span>(number !== <span style="color:#79c0ff;">null </span>&amp;&amp; !<span style="color:#a5d6ff;">/^[A-Z0-9-]{1,25}$/</span>.test(number)) {
+    fail(<span style="color:#79c0ff;">400</span>, <span style="color:#a5d6ff;">&#x27;Bad Request&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Work order number may contain A-Z, 0-9 and - only.&#x27;</span>);
+  } <span style="color:#ff7b72;">else if </span>(verb === <span style="color:#a5d6ff;">&#x27;GET&#x27; </span>&amp;&amp; number === <span style="color:#79c0ff;">null</span>) {
+    <span style="color:#8b949e;">// Statuses as shown in Maximo. Add your own synonyms here (for example &quot;WAITCONTR&quot;).
+    </span><span style="color:#ff7b72;">var </span>filter = { open: <span style="color:#a5d6ff;">&#x27; and status in [&quot;APPR&quot;,&quot;WSCH&quot;,&quot;INPRG&quot;,&quot;WMATL&quot;]&#x27;</span>,
+                   done: <span style="color:#a5d6ff;">&#x27; and status in [&quot;COMP&quot;,&quot;CLOSE&quot;]&#x27;</span>,
+                   all:  <span style="color:#a5d6ff;">&#x27;&#x27; </span>};
+    <span style="color:#ff7b72;">var </span>q = (context.get(<span style="color:#a5d6ff;">&#x27;request.parameters.status.values&#x27;</span>) || [<span style="color:#a5d6ff;">&#x27;open&#x27;</span>])[<span style="color:#79c0ff;">0</span>];
+    <span style="color:#ff7b72;">var </span>where = <span style="color:#a5d6ff;">&#x27;vendor=&quot;&#x27; </span>+ vendor + <span style="color:#a5d6ff;">&#x27;&quot;&#x27; </span>+ (filter[q] !== <span style="color:#79c0ff;">undefined </span>? filter[q] : filter.open);
+    context.set(<span style="color:#a5d6ff;">&#x27;maximoPath&#x27;</span>, <span style="color:#a5d6ff;">&#x27;/maximo/api/os/contrwo?lean=1&amp;oslc.pageSize=100&#x27;
+      </span>+ <span style="color:#a5d6ff;">&#x27;&amp;oslc.select=&#x27; </span>+ SELECT
+      + <span style="color:#a5d6ff;">&#x27;&amp;oslc.where=&#x27; </span>+ <span style="color:#d2a8ff;">encodeURIComponent</span>(where)
+      + <span style="color:#a5d6ff;">&#x27;&amp;oslc.orderBy=&#x27; </span>+ <span style="color:#d2a8ff;">encodeURIComponent</span>(<span style="color:#a5d6ff;">&#x27;+wopriority&#x27;</span>));
+    context.set(<span style="color:#a5d6ff;">&#x27;apiMode&#x27;</span>, <span style="color:#a5d6ff;">&#x27;list&#x27;</span>);
+  } <span style="color:#ff7b72;">else if </span>(verb === <span style="color:#a5d6ff;">&#x27;GET&#x27;</span>) {
+    <span style="color:#ff7b72;">var </span>w = <span style="color:#a5d6ff;">&#x27;wonum=&quot;&#x27; </span>+ number + <span style="color:#a5d6ff;">&#x27;&quot; and vendor=&quot;&#x27; </span>+ vendor + <span style="color:#a5d6ff;">&#x27;&quot;&#x27;</span>;
+    context.set(<span style="color:#a5d6ff;">&#x27;maximoPath&#x27;</span>, <span style="color:#a5d6ff;">&#x27;/maximo/api/os/contrwo?lean=1&amp;oslc.select=&#x27; </span>+ SELECT
+      + <span style="color:#a5d6ff;">&#x27;&amp;oslc.where=&#x27; </span>+ <span style="color:#d2a8ff;">encodeURIComponent</span>(w));
+    context.set(<span style="color:#a5d6ff;">&#x27;apiMode&#x27;</span>, <span style="color:#a5d6ff;">&#x27;one&#x27;</span>);
+  } <span style="color:#ff7b72;">else if </span>(verb === <span style="color:#a5d6ff;">&#x27;POST&#x27; </span>&amp;&amp; parts[<span style="color:#79c0ff;">1</span>] === <span style="color:#a5d6ff;">&#x27;completion&#x27;</span>) {
+    context.message.body.readAsJSON(<span style="color:#ff7b72;">function </span>(err, body) {
+      <span style="color:#ff7b72;">if </span>(err || !body || !body.note || !body.completedAt) {
+        fail(<span style="color:#79c0ff;">400</span>, <span style="color:#a5d6ff;">&#x27;Bad Request&#x27;</span>, <span style="color:#a5d6ff;">&#x27;completedAt and note are required.&#x27;</span>);
+        <span style="color:#ff7b72;">return</span>;
+      }
+      context.set(<span style="color:#a5d6ff;">&#x27;maximoPath&#x27;</span>, <span style="color:#a5d6ff;">&#x27;/maximo/api/script/contractor_complete&#x27;</span>);
+      context.message.header.set(<span style="color:#a5d6ff;">&#x27;x-contractor-vendor&#x27;</span>, vendor);
+      context.message.header.set(<span style="color:#a5d6ff;">&#x27;Content-Type&#x27;</span>, <span style="color:#a5d6ff;">&#x27;application/json&#x27;</span>);
+      context.message.body.write({ wonum: number, completedAt: <span style="color:#d2a8ff;">String</span>(body.completedAt).substring(<span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">30</span>),
+                                   note: <span style="color:#d2a8ff;">String</span>(body.note).substring(<span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">2000</span>) });
+      context.set(<span style="color:#a5d6ff;">&#x27;apiMode&#x27;</span>, <span style="color:#a5d6ff;">&#x27;complete&#x27;</span>);
+    });
+  } <span style="color:#ff7b72;">else </span>{
+    fail(<span style="color:#79c0ff;">404</span>, <span style="color:#a5d6ff;">&#x27;Not Found&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Unknown operation.&#x27;</span>);
+  }
+}</pre></section><section class="s" id="s11"><div class="h"><div><b>JavaScript</b> <small>39 lines</small></div><div class="a"><button data-c="c11">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/11-javascript.js" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c11"><span style="color:#ff7b72;">var </span>mode = context.get(<span style="color:#a5d6ff;">&#x27;apiMode&#x27;</span>);
+<span style="color:#ff7b72;">var </span>STATE = { WAPPR: <span style="color:#a5d6ff;">&#x27;other&#x27;</span>, APPR: <span style="color:#a5d6ff;">&#x27;assigned&#x27;</span>, WSCH: <span style="color:#a5d6ff;">&#x27;assigned&#x27;</span>, INPRG: <span style="color:#a5d6ff;">&#x27;in_progress&#x27;</span>,
+              COMP: <span style="color:#a5d6ff;">&#x27;done&#x27;</span>, CLOSE: <span style="color:#a5d6ff;">&#x27;done&#x27;</span>, CAN: <span style="color:#a5d6ff;">&#x27;other&#x27;</span>, WMATL: <span style="color:#a5d6ff;">&#x27;in_progress&#x27; </span>};
+
+<span style="color:#ff7b72;">function </span>pub(m) {
+  <span style="color:#ff7b72;">return </span>{ number: m.wonum, title: m.description || <span style="color:#a5d6ff;">&#x27;&#x27;</span>,
+           state: STATE[m.status] || <span style="color:#a5d6ff;">&#x27;other&#x27;</span>, priority: m.wopriority,
+           site: m.siteid, location: m.location, asset: m.assetnum,
+           type: m.worktype, dueBy: m.targcompdate };
+}
+<span style="color:#ff7b72;">function </span>answer(code, reason, body) {
+  context.set(<span style="color:#a5d6ff;">&#x27;message.status.code&#x27;</span>, code);
+  context.set(<span style="color:#a5d6ff;">&#x27;message.status.reason&#x27;</span>, reason);
+  context.message.header.set(<span style="color:#a5d6ff;">&#x27;Content-Type&#x27;</span>, <span style="color:#a5d6ff;">&#x27;application/json&#x27;</span>);
+  context.message.body.write(body);
+}
+
+context.message.body.readAsJSON(<span style="color:#ff7b72;">function </span>(err, json) {
+  <span style="color:#ff7b72;">var </span>status = context.get(<span style="color:#a5d6ff;">&#x27;message.status.code&#x27;</span>);
+  <span style="color:#ff7b72;">if </span>(err || status &gt;= <span style="color:#79c0ff;">400 </span>|| (json &amp;&amp; json.Error)) {
+    console.error(<span style="color:#a5d6ff;">&#x27;maximo said &#x27; </span>+ status + <span style="color:#a5d6ff;">&#x27;: &#x27; </span>+ <span style="color:#d2a8ff;">JSON</span>.stringify(json));
+    <span style="color:#ff7b72;">if </span>(mode === <span style="color:#a5d6ff;">&#x27;complete&#x27; </span>&amp;&amp; json &amp;&amp; json.Error) {
+      <span style="color:#ff7b72;">var </span>r = json.Error.reasonCode || <span style="color:#a5d6ff;">&#x27;&#x27;</span>;
+      <span style="color:#ff7b72;">if </span>(r === <span style="color:#a5d6ff;">&#x27;NOTFOUND&#x27;</span>) <span style="color:#ff7b72;">return </span>answer(<span style="color:#79c0ff;">404</span>, <span style="color:#a5d6ff;">&#x27;Not Found&#x27;</span>, { error: <span style="color:#a5d6ff;">&#x27;not_found&#x27; </span>});
+      <span style="color:#ff7b72;">if </span>(r === <span style="color:#a5d6ff;">&#x27;BADINPUT&#x27;</span>) <span style="color:#ff7b72;">return </span>answer(<span style="color:#79c0ff;">400</span>, <span style="color:#a5d6ff;">&#x27;Bad Request&#x27;</span>, { error: <span style="color:#a5d6ff;">&#x27;bad_input&#x27; </span>});
+      <span style="color:#ff7b72;">return </span>answer(<span style="color:#79c0ff;">409</span>, <span style="color:#a5d6ff;">&#x27;Conflict&#x27;</span>, { error: <span style="color:#a5d6ff;">&#x27;not_allowed&#x27;</span>, detail: json.Error.message });
+    }
+    <span style="color:#ff7b72;">return </span>answer(<span style="color:#79c0ff;">502</span>, <span style="color:#a5d6ff;">&#x27;Bad Gateway&#x27;</span>, { error: <span style="color:#a5d6ff;">&#x27;upstream_error&#x27; </span>});
+  }
+  <span style="color:#ff7b72;">if </span>(mode === <span style="color:#a5d6ff;">&#x27;list&#x27;</span>) {
+    <span style="color:#ff7b72;">var </span>items = (json.member || []).map(pub);
+    <span style="color:#ff7b72;">return </span>answer(<span style="color:#79c0ff;">200</span>, <span style="color:#a5d6ff;">&#x27;OK&#x27;</span>, { items: items, count: items.length });
+  }
+  <span style="color:#ff7b72;">if </span>(mode === <span style="color:#a5d6ff;">&#x27;one&#x27;</span>) {
+    <span style="color:#ff7b72;">var </span>m = (json.member || [])[<span style="color:#79c0ff;">0</span>];
+    <span style="color:#ff7b72;">return </span>m ? answer(<span style="color:#79c0ff;">200</span>, <span style="color:#a5d6ff;">&#x27;OK&#x27;</span>, pub(m)) : answer(<span style="color:#79c0ff;">404</span>, <span style="color:#a5d6ff;">&#x27;Not Found&#x27;</span>, { error: <span style="color:#a5d6ff;">&#x27;not_found&#x27; </span>});
+  }
+  <span style="color:#ff7b72;">return </span>answer(<span style="color:#79c0ff;">200</span>, <span style="color:#a5d6ff;">&#x27;OK&#x27;</span>, json);   <span style="color:#8b949e;">// completion: the script already speaks the public shape
+</span>});</pre></section><section class="s" id="s12"><div class="h"><div><b>Python</b> <small>60 lines</small></div><div class="a"><button data-c="c12">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/12-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c12"><span style="color:#8b949e;"># CONTRACTOR_COMPLETE: Maximo REST endpoint POST /maximo/api/script/contractor_complete
+# Called only by API Connect. Body: {&quot;wonum&quot;: &quot;...&quot;, &quot;completedAt&quot;: &quot;...&quot;, &quot;note&quot;: &quot;...&quot;}
+# Header x-contractor-vendor: set by the gateway from the caller&#x27;s consumer organization.
+# Implicit variables (script with no launch point, called over REST): request, requestBody, responseBody, userInfo
+</span><span style="color:#ff7b72;">from </span>psdi.server <span style="color:#ff7b72;">import </span>MXServer
+<span style="color:#ff7b72;">from </span>psdi.mbo <span style="color:#ff7b72;">import </span>SqlFormat
+<span style="color:#ff7b72;">from </span>psdi.util <span style="color:#ff7b72;">import </span>MXException
+<span style="color:#ff7b72;">from </span>com.ibm.json.java <span style="color:#ff7b72;">import </span>JSONObject
+<span style="color:#ff7b72;">from </span>java.util.regex <span style="color:#ff7b72;">import </span>Pattern  <span style="color:#8b949e;"># Maximo&#x27;s Jython has no Python standard library
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">obj</span>(d):
+    o = JSONObject()
+    <span style="color:#ff7b72;">for </span>k, v <span style="color:#ff7b72;">in </span>d.items():
+        o.put(k, obj(v) <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">isinstance</span>(v, <span style="color:#d2a8ff;">dict</span>) <span style="color:#ff7b72;">else </span>v)
+    <span style="color:#ff7b72;">return </span>o
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">reply</span>(d):
+    <span style="color:#ff7b72;">global </span>responseBody
+    responseBody = obj(d).serialize()
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">error</span>(code, message):
+    reply({<span style="color:#a5d6ff;">&quot;Error&quot;</span>: {<span style="color:#a5d6ff;">&quot;reasonCode&quot;</span>: code, <span style="color:#a5d6ff;">&quot;message&quot;</span>: message}})
+
+vendor = request.getHeader(<span style="color:#a5d6ff;">&quot;x-contractor-vendor&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;&quot;
+</span>body = JSONObject.parse(requestBody <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;{}&quot;</span>)
+wonum = body.get(<span style="color:#a5d6ff;">&quot;wonum&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;&quot;
+</span>note = (body.get(<span style="color:#a5d6ff;">&quot;note&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;&quot;</span>)[:<span style="color:#79c0ff;">2000</span>]
+completedAt = (body.get(<span style="color:#a5d6ff;">&quot;completedAt&quot;</span>) <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;&quot;</span>)[:<span style="color:#79c0ff;">30</span>]
+
+mx = MXServer.getMXServer()
+woSet = mx.getMboSet(<span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, userInfo)
+<span style="color:#ff7b72;">try</span>:
+    <span style="color:#ff7b72;">if not </span>woSet.getProfile().getAppOptionAuth(<span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span>, <span style="color:#a5d6ff;">&quot;COMPLETE&quot;</span>, <span style="color:#79c0ff;">None</span>):
+        error(<span style="color:#a5d6ff;">&quot;FORBIDDEN&quot;</span>, <span style="color:#a5d6ff;">&quot;User &quot; </span>+ userInfo.getUserName() + <span style="color:#a5d6ff;">&quot; lacks CONTRWO COMPLETE&quot;</span>)
+    <span style="color:#ff7b72;">elif not </span>Pattern.matches(<span style="color:#a5d6ff;">&quot;[A-Z0-9]{1,12}&quot;</span>, vendor) <span style="color:#ff7b72;">or not </span>Pattern.matches(<span style="color:#a5d6ff;">&quot;[A-Z0-9-]{1,25}&quot;</span>, wonum):
+        error(<span style="color:#a5d6ff;">&quot;BADINPUT&quot;</span>, <span style="color:#a5d6ff;">&quot;Missing or invalid vendor or work order number&quot;</span>)
+    <span style="color:#ff7b72;">else</span>:
+        <span style="color:#8b949e;"># Bind variables, never string concatenation: the vendor check is part of the query
+        </span>sf = SqlFormat(userInfo, <span style="color:#a5d6ff;">&quot;wonum = :1 and vendor = :2 and istask = 0&quot;</span>)
+        sf.setObject(<span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;WONUM&quot;</span>, wonum)
+        sf.setObject(<span style="color:#79c0ff;">2</span>, <span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span>, <span style="color:#a5d6ff;">&quot;VENDOR&quot;</span>, vendor)
+        woSet.setWhere(sf.format())
+        wo = woSet.moveFirst()
+        <span style="color:#ff7b72;">if </span>wo <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+            error(<span style="color:#a5d6ff;">&quot;NOTFOUND&quot;</span>, <span style="color:#a5d6ff;">&quot;Not found&quot;</span>)
+        <span style="color:#ff7b72;">else</span>:
+            <span style="color:#ff7b72;">try</span>:
+                <span style="color:#8b949e;"># The status memo holds 50 characters, so the contractor&#x27;s note goes into a work log entry
+                </span>wo.changeStatus(<span style="color:#a5d6ff;">&quot;COMP&quot;</span>, mx.getDate(), (<span style="color:#a5d6ff;">&quot;Completed by contractor &quot; </span>+ vendor)[:<span style="color:#79c0ff;">50</span>])
+                <span style="color:#ff7b72;">if </span>note <span style="color:#ff7b72;">or </span>completedAt:
+                    log = wo.getMboSet(<span style="color:#a5d6ff;">&quot;WORKLOG&quot;</span>).add()
+                    log.setValue(<span style="color:#a5d6ff;">&quot;LOGTYPE&quot;</span>, <span style="color:#a5d6ff;">&quot;CLIENTNOTE&quot;</span>)
+                    log.setValue(<span style="color:#a5d6ff;">&quot;DESCRIPTION&quot;</span>, (<span style="color:#a5d6ff;">&quot;Contractor &quot; </span>+ vendor + <span style="color:#a5d6ff;">&quot; completion report&quot;</span>)[:<span style="color:#79c0ff;">100</span>])
+                    log.setValue(<span style="color:#a5d6ff;">&quot;DESCRIPTION_LONGDESCRIPTION&quot;</span>, <span style="color:#a5d6ff;">&quot;Completed at (contractor time): &quot; </span>+ (completedAt <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&quot;not given&quot;</span>) + <span style="color:#a5d6ff;">&quot;\n&quot; </span>+ note)
+                woSet.save()
+                reply({<span style="color:#a5d6ff;">&quot;number&quot;</span>: wonum, <span style="color:#a5d6ff;">&quot;state&quot;</span>: <span style="color:#a5d6ff;">&quot;done&quot;</span>, <span style="color:#a5d6ff;">&quot;maximoStatus&quot;</span>: wo.getString(<span style="color:#a5d6ff;">&quot;STATUS&quot;</span>)})
+            <span style="color:#ff7b72;">except </span>MXException, e:
+                error(<span style="color:#a5d6ff;">&quot;NOTALLOWED&quot;</span>, e.getMessage())
+<span style="color:#ff7b72;">finally</span>:
+    woSet.close()</pre></section><section class="s" id="s13"><div class="h"><div><b>XML</b> <small>246 lines</small></div><div class="a"><button data-c="c13">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/13-xml.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c13"><span style="color:#8b949e;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE script SYSTEM &quot;script.dtd&quot;&gt;
+&lt;!--
+  Contractor API: the Maximo side of an API Connect front door.
+
+    CONTRWO    object structure: WORKORDER only, 13 fields, secured by its own application CONTRWO
+    CONTRWO    sigoptions READ (read work orders) and COMPLETE (report completion through the
+               CONTRACTOR_COMPLETE script, which checks this option itself)
+    CONTRAPI   security group for the integration user API Connect signs in as: CONTRWO READ + COMPLETE,
+               all sites, nothing else
+    WORKORDER_NDX_VENDOR  index on WORKORDER (VENDOR, SITEID, STATUS): every gateway query filters on vendor
+
+  Field list in MAXINTOBJCOLS: with EXCLUDEBYDEFAULT = 1 on the WORKORDER detail row, the rows listed as
+  EXCLUDE are the fields that are INCLUDED (same encoding as IBM&#x27;s MXAPIWOCHANGESTATUS).
+
+  Install: copy to tools/maximo/en/script in the maxinst pod, then from tools/maximo/internal
+           ./runscriptfile.sh -cscript -fcontractor_api_1.0.0
+  Re-runnable: every insert uses ignore_duplicates.
+  After install: reload the INTOBJECT cache (or restart the Manage server bundle) so the new structure is served.
+--&gt;
+</span><span style="color:#7ee787;">&lt;script </span><span style="color:#79c0ff;">author=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot; </span><span style="color:#79c0ff;">scriptname=</span><span style="color:#a5d6ff;">&quot;contractor_api_1.0.0&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;description&gt;</span>Contractor API: CONTRWO object structure, CONTRAPI security group, vendor index.<span style="color:#7ee787;">&lt;/description&gt;
+  &lt;statements&gt;
+
+    </span><span style="color:#8b949e;">&lt;!-- 1. the application that secures the object structure --&gt;
+    </span><span style="color:#7ee787;">&lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;MAXAPPS&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;APP&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;DESCRIPTION&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;Contractor API work orders&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;APPTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;OS&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;LOCKENABLED&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;HASLD&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;LANGCODE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;SKIPNAVIGATION&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+    &lt;add_sigoption </span><span style="color:#79c0ff;">app=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot; </span><span style="color:#79c0ff;">optionname=</span><span style="color:#a5d6ff;">&quot;READ&quot; </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Read contractor work orders&quot; </span><span style="color:#79c0ff;">esigenabled=</span><span style="color:#a5d6ff;">&quot;false&quot; </span><span style="color:#79c0ff;">visible=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;add_sigoption </span><span style="color:#79c0ff;">app=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot; </span><span style="color:#79c0ff;">optionname=</span><span style="color:#a5d6ff;">&quot;COMPLETE&quot; </span><span style="color:#79c0ff;">description=</span><span style="color:#a5d6ff;">&quot;Report contractor work as complete&quot; </span><span style="color:#79c0ff;">esigenabled=</span><span style="color:#a5d6ff;">&quot;false&quot; </span><span style="color:#79c0ff;">visible=</span><span style="color:#a5d6ff;">&quot;true&quot; </span><span style="color:#79c0ff;">prerequisite=</span><span style="color:#a5d6ff;">&quot;READ&quot;</span><span style="color:#7ee787;">/&gt;
+
+    </span><span style="color:#8b949e;">&lt;!-- 2. the object structure --&gt;
+    </span><span style="color:#7ee787;">&lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;MAXINTOBJECT&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;DESCRIPTION&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;Contractor API work orders&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;SELFREFERENCING&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USERDEFINED&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;LANGCODE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;HASLD&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;QUERYONLY&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CONFIGURABLE&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;FLATSUPPORTED&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USEWITH&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;INTEGRATION&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;ALIASCONFLICT&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHAPP&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;MODULE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;LOADQUERYFROMAPP&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;PRIMARYAPI&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;COMPLETEHIERARCHY&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GRAPHTYPE&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USEFORASSISTANT&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;TRACKREQUESTS&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USEWITHPRODUCT&quot; </span><span style="color:#79c0ff;">number=</span><span style="color:#a5d6ff;">&quot;0&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+    &lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;MAXINTOBJDETAIL&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTORDER&quot; </span><span style="color:#79c0ff;">number=</span><span style="color:#a5d6ff;">&quot;1&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;PROCESSORDER&quot; </span><span style="color:#79c0ff;">number=</span><span style="color:#a5d6ff;">&quot;1&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USERDEFINED&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTID&quot; </span><span style="color:#79c0ff;">number=</span><span style="color:#a5d6ff;">&quot;1&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;HIERARCHYPATH&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;EXCLUDEPARENTKEY&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;DELETEONCREATE&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;PROPAGATEEVENT&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INVOKEEXECUTE&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;SKIPKEYUPDATE&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;EXCLUDEBYDEFAULT&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;SKIPDELETEONREPLACE&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+    &lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;MAXINTOBJCOLS&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WONUM&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;DESCRIPTION&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;STATUS&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;STATUSDATE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;SITEID&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;LOCATION&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;ASSETNUM&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKTYPE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WOPRIORITY&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;VENDOR&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;TARGSTARTDATE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;TARGCOMPDATE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OBJECTNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;REPORTDATE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INTOBJFLDTYPE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EXCLUDE&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEBY&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;CHANGEDATE&quot; </span><span style="color:#79c0ff;">date=</span><span style="color:#a5d6ff;">&quot;sysdate&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+
+    </span><span style="color:#8b949e;">&lt;!-- 3. the security group the API Connect integration user belongs to --&gt;
+    </span><span style="color:#7ee787;">&lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;MAXGROUP&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;DESCRIPTION&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;Contractor API gateway (API Connect)&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;INDEPENDENT&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHALLSITES&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHALLGLS&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHALLSTOREROOMS&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHLABORALL&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHLABORCREW&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHLABORSELF&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHLABORSUPER&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;LANGCODE&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;EN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHPERSONGROUP&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;HASLD&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;NULLREPFAC&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;AUTHALLREPFACS&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;SIDENAV&quot; </span><span style="color:#79c0ff;">boolean=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+    &lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;APPLICATIONAUTH&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;APP&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OPTIONNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;READ&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;APP&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OPTIONNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;COMPLETE&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;APP&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OPTIONNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;READ&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;APP&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRWO&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;OPTIONNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;COMPLETE&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+
+    </span><span style="color:#8b949e;">&lt;!-- 4. every gateway query filters on the vendor --&gt;
+    </span><span style="color:#7ee787;">&lt;specify_index </span><span style="color:#79c0ff;">name=</span><span style="color:#a5d6ff;">&quot;WORKORDER_NDX_VENDOR&quot; </span><span style="color:#79c0ff;">object=</span><span style="color:#a5d6ff;">&quot;WORKORDER&quot; </span><span style="color:#79c0ff;">unique=</span><span style="color:#a5d6ff;">&quot;false&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;indexkey </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;VENDOR&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;indexkey </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;SITEID&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;indexkey </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;STATUS&quot;</span><span style="color:#7ee787;">/&gt;
+    &lt;/specify_index&gt;
+
+  &lt;/statements&gt;
+&lt;/script&gt;
+</span></pre></section><section class="s" id="s14"><div class="h"><div><b>XML</b> <small>27 lines</small></div><div class="a"><button data-c="c14">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/14-xml.xml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c14"><span style="color:#8b949e;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE script SYSTEM &quot;script.dtd&quot;&gt;
+&lt;!--
+  Contractor API 1.0.1: let administrators put users into CONTRAPI.
+
+  A new security group is not in anyone&#x27;s group reassignment list (GRPREASSIGNAUTH, the
+  &quot;Authorize Group Reassignment&quot; action in Security Groups). Until it is, the MAS Users page does not
+  offer the group, and Security Groups &gt; Users &gt; Select Users fails with BMXAA0028E.
+
+  Install: copy to tools/maximo/en/script, then from tools/maximo/internal
+           ./runscriptfile.sh -cscript -fcontractor_api_1.0.1
+--&gt;
+</span><span style="color:#7ee787;">&lt;script </span><span style="color:#79c0ff;">author=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot; </span><span style="color:#79c0ff;">scriptname=</span><span style="color:#a5d6ff;">&quot;contractor_api_1.0.1&quot;</span><span style="color:#7ee787;">&gt;
+  &lt;description&gt;</span>Contractor API: MAXADMIN and MXINTADM may assign users to CONTRAPI.<span style="color:#7ee787;">&lt;/description&gt;
+  &lt;statements&gt;
+    &lt;insert </span><span style="color:#79c0ff;">table=</span><span style="color:#a5d6ff;">&quot;GRPREASSIGNAUTH&quot; </span><span style="color:#79c0ff;">ignore_duplicates=</span><span style="color:#a5d6ff;">&quot;true&quot;</span><span style="color:#7ee787;">&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USERID&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MAXADMIN&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+      &lt;insertrow&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;USERID&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;MXINTADM&quot;</span><span style="color:#7ee787;">/&gt;
+        &lt;columnvalue </span><span style="color:#79c0ff;">column=</span><span style="color:#a5d6ff;">&quot;GROUPNAME&quot; </span><span style="color:#79c0ff;">string=</span><span style="color:#a5d6ff;">&quot;CONTRAPI&quot;</span><span style="color:#7ee787;">/&gt;
+      &lt;/insertrow&gt;
+    &lt;/insert&gt;
+  &lt;/statements&gt;
+&lt;/script&gt;
+</span></pre></section><section class="s" id="s15"><div class="h"><div><b>Python</b> <small>106 lines</small></div><div class="a"><button data-c="c15">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/15-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c15"><span style="color:#a5d6ff;">&quot;&quot;&quot;Demo data for the contractor API: three contractor companies and the BEDFORD work orders assigned to them.
+
+Re-runnable: companies are created only if missing; work orders are created only if no open work order with
+the same description and vendor exists. Uses the Manage REST API (MXAPIVENDORMSTR, MXAPIVENDOR, MXAPIWODETAIL).
+
+    set MAXIMO_API=https://&lt;manage-host&gt;/maximo/api
+    set MAXIMO_APIKEY=&lt;an administrator&#x27;s API key, for the demo data only&gt;
+    python seed_demo.py
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>datetime <span style="color:#ff7b72;">as </span>dt
+<span style="color:#ff7b72;">import </span>json
+<span style="color:#ff7b72;">import </span>os
+<span style="color:#ff7b72;">import </span>urllib.error
+<span style="color:#ff7b72;">import </span>urllib.parse
+<span style="color:#ff7b72;">import </span>urllib.request
+
+<span style="color:#ff7b72;">class </span><span style="color:#ffa657;">m</span>:  <span style="color:#8b949e;"># minimal Maximo REST client
+    </span>BASE, KEY = os.environ[<span style="color:#a5d6ff;">&quot;MAXIMO_API&quot;</span>].rstrip(<span style="color:#a5d6ff;">&quot;/&quot;</span>), os.environ[<span style="color:#a5d6ff;">&quot;MAXIMO_APIKEY&quot;</span>]
+
+    <span style="color:#ffa657;">@staticmethod
+    </span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">call</span>(method, path, body=<span style="color:#79c0ff;">None</span>, headers=<span style="color:#79c0ff;">None</span>):
+        h = {<span style="color:#a5d6ff;">&quot;apikey&quot;</span>: m.KEY, <span style="color:#a5d6ff;">&quot;Accept&quot;</span>: <span style="color:#a5d6ff;">&quot;application/json&quot;</span>, <span style="color:#a5d6ff;">&quot;Content-Type&quot;</span>: <span style="color:#a5d6ff;">&quot;application/json&quot;</span>}
+        h.update(headers <span style="color:#ff7b72;">or </span>{})
+        r = urllib.request.Request(m.BASE + path, method=method, headers=h,
+                                   data=json.dumps(body).encode() <span style="color:#ff7b72;">if </span>body <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">None</span>)
+        <span style="color:#ff7b72;">try</span>:
+            <span style="color:#ff7b72;">with </span>urllib.request.urlopen(r, timeout=<span style="color:#79c0ff;">120</span>) <span style="color:#ff7b72;">as </span>f:
+                t = f.read()
+                <span style="color:#ff7b72;">return </span>f.status, (json.loads(t) <span style="color:#ff7b72;">if </span>t <span style="color:#ff7b72;">else </span>{})
+        <span style="color:#ff7b72;">except </span>urllib.error.HTTPError <span style="color:#ff7b72;">as </span>e:
+            <span style="color:#ff7b72;">return </span>e.code, json.loads(e.read() <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">b&quot;{}&quot;</span>)
+
+    <span style="color:#ffa657;">@staticmethod
+    </span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">find</span>(os_name, where, select=<span style="color:#a5d6ff;">&quot;*&quot;</span>):
+        q = urllib.parse.urlencode({<span style="color:#a5d6ff;">&quot;lean&quot;</span>: <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;oslc.select&quot;</span>: select, <span style="color:#a5d6ff;">&quot;oslc.where&quot;</span>: where, <span style="color:#a5d6ff;">&quot;oslc.pageSize&quot;</span>: <span style="color:#79c0ff;">100</span>})
+        code, r = m.call(<span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">f&quot;/os/{</span>os_name<span style="color:#a5d6ff;">}?{</span>q<span style="color:#a5d6ff;">}&quot;</span>)
+        <span style="color:#ff7b72;">if </span>code != <span style="color:#79c0ff;">200</span>:  <span style="color:#8b949e;"># never treat a failed query as &quot;not found&quot;
+            </span><span style="color:#ff7b72;">raise </span>SystemExit(<span style="color:#a5d6ff;">f&quot;query on {</span>os_name<span style="color:#a5d6ff;">} failed: {</span>code<span style="color:#a5d6ff;">} {</span>json.dumps(r)[:<span style="color:#79c0ff;">300</span>]<span style="color:#a5d6ff;">}&quot;</span>)
+        <span style="color:#ff7b72;">return </span>r.get(<span style="color:#a5d6ff;">&quot;member&quot;</span>, [])
+
+ORG, SITE = <span style="color:#a5d6ff;">&quot;EAGLENA&quot;</span>, <span style="color:#a5d6ff;">&quot;BEDFORD&quot;
+</span>VENDORS = {
+    <span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>: <span style="color:#a5d6ff;">&quot;NorthAir HVAC Services&quot;</span>,
+    <span style="color:#a5d6ff;">&quot;VOLTPRO&quot;</span>: <span style="color:#a5d6ff;">&quot;VoltPro Electrical Contractors&quot;</span>,
+    <span style="color:#a5d6ff;">&quot;LIFTCARE&quot;</span>: <span style="color:#a5d6ff;">&quot;LiftCare Cranes and Hoists&quot;</span>,
+}
+<span style="color:#8b949e;"># vendor, asset, location, work type, priority, days to due, final status, description
+</span>WORK = [
+    (<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;11200&quot;</span>, <span style="color:#a5d6ff;">&quot;BR200&quot;</span>, <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>,  <span style="color:#a5d6ff;">&quot;HVAC unit tripping on high head pressure&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;11210&quot;</span>, <span style="color:#a5d6ff;">&quot;BR210&quot;</span>, <span style="color:#a5d6ff;">&quot;PM&quot;</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#79c0ff;">6</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>,  <span style="color:#a5d6ff;">&quot;Quarterly fan belt and bearing inspection&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;11240&quot;</span>, <span style="color:#a5d6ff;">&quot;BR240&quot;</span>, <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#a5d6ff;">&quot;INPRG&quot;</span>, <span style="color:#a5d6ff;">&quot;Circulation fan vibration above 7 mm/s&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;11250&quot;</span>, <span style="color:#a5d6ff;">&quot;BR200&quot;</span>, <span style="color:#a5d6ff;">&quot;PM&quot;</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#79c0ff;">9</span>, <span style="color:#a5d6ff;">&quot;WSCH&quot;</span>,  <span style="color:#a5d6ff;">&quot;Replace filters and clean coils&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;11300&quot;</span>, <span style="color:#a5d6ff;">&quot;BR300&quot;</span>, <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>,  <span style="color:#a5d6ff;">&quot;Compressor short cycling, check refrigerant charge&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;VOLTPRO&quot;</span>,  <span style="color:#a5d6ff;">&quot;11220&quot;</span>, <span style="color:#a5d6ff;">&quot;ECC210&quot;</span>, <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>, <span style="color:#a5d6ff;">&quot;HVAC control panel breaker tripping&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;VOLTPRO&quot;</span>,  <span style="color:#a5d6ff;">&quot;11230&quot;</span>, <span style="color:#a5d6ff;">&quot;BR230&quot;</span>, <span style="color:#a5d6ff;">&quot;PM&quot;</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">5</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>,  <span style="color:#a5d6ff;">&quot;Emergency generator monthly load test&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;VOLTPRO&quot;</span>,  <span style="color:#a5d6ff;">&quot;11211&quot;</span>, <span style="color:#a5d6ff;">&quot;BR210&quot;</span>, <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#79c0ff;">4</span>, <span style="color:#a5d6ff;">&quot;INPRG&quot;</span>, <span style="color:#a5d6ff;">&quot;Motor starter contactor chatter&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;VOLTPRO&quot;</span>,  <span style="color:#a5d6ff;">&quot;11340&quot;</span>, <span style="color:#a5d6ff;">&quot;BR300&quot;</span>, <span style="color:#a5d6ff;">&quot;PM&quot;</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#79c0ff;">12</span>, <span style="color:#a5d6ff;">&quot;WSCH&quot;</span>, <span style="color:#a5d6ff;">&quot;Thermographic survey of motor starters&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;LIFTCARE&quot;</span>, <span style="color:#a5d6ff;">&quot;12200&quot;</span>, <span style="color:#a5d6ff;">&quot;SHIPPING&quot;</span>, <span style="color:#a5d6ff;">&quot;PM&quot;</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>, <span style="color:#a5d6ff;">&quot;Overhead crane #1 statutory inspection&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;LIFTCARE&quot;</span>, <span style="color:#a5d6ff;">&quot;12210&quot;</span>, <span style="color:#a5d6ff;">&quot;SHIPPING&quot;</span>, <span style="color:#a5d6ff;">&quot;CM&quot;</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">1</span>, <span style="color:#a5d6ff;">&quot;APPR&quot;</span>, <span style="color:#a5d6ff;">&quot;Crane #1 brake slipping under load&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;LIFTCARE&quot;</span>, <span style="color:#a5d6ff;">&quot;12500&quot;</span>, <span style="color:#a5d6ff;">&quot;SHIPPING&quot;</span>, <span style="color:#a5d6ff;">&quot;PM&quot;</span>, <span style="color:#79c0ff;">3</span>, <span style="color:#79c0ff;">10</span>, <span style="color:#a5d6ff;">&quot;WSCH&quot;</span>, <span style="color:#a5d6ff;">&quot;Overhead crane #2 rope and hook check&quot;</span>),
+]
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">q</span>(params):
+    <span style="color:#ff7b72;">return </span>urllib.parse.urlencode(params)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">ensure_vendor</span>(code, name):
+    found = m.find(<span style="color:#a5d6ff;">&quot;mxapivendor&quot;</span>, <span style="color:#a5d6ff;">f&#x27;company=&quot;{</span>code<span style="color:#a5d6ff;">}&quot; and orgid=&quot;{</span>ORG<span style="color:#a5d6ff;">}&quot;&#x27;</span>, <span style="color:#a5d6ff;">&quot;company&quot;</span>)
+    <span style="color:#ff7b72;">if </span>found:
+        <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;exists&quot;
+    </span><span style="color:#ff7b72;">if not </span>m.find(<span style="color:#a5d6ff;">&quot;mxapivendormstr&quot;</span>, <span style="color:#a5d6ff;">f&#x27;company=&quot;{</span>code<span style="color:#a5d6ff;">}&quot;&#x27;</span>, <span style="color:#a5d6ff;">&quot;company&quot;</span>):
+        c0, r0 = m.call(<span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/os/mxapivendormstr?lean=1&quot;</span>, {<span style="color:#a5d6ff;">&quot;company&quot;</span>: code, <span style="color:#a5d6ff;">&quot;name&quot;</span>: name, <span style="color:#a5d6ff;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;V&quot;</span>, <span style="color:#a5d6ff;">&quot;companysetid&quot;</span>: <span style="color:#a5d6ff;">&quot;COMPSET1&quot;</span>})
+        <span style="color:#ff7b72;">if </span>c0 <span style="color:#ff7b72;">not in </span>(<span style="color:#79c0ff;">200</span>, <span style="color:#79c0ff;">201</span>):
+            <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">f&quot;master FAILED {</span>c0<span style="color:#a5d6ff;">} {</span>json.dumps(r0)[:<span style="color:#79c0ff;">300</span>]<span style="color:#a5d6ff;">}&quot;
+    </span>code_, r = m.call(<span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/os/mxapivendor?lean=1&quot;</span>, {
+        <span style="color:#a5d6ff;">&quot;company&quot;</span>: code, <span style="color:#a5d6ff;">&quot;name&quot;</span>: name, <span style="color:#a5d6ff;">&quot;type&quot;</span>: <span style="color:#a5d6ff;">&quot;V&quot;</span>, <span style="color:#a5d6ff;">&quot;orgid&quot;</span>: ORG, <span style="color:#a5d6ff;">&quot;companysetid&quot;</span>: <span style="color:#a5d6ff;">&quot;COMPSET1&quot;</span>, <span style="color:#a5d6ff;">&quot;currencycode&quot;</span>: <span style="color:#a5d6ff;">&quot;USD&quot;</span>})
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">f&quot;created {</span>code_<span style="color:#a5d6ff;">}&quot; </span><span style="color:#ff7b72;">if </span>code_ <span style="color:#ff7b72;">in </span>(<span style="color:#79c0ff;">200</span>, <span style="color:#79c0ff;">201</span>) <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">f&quot;FAILED {</span>code_<span style="color:#a5d6ff;">} {</span>json.dumps(r)[:<span style="color:#79c0ff;">300</span>]<span style="color:#a5d6ff;">}&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">ensure_wo</span>(vendor, asset, loc, wtype, prio, days, status, desc):
+    <span style="color:#8b949e;"># oslc.where has no &quot;not in&quot; (BMXAA8744E), so list the statuses that count as existing work
+    </span>where = (<span style="color:#a5d6ff;">f&#x27;siteid=&quot;{</span>SITE<span style="color:#a5d6ff;">}&quot; and vendor=&quot;{</span>vendor<span style="color:#a5d6ff;">}&quot; and description=&quot;{</span>desc<span style="color:#a5d6ff;">}&quot;&#x27;
+             &#x27; and status in [&quot;WAPPR&quot;,&quot;APPR&quot;,&quot;WSCH&quot;,&quot;WMATL&quot;,&quot;INPRG&quot;,&quot;COMP&quot;]&#x27;</span>)
+    found = m.find(<span style="color:#a5d6ff;">&quot;mxapiwodetail&quot;</span>, where, <span style="color:#a5d6ff;">&quot;wonum,status,href&quot;</span>)
+    <span style="color:#ff7b72;">if </span>found:
+        <span style="color:#ff7b72;">return </span>found[<span style="color:#79c0ff;">0</span>][<span style="color:#a5d6ff;">&quot;wonum&quot;</span>], <span style="color:#a5d6ff;">&quot;exists&quot;
+    </span>due = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=days)).replace(hour=<span style="color:#79c0ff;">17</span>, minute=<span style="color:#79c0ff;">0</span>, second=<span style="color:#79c0ff;">0</span>, microsecond=<span style="color:#79c0ff;">0</span>)
+    body = {<span style="color:#a5d6ff;">&quot;siteid&quot;</span>: SITE, <span style="color:#a5d6ff;">&quot;description&quot;</span>: desc, <span style="color:#a5d6ff;">&quot;assetnum&quot;</span>: asset, <span style="color:#a5d6ff;">&quot;location&quot;</span>: loc, <span style="color:#a5d6ff;">&quot;worktype&quot;</span>: wtype,
+            <span style="color:#a5d6ff;">&quot;wopriority&quot;</span>: prio, <span style="color:#a5d6ff;">&quot;vendor&quot;</span>: vendor, <span style="color:#a5d6ff;">&quot;targstartdate&quot;</span>: dt.datetime.now(dt.timezone.utc).isoformat(timespec=<span style="color:#a5d6ff;">&quot;seconds&quot;</span>),
+            <span style="color:#a5d6ff;">&quot;targcompdate&quot;</span>: due.isoformat(timespec=<span style="color:#a5d6ff;">&quot;seconds&quot;</span>)}
+    code, r = m.call(<span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/os/mxapiwodetail?lean=1&amp;&quot; </span>+ q({<span style="color:#a5d6ff;">&quot;oslc.properties&quot;</span>: <span style="color:#a5d6ff;">&quot;wonum,href&quot;</span>}), body,
+                     {<span style="color:#a5d6ff;">&quot;properties&quot;</span>: <span style="color:#a5d6ff;">&quot;wonum,href&quot;</span>})
+    <span style="color:#ff7b72;">if </span>code <span style="color:#ff7b72;">not in </span>(<span style="color:#79c0ff;">200</span>, <span style="color:#79c0ff;">201</span>):
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">f&quot;FAILED {</span>code<span style="color:#a5d6ff;">} {</span>json.dumps(r)[:<span style="color:#79c0ff;">300</span>]<span style="color:#a5d6ff;">}&quot;
+    </span>wonum, href = r[<span style="color:#a5d6ff;">&quot;wonum&quot;</span>], r[<span style="color:#a5d6ff;">&quot;href&quot;</span>]
+    rid = href.rsplit(<span style="color:#a5d6ff;">&quot;/&quot;</span>, <span style="color:#79c0ff;">1</span>)[<span style="color:#79c0ff;">1</span>]
+    <span style="color:#ff7b72;">for </span>st <span style="color:#ff7b72;">in </span>{<span style="color:#a5d6ff;">&quot;APPR&quot;</span>: [<span style="color:#a5d6ff;">&quot;APPR&quot;</span>], <span style="color:#a5d6ff;">&quot;WSCH&quot;</span>: [<span style="color:#a5d6ff;">&quot;APPR&quot;</span>, <span style="color:#a5d6ff;">&quot;WSCH&quot;</span>], <span style="color:#a5d6ff;">&quot;INPRG&quot;</span>: [<span style="color:#a5d6ff;">&quot;APPR&quot;</span>, <span style="color:#a5d6ff;">&quot;INPRG&quot;</span>]}[status]:
+        c2, r2 = m.call(<span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">f&quot;/os/mxapiwodetail/{</span>rid<span style="color:#a5d6ff;">}?lean=1&amp;action=wsmethod:changeStatus&quot;</span>,
+                        {<span style="color:#a5d6ff;">&quot;status&quot;</span>: st, <span style="color:#a5d6ff;">&quot;memo&quot;</span>: <span style="color:#a5d6ff;">&quot;Assigned to contractor &quot; </span>+ vendor}, {<span style="color:#a5d6ff;">&quot;x-method-override&quot;</span>: <span style="color:#a5d6ff;">&quot;PATCH&quot;</span>})
+        <span style="color:#ff7b72;">if </span>c2 <span style="color:#ff7b72;">not in </span>(<span style="color:#79c0ff;">200</span>, <span style="color:#79c0ff;">204</span>):
+            <span style="color:#ff7b72;">return </span>wonum, <span style="color:#a5d6ff;">f&quot;created, status {</span>st<span style="color:#a5d6ff;">} FAILED {</span>c2<span style="color:#a5d6ff;">} {</span>json.dumps(r2)[:<span style="color:#79c0ff;">200</span>]<span style="color:#a5d6ff;">}&quot;
+    </span><span style="color:#ff7b72;">return </span>wonum, <span style="color:#a5d6ff;">&quot;created &quot; </span>+ status
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    <span style="color:#ff7b72;">for </span>code, name <span style="color:#ff7b72;">in </span>VENDORS.items():
+        <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;vendor&quot;</span>, code, ensure_vendor(code, name))
+    <span style="color:#ff7b72;">for </span>row <span style="color:#ff7b72;">in </span>WORK:
+        <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">&quot;wo&quot;</span>, row[<span style="color:#79c0ff;">0</span>], *ensure_wo(*row))</pre></section><section class="s" id="s16"><div class="h"><div><b>Python</b> <small>52 lines</small></div><div class="a"><button data-c="c16">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/one-front-door-for-maximo-contractor-work-orders-ibm-api-connect/16-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c16"><span style="color:#a5d6ff;">&quot;&quot;&quot;End-to-end test of the contractor API through the API Connect gateway.
+
+Reads the apps&#x27; client ID and secret from contractor_apps.env (one line per value, KEY=value), which you fill in
+and never commit. Prints status code and body of every call; never prints the credentials.
+
+    python test_gateway.py https://&lt;gateway-host&gt;/&lt;provider-org&gt;/&lt;catalog&gt;
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>json
+<span style="color:#ff7b72;">import </span>os
+<span style="color:#ff7b72;">import </span>sys
+<span style="color:#ff7b72;">import </span>urllib.error
+<span style="color:#ff7b72;">import </span>urllib.request
+
+BASE = sys.argv[<span style="color:#79c0ff;">1</span>].rstrip(<span style="color:#a5d6ff;">&quot;/&quot;</span>) + <span style="color:#a5d6ff;">&quot;/contractor/v1&quot; </span><span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(sys.argv) &gt; <span style="color:#79c0ff;">1 </span><span style="color:#ff7b72;">else </span>sys.exit(__doc__)
+ENV = {}
+<span style="color:#ff7b72;">for </span>line <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">open</span>(os.path.join(os.path.dirname(os.path.abspath(__file__)), <span style="color:#a5d6ff;">&quot;contractor_apps.env&quot;</span>), encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>):
+    <span style="color:#ff7b72;">if </span><span style="color:#a5d6ff;">&quot;=&quot; </span><span style="color:#ff7b72;">in </span>line <span style="color:#ff7b72;">and not </span>line.lstrip().startswith(<span style="color:#a5d6ff;">&quot;#&quot;</span>):
+        k, v = line.strip().split(<span style="color:#a5d6ff;">&quot;=&quot;</span>, <span style="color:#79c0ff;">1</span>)
+        ENV[k.strip()] = v.strip()
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">call</span>(who, method, path, body=<span style="color:#79c0ff;">None</span>):
+    h = {<span style="color:#a5d6ff;">&quot;Accept&quot;</span>: <span style="color:#a5d6ff;">&quot;application/json&quot;</span>, <span style="color:#a5d6ff;">&quot;Content-Type&quot;</span>: <span style="color:#a5d6ff;">&quot;application/json&quot;</span>}
+    <span style="color:#ff7b72;">if </span>who:
+        h[<span style="color:#a5d6ff;">&quot;X-IBM-Client-Id&quot;</span>] = ENV[who + <span style="color:#a5d6ff;">&quot;_CLIENT_ID&quot;</span>]
+        h[<span style="color:#a5d6ff;">&quot;X-IBM-Client-Secret&quot;</span>] = ENV[who + <span style="color:#a5d6ff;">&quot;_CLIENT_SECRET&quot;</span>]
+    r = urllib.request.Request(BASE + path, method=method, headers=h,
+                               data=json.dumps(body).encode() <span style="color:#ff7b72;">if </span>body <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">else </span><span style="color:#79c0ff;">None</span>)
+    <span style="color:#ff7b72;">try</span>:
+        <span style="color:#ff7b72;">with </span>urllib.request.urlopen(r, timeout=<span style="color:#79c0ff;">30</span>) <span style="color:#ff7b72;">as </span>f:
+            code, text = f.status, f.read().decode()
+    <span style="color:#ff7b72;">except </span>urllib.error.HTTPError <span style="color:#ff7b72;">as </span>e:
+        code, text = e.code, e.read().decode()
+    <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">f&quot;\n### {</span>who <span style="color:#ff7b72;">or </span><span style="color:#a5d6ff;">&#x27;no credentials&#x27;}  {</span>method<span style="color:#a5d6ff;">} {</span>path<span style="color:#a5d6ff;">}&quot; </span>+ (<span style="color:#a5d6ff;">f&quot;  {</span>json.dumps(body)<span style="color:#a5d6ff;">}&quot; </span><span style="color:#ff7b72;">if </span>body <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;&quot;</span>))
+    <span style="color:#d2a8ff;">print</span>(code, text[:<span style="color:#79c0ff;">1500</span>])
+
+who = [w <span style="color:#ff7b72;">for </span>w <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;VOLTPRO&quot;</span>, <span style="color:#a5d6ff;">&quot;LIFTCARE&quot;</span>) <span style="color:#ff7b72;">if </span>ENV.get(w + <span style="color:#a5d6ff;">&quot;_CLIENT_ID&quot;</span>)]
+call(<span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders&quot;</span>)
+<span style="color:#ff7b72;">for </span>w <span style="color:#ff7b72;">in </span>who:
+    call(w, <span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders&quot;</span>)
+<span style="color:#ff7b72;">if </span><span style="color:#a5d6ff;">&quot;NORTHAIR&quot; </span><span style="color:#ff7b72;">in </span>who:
+    call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders?status=done&quot;</span>)
+    call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/8839&quot;</span>)
+    call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/8844&quot;</span>)          <span style="color:#8b949e;"># VOLTPRO&#x27;s work order
+    </span>call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;GET&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/88%3B44&quot;</span>)       <span style="color:#8b949e;"># fails the number pattern
+    </span>call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/8841/completion&quot;</span>, {<span style="color:#a5d6ff;">&quot;completedAt&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-11T10:30:00+03:00&quot;</span>})
+    call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/8844/completion&quot;</span>,
+         {<span style="color:#a5d6ff;">&quot;completedAt&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-11T10:30:00+03:00&quot;</span>, <span style="color:#a5d6ff;">&quot;note&quot;</span>: <span style="color:#a5d6ff;">&quot;Trying another contractor&#x27;s job&quot;</span>})
+    call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/8841/completion&quot;</span>,
+         {<span style="color:#a5d6ff;">&quot;completedAt&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-11T10:30:00+03:00&quot;</span>,
+          <span style="color:#a5d6ff;">&quot;note&quot;</span>: <span style="color:#a5d6ff;">&quot;Fan rebalanced and both bearings replaced. Vibration down from 7.4 to 1.9 mm/s.&quot;</span>})
+    call(<span style="color:#a5d6ff;">&quot;NORTHAIR&quot;</span>, <span style="color:#a5d6ff;">&quot;POST&quot;</span>, <span style="color:#a5d6ff;">&quot;/workorders/8841/completion&quot;</span>,
+         {<span style="color:#a5d6ff;">&quot;completedAt&quot;</span>: <span style="color:#a5d6ff;">&quot;2026-11-11T10:35:00+03:00&quot;</span>, <span style="color:#a5d6ff;">&quot;note&quot;</span>: <span style="color:#a5d6ff;">&quot;Second report for the same job&quot;</span>})</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

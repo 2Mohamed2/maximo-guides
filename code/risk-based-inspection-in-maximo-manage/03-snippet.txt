@@ -1,0 +1,6 @@
+Art (fraction of the wall lost since the reading) = Cr × age / t_rdi
+    = 0.305 × 0.597 / 12.9                                   = 0.0141
+
+Flow stress FS = (YS + TS) / 2 × E × 1.1 = (260 + 485) / 2 × 1.0 × 1.1 = 409.75 MPa
+Strength ratio SR = (S × E / FS) × (t_min / t_rdi)
+    = (138 × 1.0 / 409.75) × (11.2 / 12.9)                   = 0.292

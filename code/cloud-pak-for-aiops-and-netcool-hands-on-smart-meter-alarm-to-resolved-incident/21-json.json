@@ -1,0 +1,9 @@
+{
+  "rowset": {
+    "osname": "AGG_P", "dbname": "alerts", "tblname": "status",
+    "rows": [
+      { "Node": "MTR-4200-0101", "Severity": 5, "Location": "Substation 4200-JCS-031500, Jeddah South", "Customer": "Residential feeder F-12", "Tally": 2 },
+      { "Node": "MTR-4200-0102", "Severity": 5, "Location": "Substation 4200-JCS-031500, Jeddah South", "Customer": "Residential feeder F-12", "Tally": 1 }
+    ]
+  }
+}

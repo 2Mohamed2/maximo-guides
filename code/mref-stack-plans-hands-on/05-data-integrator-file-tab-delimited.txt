@@ -1,0 +1,11 @@
+triNameTX	triIdTX	triDescriptionTX	Parent
+Demo Bank Maroc	ORG-MA	Demo Bank Maroc (demo)	\Organizations
+Banque de détail	ORG-MA-01	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Banque de l’entreprise	ORG-MA-02	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Salle des marchés	ORG-MA-03	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Risques et conformité	ORG-MA-04	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Digital et SI	ORG-MA-05	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Opérations	ORG-MA-06	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Finances	ORG-MA-07	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Capital humain	ORG-MA-08	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc
+Direction générale	ORG-MA-09	Direction Demo Bank Maroc, démo	\Organizations\Demo Bank Maroc

@@ -1,0 +1,2 @@
+BAT_WEAK_CELL =
+    RI_MAX_VS_MEAN > 1.5

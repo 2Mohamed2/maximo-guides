@@ -1,0 +1,7 @@
+GET https://HOST/oslc/spq/triAssetsQC?oslc.pageSize=2
+Accept: application/json
+
+{ "oslc:responseInfo": { "oslc:totalCount": 1825,
+                         "oslc:nextPage": { "rdf:resource": "…/triAssetsQC?oslc.pageSize=2&pageno=2" } },
+  "rdfs:member": [ { "rdf:resource": "https://HOST/oslc/so/triAssetRS/10375298" },
+                   { "rdf:resource": "…" } ] }

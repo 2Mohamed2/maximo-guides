@@ -1,0 +1,8 @@
+{
+  "OrderNo": "OM12300011",
+  "EnterpriseCode": "Matrix-B",
+  "SellerOrganizationCode": "Mtrx_Store_1",
+  "Status": "Included In Shipment",
+  "PaymentStatus": "AUTHORIZED",
+  "PriceInfo": { "Currency": "USD", "TotalAmount": "789.99" }
+}

@@ -1,0 +1,7 @@
+{"reference": "MAXIMO-BEDFORD-8871",
+ "costCenter": "200",
+ "postingDate": "2026-11-11",
+ "text": "8871 AH005 Pump AH005 bearing replacement after high vibration",
+ "lines": [{"account": "6000-200-300", "type": "LABOR",    "amount": 52.50},
+           {"account": "6000-200-200", "type": "MATERIAL", "amount": 124.33}],
+ "total": 176.83}

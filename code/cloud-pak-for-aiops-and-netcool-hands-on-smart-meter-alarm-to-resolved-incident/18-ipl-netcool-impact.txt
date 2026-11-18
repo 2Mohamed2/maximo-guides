@@ -1,0 +1,19 @@
+// SMOC_EnrichMeterAlarms: add the substation location and the customer to smart meter alarms
+Log("SMOC enrichment started");
+Query = "select Identifier, Node, AlertKey from alerts.status where Manager = 'SMOCLab' and Location = ''";
+Rows = DirectSQL('defaultobjectserver', Query, false);
+Log("Alarms to enrich: " + Length(Rows));
+i = 0;
+while (i < Length(Rows)) {
+Row = Rows[i];
+Location = "Substation " + Row.AlertKey;
+Customer = "Residential feeder F-12";
+if (Row.AlertKey == "4200-JCS-031500") {
+Location = "Substation 4200-JCS-031500, Jeddah South";
+}
+SetSql = "update alerts.status set Location = '" + Location + "', Customer = '" + Customer + "' where Identifier = '" + Row.Identifier + "'";
+DirectSQL('defaultobjectserver', SetSql, false);
+Log("Enriched " + Row.Node + ": " + Location + " / " + Customer);
+i = i + 1;
+}
+Log("SMOC enrichment done");

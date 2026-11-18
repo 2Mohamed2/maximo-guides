@@ -1,0 +1,11 @@
+{
+  "title": "Temperature now",
+  "size": "SMALL",
+  "type": "VALUE",
+  "content": {
+    "attributes": [ { "dataSourceId": "temperature_1", "label": "Temperature", "unit": "°C", "precision": 2 } ]
+  },
+  "dataSource": {
+    "attributes": [ { "id": "temperature_1", "attribute": "temperature", "aggregator": "last", "eventName": "status" } ]
+  }
+}

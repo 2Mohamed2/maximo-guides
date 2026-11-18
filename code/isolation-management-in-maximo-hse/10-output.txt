@@ -1,0 +1,3 @@
+GET /maximo/api/os/mxapiplusgisolation?lean=1
+    &oslc.where=permitworknum="1007"
+    &oslc.select=permitworknum,description,status,ptwclass,pertypenum,location

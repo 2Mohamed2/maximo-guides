@@ -1,0 +1,8 @@
+POST /maximo/api/os/plusdelectestr/{meter-id}?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+
+{ "plusdelectrictest": [ { "testdate": "2026-10-23T09:30:00", "avgaccuracyasfound": 97.40,
+    "avgaccuracyasleft": 97.40, "voltage": 240, "fullloadcurrent": 30, "lightloadcurrent": 3,
+    "failedtest": true, "metercreep": false, "demandtest": false, "tampered": false,
+    "notes": "Acceptance test before installation at Maple Ridge - outside the +/-2 % limit, return to vendor" } ] }

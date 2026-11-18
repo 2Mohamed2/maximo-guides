@@ -1,0 +1,12 @@
+# RBI.APPROVE - when an assessment is approved, older approved assessments of the same asset are superseded.
+from psdi.mbo import MboConstants
+F = MboConstants.NOACCESSCHECK | MboConstants.NOVALIDATION_AND_NOACTION
+if mbo.getString("STATUS") == "APPR":
+    if mbo.getDouble("TMIN") <= 0 or mbo.getDouble("TNOM") <= mbo.getDouble("TMIN"):
+        service.error("rbi", "needthickness")
+    old = mbo.getMboSet("$rbiold", "RBIASSESS",
+                        "assetnum=:assetnum and siteid=:siteid and status='APPR' and assessnum<>:assessnum")
+    o = old.moveFirst()
+    while o is not None:
+        o.setValue("STATUS", "SUPERSEDED", F)
+        o = old.moveNext()

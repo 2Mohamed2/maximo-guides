@@ -1,0 +1,5 @@
+triNameTX	triIdTX	triDescriptionTX	triLevelNU	Parent
+Niveau 01	MA-HQ-0001-L01	Siège social - niveau 1 - Opérations	1	\Locations\Patrimoine Demo Bank Maroc\Siège social
+Niveau 02	MA-HQ-0001-L02	Siège social - niveau 2 - Opérations	2	\Locations\Patrimoine Demo Bank Maroc\Siège social
+Niveau 03	MA-HQ-0001-L03	Siège social - niveau 3 - Opérations	3	\Locations\Patrimoine Demo Bank Maroc\Siège social
+Niveau 04	MA-HQ-0001-L04	Siège social - niveau 4 - Digital et SI	4	\Locations\Patrimoine Demo Bank Maroc\Siège social

@@ -1,0 +1,8 @@
+POST /maximo/api/os/mxrbiassess/_UkJJLTEwMTEvQkVERk9SRA--?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+properties: assessnum,status
+
+{
+  "status": "APPR"
+}

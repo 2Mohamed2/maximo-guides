@@ -1,0 +1,4 @@
+excludable = Sequence {
+    Set {'toll'}, Set {'motorway'}, Set {'ferry'},
+    Set {'toll', 'motorway'}, Set {'tunnel'}, Set {'toll', 'ferry'}   -- added
+}

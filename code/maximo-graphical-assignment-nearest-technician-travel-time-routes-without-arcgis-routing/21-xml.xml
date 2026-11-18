@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script SYSTEM "script.dtd">
+<!--
+  Road distance next to travel time on Graphical Assignment emergency recommendations.
+
+  Adds SKDEMAVAILRES.DISTANCEKM (road kilometres, technician -> emergency work order)
+  and shows it in the "Emergency Work Resource Availability" dialog (id runemrg) of
+  RLASSIGN, RLCAPACITY and GWORKASSIGN: a list column after Travel Time and a field in
+  the row details. The value is filled by automation script GISNTEMRES (1.0.2 or later,
+  dbc/gisnt_emres_traveltime_1.0.2.dbc) from the routing service.
+
+  Presentation edits are targeted replace() calls anchored on the stock Travel Time
+  markup, guarded so a re-run is a no-op and a customised dialog is left alone.
+  Reverse: replace the added tablecol / textbox with '' and drop the attribute.
+-->
+<script author="GISNT" scriptname="gisnt_emres_distance_1.0.0">
+  <description>Distance (km) on Graphical Assignment emergency recommendations</description>
+  <check tag="INFO" group="scriptrun" key="ScriptNotNeeded" default="DISTANCEKM already on SKDEMAVAILRES; skipped." skip_script="true">
+    <check_query query="select 1 from maxattribute where objectname = 'SKDEMAVAILRES' and attributename = 'DISTANCEKM'"/>
+  </check>
+  <statements>
+    <freeform description="Distance column in the Emergency Work Resource Availability list">
+      <sql target="oracle">update maxpresentation set presentation = replace(presentation, '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;', '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;&lt;tablecol dataattribute="distancekm" id="runemrg_assignments_table_tablebody_distkm"/&gt;') where app in ('RLASSIGN', 'RLCAPACITY', 'GWORKASSIGN') and dbms_lob.instr(presentation, 'runemrg_assignments_table_tablebody_distkm') = 0 and dbms_lob.instr(presentation, '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;') &gt; 0</sql>
+      <sql target="db2">update maxpresentation set presentation = replace(presentation, '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;', '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;&lt;tablecol dataattribute="distancekm" id="runemrg_assignments_table_tablebody_distkm"/&gt;') where app in ('RLASSIGN', 'RLCAPACITY', 'GWORKASSIGN') and locate('runemrg_assignments_table_tablebody_distkm', presentation) = 0 and locate('&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;', presentation) &gt; 0</sql>
+      <sql target="sqlserver">update maxpresentation set presentation = replace(cast(presentation as varchar(max)), '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;', '&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;&lt;tablecol dataattribute="distancekm" id="runemrg_assignments_table_tablebody_distkm"/&gt;') where app in ('RLASSIGN', 'RLCAPACITY', 'GWORKASSIGN') and charindex('runemrg_assignments_table_tablebody_distkm', cast(presentation as varchar(max))) = 0 and charindex('&lt;tablecol dataattribute="traveltime" id="runemrg_assignments_table_tablebody_travtime"/&gt;', cast(presentation as varchar(max))) &gt; 0</sql>
+    </freeform>
+    <freeform description="Distance field in the recommendation details">
+      <sql target="oracle">update maxpresentation set presentation = replace(presentation, '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;', '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;&lt;textbox dataattribute="distancekm" id="emwo_preview_1_grid7_52"/&gt;') where app in ('RLASSIGN', 'RLCAPACITY', 'GWORKASSIGN') and dbms_lob.instr(presentation, 'emwo_preview_1_grid7_52') = 0 and dbms_lob.instr(presentation, '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;') &gt; 0</sql>
+      <sql target="db2">update maxpresentation set presentation = replace(presentation, '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;', '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;&lt;textbox dataattribute="distancekm" id="emwo_preview_1_grid7_52"/&gt;') where app in ('RLASSIGN', 'RLCAPACITY', 'GWORKASSIGN') and locate('emwo_preview_1_grid7_52', presentation) = 0 and locate('&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;', presentation) &gt; 0</sql>
+      <sql target="sqlserver">update maxpresentation set presentation = replace(cast(presentation as varchar(max)), '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;', '&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;&lt;textbox dataattribute="distancekm" id="emwo_preview_1_grid7_52"/&gt;') where app in ('RLASSIGN', 'RLCAPACITY', 'GWORKASSIGN') and charindex('emwo_preview_1_grid7_52', cast(presentation as varchar(max))) = 0 and charindex('&lt;textbox dataattribute="traveltime" id="emwo_preview_1_grid7_51"/&gt;', cast(presentation as varchar(max))) &gt; 0</sql>
+    </freeform>
+    <add_attributes object="SKDEMAVAILRES">
+      <attrdef attribute="DISTANCEKM" maxtype="DECIMAL" length="10" scale="2" persistent="true" haslongdesc="false"
+               required="false" userdefined="true" title="Distance (km)"
+               remarks="Road distance in kilometres from where the technician is now to the emergency work order" />
+    </add_attributes>
+  </statements>
+</script>

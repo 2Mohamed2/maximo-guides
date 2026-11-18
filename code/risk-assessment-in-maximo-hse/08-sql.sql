@@ -1,0 +1,1 @@
+select 'REVIEWER', personid, reviewed, convert(varchar(16), revieweddate, 120) from plusgriskrev where plusgriskassessid=101 union all select 'APPROVER', personid, approved, convert(varchar(16), approveddate, 120) from plusgriskappr where plusgriskassessid=101

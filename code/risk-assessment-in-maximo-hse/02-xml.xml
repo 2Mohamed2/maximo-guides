@@ -1,0 +1,6 @@
+<add_attributes object="PLUSGRISKASSESS">
+  <attrdef attribute="ORIGRESULTNUM"
+           maxtype="UPPER" length="12"
+           persistent="false"
+           title="Originating Inspection" ... />
+</add_attributes>

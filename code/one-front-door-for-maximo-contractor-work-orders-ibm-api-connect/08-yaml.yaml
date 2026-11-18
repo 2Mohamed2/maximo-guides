@@ -1,0 +1,252 @@
+openapi: 3.0.0
+info:
+  title: Contractor work orders
+  x-ibm-name: contractor-workorders
+  version: 1.0.0
+  description: Work orders assigned to your company in our maintenance system.
+servers:
+  - url: /contractor/v1
+security:
+  - clientId: []
+    clientSecret: []
+paths:
+  /workorders:
+    get:
+      operationId: listWorkOrders
+      summary: List work orders assigned to your company
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [open, done, all], default: open }
+      responses:
+        '200':
+          description: Work orders
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkOrderList' }
+  /workorders/{number}:
+    parameters:
+      - name: number
+        in: path
+        required: true
+        schema: { type: string, pattern: '^[A-Z0-9-]{1,25}$' }
+    get:
+      operationId: getWorkOrder
+      summary: Read one work order
+      responses:
+        '200':
+          description: The work order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkOrder' }
+        '404': { description: Not found or not assigned to your company }
+  /workorders/{number}/completion:
+    parameters:
+      - name: number
+        in: path
+        required: true
+        schema: { type: string, pattern: '^[A-Z0-9-]{1,25}$' }
+    post:
+      operationId: completeWorkOrder
+      summary: Report the work as complete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Completion' }
+      responses:
+        '200': { description: Completed }
+        '400': { description: completedAt or note missing }
+        '404': { description: Not found or not assigned to your company }
+        '409': { description: The work order cannot be completed from its current state }
+components:
+  securitySchemes:
+    clientId:     { type: apiKey, in: header, name: X-IBM-Client-Id }
+    clientSecret: { type: apiKey, in: header, name: X-IBM-Client-Secret }
+  schemas:
+    WorkOrder:
+      type: object
+      properties:
+        number:   { type: string, example: '8839' }
+        title:    { type: string }
+        state:    { type: string, enum: [assigned, in_progress, done, other] }
+        priority: { type: integer }
+        site:     { type: string }
+        location: { type: string }
+        asset:    { type: string }
+        type:     { type: string }
+        dueBy:    { type: string, format: date-time }
+    WorkOrderList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/WorkOrder' } }
+        count: { type: integer }
+    Completion:
+      type: object
+      required: [completedAt, note]
+      properties:
+        completedAt: { type: string, format: date-time }
+        note:        { type: string, maxLength: 2000 }
+x-ibm-configuration:
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  gateway: datapower-api-gateway
+  cors: { enabled: true }
+  properties:
+    maximo-host:
+      value: 'https://manage.example.com'
+      encoded: false
+      description: 'Manage base URL; set per catalog'
+    maximo-apikey:
+      value: ''
+      encoded: false
+      description: 'API key of MXCONTRACTAPI; set per catalog'
+  assembly:
+    execute:
+      - set-variable:
+          version: 2.0.0
+          title: maximo-key
+          actions:
+            - clear: message.headers.authorization
+            - clear: message.headers.x-contractor-vendor
+            - set: message.headers.apikey
+              value: $(maximo-apikey)
+              type: string
+      - gatewayscript:
+          version: 2.0.0
+          title: build-query
+          source: |
+            // build-query: decide the Maximo call from the public call.
+            // The vendor comes from the caller's consumer organization, never from the request.
+            var vendor = context.get('client.org.name') || '';
+            var verb   = context.get('request.verb');
+            var path   = context.get('request.path');          // e.g. /contractor/v1/workorders/1203/completion
+            var rest   = path.replace(/^.*\/workorders/, '');  // '', '/1203' or '/1203/completion'
+
+            // A named rejection goes to the ClientError catch, which keeps this status code
+            function fail(code, reason, msg) {
+              context.reject('ClientError', msg);
+              context.message.statusCode = code + ' ' + reason;
+            }
+
+            if (!/^[A-Z0-9]{1,12}$/.test(vendor.toUpperCase())) {
+              fail(403, 'Forbidden', 'This application is not linked to a contractor.');
+            } else {
+              vendor = vendor.toUpperCase();
+              var SELECT = 'wonum,description,status,wopriority,siteid,location,assetnum,worktype,targcompdate';
+              var parts  = rest.split('/').filter(function (p) { return p; });
+              var number = parts[0] ? decodeURIComponent(parts[0]) : null;
+
+              if (number !== null && !/^[A-Z0-9-]{1,25}$/.test(number)) {
+                fail(400, 'Bad Request', 'Work order number may contain A-Z, 0-9 and - only.');
+              } else if (verb === 'GET' && number === null) {
+                // Statuses as shown in Maximo. Add your own synonyms here (for example "WAITCONTR").
+                var filter = { open: ' and status in ["APPR","WSCH","INPRG","WMATL"]',
+                               done: ' and status in ["COMP","CLOSE"]',
+                               all:  '' };
+                var q = (context.get('request.parameters.status.values') || ['open'])[0];
+                var where = 'vendor="' + vendor + '"' + (filter[q] !== undefined ? filter[q] : filter.open);
+                context.set('maximoPath', '/maximo/api/os/contrwo?lean=1&oslc.pageSize=100'
+                  + '&oslc.select=' + SELECT
+                  + '&oslc.where=' + encodeURIComponent(where)
+                  + '&oslc.orderBy=' + encodeURIComponent('+wopriority'));
+                context.set('apiMode', 'list');
+              } else if (verb === 'GET') {
+                var w = 'wonum="' + number + '" and vendor="' + vendor + '"';
+                context.set('maximoPath', '/maximo/api/os/contrwo?lean=1&oslc.select=' + SELECT
+                  + '&oslc.where=' + encodeURIComponent(w));
+                context.set('apiMode', 'one');
+              } else if (verb === 'POST' && parts[1] === 'completion') {
+                context.message.body.readAsJSON(function (err, body) {
+                  if (err || !body || !body.note || !body.completedAt) {
+                    fail(400, 'Bad Request', 'completedAt and note are required.');
+                    return;
+                  }
+                  context.set('maximoPath', '/maximo/api/script/contractor_complete');
+                  context.message.header.set('x-contractor-vendor', vendor);
+                  context.message.header.set('Content-Type', 'application/json');
+                  context.message.body.write({ wonum: number, completedAt: String(body.completedAt).substring(0, 30),
+                                               note: String(body.note).substring(0, 2000) });
+                  context.set('apiMode', 'complete');
+                });
+              } else {
+                fail(404, 'Not Found', 'Unknown operation.');
+              }
+            }
+
+      - invoke:
+          version: 2.0.0
+          title: call-maximo
+          target-url: $(maximo-host)$(maximoPath)
+          verb: keep
+          timeout: 10
+          header-control: { type: allowlist, values: [apikey, accept, content-type, x-contractor-vendor] }
+          parameter-control: { type: allowlist, values: [] }
+          backend-type: json
+      - gatewayscript:
+          version: 2.0.0
+          title: reshape
+          source: |
+            var mode = context.get('apiMode');
+            var STATE = { WAPPR: 'other', APPR: 'assigned', WSCH: 'assigned', INPRG: 'in_progress',
+                          COMP: 'done', CLOSE: 'done', CAN: 'other', WMATL: 'in_progress' };
+
+            function pub(m) {
+              return { number: m.wonum, title: m.description || '',
+                       state: STATE[m.status] || 'other', priority: m.wopriority,
+                       site: m.siteid, location: m.location, asset: m.assetnum,
+                       type: m.worktype, dueBy: m.targcompdate };
+            }
+            function answer(code, reason, body) {
+              context.set('message.status.code', code);
+              context.set('message.status.reason', reason);
+              context.message.header.set('Content-Type', 'application/json');
+              context.message.body.write(body);
+            }
+
+            context.message.body.readAsJSON(function (err, json) {
+              var status = context.get('message.status.code');
+              if (err || status >= 400 || (json && json.Error)) {
+                console.error('maximo said ' + status + ': ' + JSON.stringify(json));
+                if (mode === 'complete' && json && json.Error) {
+                  var r = json.Error.reasonCode || '';
+                  if (r === 'NOTFOUND') return answer(404, 'Not Found', { error: 'not_found' });
+                  if (r === 'BADINPUT') return answer(400, 'Bad Request', { error: 'bad_input' });
+                  return answer(409, 'Conflict', { error: 'not_allowed', detail: json.Error.message });
+                }
+                return answer(502, 'Bad Gateway', { error: 'upstream_error' });
+              }
+              if (mode === 'list') {
+                var items = (json.member || []).map(pub);
+                return answer(200, 'OK', { items: items, count: items.length });
+              }
+              if (mode === 'one') {
+                var m = (json.member || [])[0];
+                return m ? answer(200, 'OK', pub(m)) : answer(404, 'Not Found', { error: 'not_found' });
+              }
+              return answer(200, 'OK', json);   // completion: the script already speaks the public shape
+            });
+
+    catch:
+      - errors: [ClientError]
+        execute:
+          - gatewayscript:
+              version: 2.0.0
+              title: client-error
+              source: |
+                // Status code was set by build-query; only the body is written here
+                context.message.header.set('Content-Type', 'application/json');
+                context.message.body.write({ error: context.get('error.message') });
+      - default:
+          - gatewayscript:
+              version: 2.0.0
+              title: clean-error
+              source: |
+                context.set('message.status.code', 502);
+                context.set('message.status.reason', 'Bad Gateway');
+                context.message.header.set('Content-Type', 'application/json');
+                context.message.body.write({ error: 'upstream_error',
+                  detail: 'The maintenance system did not answer. Try again later.' });

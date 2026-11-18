@@ -1,0 +1,5 @@
+POST /maximo/api/os/mxapiasset/{asset-id}?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+
+{ "geometry": "POINT (-96.8135 32.74)" }

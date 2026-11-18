@@ -1,0 +1,2 @@
+triNameTX	triIdTX	triDescriptionTX	triCityTX	triCountryTX	Parent
+Patrimoine Demo Bank Maroc	PRP-MA01	Agences, directions régionales, data centers et centres fiduciaires de Demo Bank au Maroc (démo, données illustratives)	Casablanca	Maroc	\Locations

@@ -1,0 +1,1 @@
+insert into scriptlaunchpoint (launchpointname, autoscript, launchpointtype, objectname, objectevent, active, description, scriptlaunchpointid) select 'GISNTEMRES', 'GISNTEMRES', 'OBJECT', 'SKDEMAVAILRES', 2, 1, 'Before save on add', nextval for scriptlaunchpointseq from sysibm.sysdummy1 where not exists (select 1 from scriptlaunchpoint where launchpointname='GISNTEMRES')

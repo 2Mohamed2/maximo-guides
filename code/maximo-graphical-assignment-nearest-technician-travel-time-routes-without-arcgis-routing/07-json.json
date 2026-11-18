@@ -1,0 +1,7 @@
+{
+  "odCostMatrix": {
+    "costAttributeNames": ["TravelTime", "Kilometers"],
+    "1": {"1": [6.678, 5.3135]},
+    "2": {"1": [14.79, 9.7419]}
+  }
+}

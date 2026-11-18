@@ -1,0 +1,6 @@
+POST /maximo/api/os/mxapiplusgwastemgmt/{record id}?lean=1
+x-method-override: PATCH
+patchtype: MERGE
+
+{ "plusgwastecert": [ { "href": "{the certificate row href}",
+    "certacqu": true, "certacqudate": "2026-11-20T10:00:00" } ] }

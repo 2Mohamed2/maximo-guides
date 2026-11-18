@@ -1,0 +1,8 @@
+{
+  "source": "observability-tool",
+  "alertId": "ALR-PACS-IMG-01-DISKLAT",
+  "severity": "critical",
+  "entity": { "type": "host", "name": "pacs-img-01", "cmdbId": "PACS-IMG-01" },
+  "title": "Disk read latency above 250 ms on pacs-img-01",
+  "detail": "Volume /archive: p95 read latency 312 ms for 10 minutes (threshold 250 ms). Radiology viewers report slow study loading."
+}

@@ -1,0 +1,20 @@
+query : select wonum, description, status, siteid from maximo.workorder w
+        where not exists (select 1 from maximo.wpmaterial m where m.wonum = w.wonum)
+        fetch first 3 rows only
+answer: {"rowcount":3,"truncated":false,"columns":["WONUM","DESCRIPTION","STATUS","SITEID"],
+         "rows":[{"WONUM":"W102957_DT_US_1A999","DESCRIPTION":null,"STATUS":"CLOSE","SITEID":"DETROIT"}, ...]}
+
+query : select count(*) as n from workorder
+answer: {"rowcount":1,"truncated":false,"columns":["N"],"rows":[{"N":"67501"}]}
+
+query : update workorder set description='x' where wonum='1'
+answer: {"error":"Only SELECT statements can be run."}
+
+query : select userid, password from maxuser
+answer: {"error":"The statement touches credential data (password), which this tool does not return."}
+
+query : select wonum from workorder; delete from workorder
+answer: {"error":"Only one statement without comments can be run."}
+
+query : select nosuchcol from workorder
+answer: {"error":"SQL error: \"NOSUCHCOL\" is not valid in the context where it is used.. SQLCODE=-206, SQLSTATE=42703"}

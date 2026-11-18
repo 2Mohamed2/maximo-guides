@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@maximo/maximo-js-api": "3.2.803",
+    "@maximo/react-components": "3.2.803",
+    "mobx": "6.15.4",
+    "react": "18.3.1"
+  },
+  "scripts": {
+    "build": "npx @maximo/maxdev-cli build --in ./src/app.xml --out ./build/app/src/ --update-ids --copy",
+    "build:production": "yarn build && yarn labels && cd build/app && react-scripts build",
+    "labels": "npx @maximo/maxdev-cli localize -i ./src/app.xml -o ./src/i18n/labels.json --format json"
+  }
+}

@@ -1,0 +1,5 @@
+1007  ISOLATION COMP  1  MCC-02-07                               OPEN, RACKED OUT   -  1  0
+1007  ISOLATION COMP  2  XV-2203                                 CLOSED, LOCKED     -  1  0
+1007  ISOLATION COMP  3  XV-2201                                 CLOSED, LOCKED     -  1  0
+1007  ISOLATION COMP  4  Casing drain valve D-2205, 3/4in, ...   OPEN, CAR SEALED   -  1  0
+1007  ISOLATION COMP  5  Pressure gauge PI-2204 on pump casing   0 BARG PROVEN      -  1  0

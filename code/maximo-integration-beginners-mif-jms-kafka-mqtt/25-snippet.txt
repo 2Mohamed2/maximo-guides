@@ -1,0 +1,6 @@
+[CID-CRON-697] got message 9635157.1791873245883959498 from queue jms/maximo/int/queues/sqin
+[ERROR] Processing failed for MXASSETInterface. ...
+        BMXAA9301E - The user of the transaction is not authorized for Object Structure MXASSET.
+        Configure authorization in the object structure application and grant necessary access to the user.
+[ERROR] Message 9635157.1791873245883959498 processing was unsucessful by JMS Queue Cron Task
+        JMSQSEQCONSUMER.SEQQIN

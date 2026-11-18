@@ -1,0 +1,1 @@
+GET /maximo/api/os/mxrbiassess?lean=1&oslc.select=assessnum,assetnum,status,riskcell,risk,finriskplan,nextinspdate,wonum&oslc.orderBy=-assessnum&oslc.pageSize=10

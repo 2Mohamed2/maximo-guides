@@ -1,0 +1,4 @@
+GET /osrm/truck/route/v1/driving/-71.235575,42.376414;-71.070072,42.360005
+    ?steps=true&alternatives=2&overview=simplified&geometries=polyline6
+    &annotations=duration,distance,speed,datasources
+    &approaches=unrestricted;curb

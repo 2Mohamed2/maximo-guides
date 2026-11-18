@@ -1,0 +1,6 @@
+Long-term rate  = (16.0 − 12.9) / 17.95 y (2008-05-01 to 2026-04-14)  = 0.173 mm/y
+Short-term rate = (14.1 − 12.9) /  3.93 y (2022-05-10 to 2026-04-14)  = 0.305 mm/y
+Governing rate Cr = max(0.173, 0.305)                                  = 0.305 mm/y
+Age since the last reading (to the RBI date 2026-11-18)                = 0.597 y
+Thickness at the RBI date = 12.9 − 0.305 × 0.597                       = 12.72 mm
+Remaining life = (12.72 − 11.2) / 0.305                                = 5.0 years

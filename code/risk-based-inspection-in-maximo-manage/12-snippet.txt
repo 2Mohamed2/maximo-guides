@@ -1,0 +1,57 @@
+POST /maximo/api/os/mxrbiassess?lean=1
+properties: assessnum,status,crst,corrrate,remlife,dftotal,dfplan,riskcellnow,riskcell,risk,finrisk,finriskplan,targetdate,nextinspdate,driver,inspeffreq,finriskmit,inspmethod
+
+{
+  "assetnum": "V-1101",
+  "siteid": "BEDFORD",
+  "orgid": "EAGLENA",
+  "description": "Crude feed separator - after Nov 2026 shutdown",
+  "equiptype": "VESSEL",
+  "material": "SA-516-70 carbon steel",
+  "fluid": "CRUDE",
+  "installdate": "2008-05-01T00:00:00",
+  "assessdate": "2026-11-18T00:00:00",
+  "plandate": "2031-11-18T00:00:00",
+  "assessor": "WILSON",
+  "allowstress": 138,
+  "yieldstr": 260,
+  "tensilestr": 485,
+  "jointeff": 1.0,
+  "tmeter": "WALL-THK",
+  "tnom": 16,
+  "tmin": 11.2,
+  "crconf": "MEDIUM",
+  "thinnb": 1,
+  "thinnc": 1,
+  "lastinspdate": "2026-11-16T00:00:00",
+  "gff": 3.06e-05,
+  "msscore": 500,
+  "repaircost": 350000,
+  "outagedays": 12,
+  "lossperday": 180000,
+  "envcost": 250000,
+  "consarea": 300,
+  "risktarget": 10000,
+  "rbidamage": [
+    {
+      "mechanism": "CUI",
+      "suscept": "MEDIUM",
+      "corrrate": 0.1,
+      "startdate": "2014-01-01T00:00:00",
+      "nb": 1,
+      "siteid": "BEDFORD",
+      "orgid": "EAGLENA",
+      "notes": "Profile RT of the north side, cladding repaired Nov 2026 (effectiveness B)"
+    },
+    {
+      "mechanism": "EXTCORR",
+      "suscept": "LOW",
+      "corrrate": 0.02,
+      "startdate": "2008-05-01T00:00:00",
+      "nc": 1,
+      "siteid": "BEDFORD",
+      "orgid": "EAGLENA",
+      "notes": "Painted skirt and supports, coastal atmosphere"
+    }
+  ]
+}

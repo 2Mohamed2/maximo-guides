@@ -1,0 +1,4 @@
+GET https://api.example.com/maximo-integration/production/contractor/v1/workorders?status=open
+X-IBM-Client-Id: 3f2c...e91
+X-IBM-Client-Secret: 9a1b...77c
+Accept: application/json

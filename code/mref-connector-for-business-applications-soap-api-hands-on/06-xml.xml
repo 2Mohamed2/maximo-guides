@@ -1,0 +1,9 @@
+<ws:getObjectTypeId>
+  <ws:moduleName>triTask</ws:moduleName>
+  <ws:objectTypeName>triWorkTask</ws:objectTypeName>
+</ws:getObjectTypeId>
+
+<!-- answer -->
+<ns1:getObjectTypeIdResponse xmlns:ns1="http://ws.tririga.com">
+  <ns1:out>10008284</ns1:out>
+</ns1:getObjectTypeIdResponse>

@@ -1,0 +1,11 @@
+package com.tririga.custom;                 // required package
+
+public class MREF3D implements IConnect {   // class name = Class Loader name
+
+    public void execute(TririgaWS tws, HttpServletRequest req, HttpServletResponse res) {
+        String b = req.getParameter("building");
+        if (b == null || !b.matches("\\d{1,19}")) { res.setStatus(400); return; }   // validate input
+        // read-only SELECTs on MREF's own data source, the id bound as a parameter
+        // … write JSON to res
+    }
+}
