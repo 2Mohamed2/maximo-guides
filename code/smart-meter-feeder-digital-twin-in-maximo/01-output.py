@@ -1,0 +1,2 @@
+NTL_PCT =
+    (NTL_KWH / FEEDER_KWH * 100)
