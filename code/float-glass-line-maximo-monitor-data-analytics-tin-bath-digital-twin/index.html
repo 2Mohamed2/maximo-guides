@@ -1173,65 +1173,7 @@ BASE_YIELD = <span style="color:#79c0ff;">88.6          </span><span style="colo
 
 
 <span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
-    main()</pre></section><section class="s" id="s19"><div class="h"><div><b>deploy.yaml</b> <small>59 lines</small></div><div class="a"><button data-c="c19">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/float-glass-line-maximo-monitor-data-analytics-tin-bath-digital-twin/19-deploy.yaml" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c19"><span style="color:#8b949e;"># Float Glass Line 1 simulator + control page. Own namespace, nothing shared. Inputs (created by deploy.sh, not in git):
-#   configmap floatglass-sim-code    : sim.py, line.json, page.html
-#   secret    floatglass-sim-devices : devices.json (Monitor device tokens from monitor_setup.py)
-#   secret    floatglass-sim-key     : demo-key (switches scenarios from the page)
-</span><span style="color:#7ee787;">apiVersion</span>: apps/v1
-<span style="color:#7ee787;">kind</span>: Deployment
-<span style="color:#7ee787;">metadata</span>:
-  <span style="color:#7ee787;">name</span>: floatglass-sim
-  <span style="color:#7ee787;">namespace</span>: floatglass-sim
-  <span style="color:#7ee787;">labels</span>: {<span style="color:#7ee787;"> app</span>: floatglass-sim }
-<span style="color:#7ee787;">spec</span>:
-  <span style="color:#7ee787;">replicas</span>: 1
-  <span style="color:#7ee787;">strategy</span>: {<span style="color:#7ee787;"> type</span>: Recreate }
-  <span style="color:#7ee787;">selector</span>: {<span style="color:#7ee787;"> matchLabels</span>: {<span style="color:#7ee787;"> app</span>: floatglass-sim } }
-  <span style="color:#7ee787;">template</span>:
-    <span style="color:#7ee787;">metadata</span>: {<span style="color:#7ee787;"> labels</span>: {<span style="color:#7ee787;"> app</span>: floatglass-sim } }
-    <span style="color:#7ee787;">spec</span>:
-      <span style="color:#7ee787;">containers</span>:
-        - <span style="color:#7ee787;">name</span>: sim
-          <span style="color:#7ee787;">image</span>: docker.io/library/python:3.12-slim-bookworm
-          <span style="color:#7ee787;">command</span>: [<span style="color:#a5d6ff;">&quot;/bin/sh&quot;</span>, <span style="color:#a5d6ff;">&quot;-c&quot;</span>]
-          <span style="color:#7ee787;">args</span>:
-            - pip install --quiet --no-cache-dir --user &quot;paho-mqtt&gt;=2&quot; &amp;&amp;
-              exec python -u /code/sim.py live --every 10 --tin-every 10 --http 8080
-          <span style="color:#7ee787;">env</span>:
-            - {<span style="color:#7ee787;"> name</span>: HOME,<span style="color:#7ee787;"> value</span>: /tmp }
-            - {<span style="color:#7ee787;"> name</span>: PYTHONUSERBASE,<span style="color:#7ee787;"> value</span>: /tmp/pyuser }
-            - {<span style="color:#7ee787;"> name</span>: DEV_FILE,<span style="color:#7ee787;"> value</span>: /secret/devices.json }
-            - {<span style="color:#7ee787;"> name</span>: SCENARIO_STATE,<span style="color:#7ee787;"> value</span>: /tmp/scenarios.json }
-            - {<span style="color:#7ee787;"> name</span>: DEMO_KEY,<span style="color:#7ee787;"> valueFrom</span>: {<span style="color:#7ee787;"> secretKeyRef</span>: {<span style="color:#7ee787;"> name</span>: floatglass-sim-key,<span style="color:#7ee787;"> key</span>: demo-key } } }
-          <span style="color:#7ee787;">ports</span>: [{<span style="color:#7ee787;"> containerPort</span>: 8080,<span style="color:#7ee787;"> name</span>: http }]
-          <span style="color:#7ee787;">readinessProbe</span>: {<span style="color:#7ee787;"> httpGet</span>: {<span style="color:#7ee787;"> path</span>: /healthz,<span style="color:#7ee787;"> port</span>: 8080 },<span style="color:#7ee787;"> initialDelaySeconds</span>: 20,<span style="color:#7ee787;"> periodSeconds</span>: 10 }
-          <span style="color:#7ee787;">livenessProbe</span>: {<span style="color:#7ee787;"> httpGet</span>: {<span style="color:#7ee787;"> path</span>: /healthz,<span style="color:#7ee787;"> port</span>: 8080 },<span style="color:#7ee787;"> initialDelaySeconds</span>: 90,<span style="color:#7ee787;"> periodSeconds</span>: 30 }
-          <span style="color:#7ee787;">resources</span>:
-            <span style="color:#7ee787;">requests</span>: {<span style="color:#7ee787;"> cpu</span>: 20m,<span style="color:#7ee787;"> memory</span>: 64Mi }
-            <span style="color:#7ee787;">limits</span>: {<span style="color:#7ee787;"> cpu</span>: 300m,<span style="color:#7ee787;"> memory</span>: 256Mi }
-          <span style="color:#7ee787;">volumeMounts</span>:
-            - {<span style="color:#7ee787;"> name</span>: code,<span style="color:#7ee787;"> mountPath</span>: /code }
-            - {<span style="color:#7ee787;"> name</span>: devices,<span style="color:#7ee787;"> mountPath</span>: /secret,<span style="color:#7ee787;"> readOnly</span>: true }
-      <span style="color:#7ee787;">volumes</span>:
-        - <span style="color:#7ee787;">name</span>: code
-          <span style="color:#7ee787;">configMap</span>: {<span style="color:#7ee787;"> name</span>: floatglass-sim-code }
-        - <span style="color:#7ee787;">name</span>: devices
-          <span style="color:#7ee787;">secret</span>: {<span style="color:#7ee787;"> secretName</span>: floatglass-sim-devices }
----
-<span style="color:#7ee787;">apiVersion</span>: v1
-<span style="color:#7ee787;">kind</span>: Service
-<span style="color:#7ee787;">metadata</span>: {<span style="color:#7ee787;"> name</span>: floatglass-sim,<span style="color:#7ee787;"> namespace</span>: floatglass-sim }
-<span style="color:#7ee787;">spec</span>:
-  <span style="color:#7ee787;">selector</span>: {<span style="color:#7ee787;"> app</span>: floatglass-sim }
-  <span style="color:#7ee787;">ports</span>: [{<span style="color:#7ee787;"> name</span>: http,<span style="color:#7ee787;"> port</span>: 8080,<span style="color:#7ee787;"> targetPort</span>: 8080 }]
----
-<span style="color:#7ee787;">apiVersion</span>: route.openshift.io/v1
-<span style="color:#7ee787;">kind</span>: Route
-<span style="color:#7ee787;">metadata</span>: {<span style="color:#7ee787;"> name</span>: floatglass-sim,<span style="color:#7ee787;"> namespace</span>: floatglass-sim }
-<span style="color:#7ee787;">spec</span>:
-  <span style="color:#7ee787;">to</span>: {<span style="color:#7ee787;"> kind</span>: Service,<span style="color:#7ee787;"> name</span>: floatglass-sim }
-  <span style="color:#7ee787;">port</span>: {<span style="color:#7ee787;"> targetPort</span>: http }
-  <span style="color:#7ee787;">tls</span>: {<span style="color:#7ee787;"> termination</span>: edge,<span style="color:#7ee787;"> insecureEdgeTerminationPolicy</span>: Redirect }</pre></section><section class="s" id="s20"><div class="h"><div><b>twin_calc.py</b> <small>96 lines</small></div><div class="a"><button data-c="c20">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/float-glass-line-maximo-monitor-data-analytics-tin-bath-digital-twin/20-twin_calc.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c20"><span style="color:#a5d6ff;">&quot;&quot;&quot;The tin bath twin&#x27;s expectations (FG-L1-TB, Float Line 1, 600 t/day).
+    main()</pre></section><section class="s" id="s20"><div class="h"><div><b>twin_calc.py</b> <small>96 lines</small></div><div class="a"><button data-c="c20">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/float-glass-line-maximo-monitor-data-analytics-tin-bath-digital-twin/20-twin_calc.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c20"><span style="color:#a5d6ff;">&quot;&quot;&quot;The tin bath twin&#x27;s expectations (FG-L1-TB, Float Line 1, 600 t/day).
 
 One definition, two outputs:
   monitor_expressions(twin) -&gt; pandas expressions for Maximo Monitor PythonExpression functions
