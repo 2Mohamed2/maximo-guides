@@ -1,0 +1,819 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code: Moving Maximo from Oracle to Db2, tested end to end: IBM’s tool, the S</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet"><style>:root{--bg:#f4f4f4;--card:#fff;--ink:#161616;--mut:#525252;--acc:#0f62fe;--line:#e0e0e0}@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#262626;--ink:#f4f4f4;--mut:#c6c6c6;--acc:#78a9ff;--line:#393939}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;line-height:1.5}main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;line-height:1.25;margin:4px 0 6px}.k{color:var(--acc);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}a{color:var(--acc)}.lede{color:var(--mut);margin:0 0 24px}.s{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;scroll-margin-top:16px}.h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.h b{font-size:14px}.h small{color:var(--mut)}.h .a{display:flex;gap:8px}.h button,.h a.btn{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;text-decoration:none}.h button.ok{background:var(--acc);color:#fff}pre{margin:0;padding:14px 16px;background:#0d1117;color:#e6edf3;font:13px/1.5 'IBM Plex Mono',Consolas,monospace;overflow-x:auto;white-space:pre}:target{outline:3px solid var(--acc)}</style></head><body><main><div class="k">Code from the post</div><h1>Moving Maximo from Oracle to Db2, tested end to end: IBM’s tool, the SQL hidden in your records, and the traps that raise no error</h1><p class="lede">Every code box of <a href="https://community.ibm.com/community/user/blogs/mohamed-chihaoui/2026/11/26/moving-maximo-from-oracle-to-db2-tested-end-to-end">the post on the IBM Community</a>, with a Copy button. Each snippet is also a file in <a href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end">github.com/2Mohamed2/maximo-guides/code/moving-maximo-from-oracle-to-db2-tested-end-to-end</a>.</p><section class="s" id="s1"><div class="h"><div><b>Shell</b> <small>2 lines</small></div><div class="a"><button data-c="c1">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/01-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c1">python find_oracle_sql.py
+sqlplus -s maximo/&lt;password&gt;@&lt;host&gt;:1521/&lt;service&gt; @find_oracle_sql.sql &gt; findings.csv</pre></section><section class="s" id="s2"><div class="h"><div><b>Shell</b> <small>5 lines</small></div><div class="a"><button data-c="c2">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/02-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c2"><span style="color:#d2a8ff;">cd </span>&lt;SMP&gt;/maximo/tools/maximo/internal
+./unlcvt.sh -x3
+<span style="color:#8b949e;"># BMXAA6818I - Unlcvt started for schema MAXIMO, connected to database jdbc:oracle:thin:@//&lt;host&gt;:1521/&lt;service&gt;
+# BMXAA0364I - Getting metadata ... BMXAA0359I - Writing Create Index statements
+# BMXAA6820I - Unlcvt completed without errors.
+</span></pre></section><section class="s" id="s3"><div class="h"><div><b>Shell</b> <small>4 lines</small></div><div class="a"><button data-c="c3">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/03-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c3">cp Unlcvt.db2 &lt;SMP&gt;/maximo/tools/maximo/en/Unlcvt.db2
+<span style="color:#d2a8ff;">cd </span>&lt;SMP&gt;/maximo/tools/maximo
+<span style="color:#8b949e;"># maximo.properties now points at the TARGET Db2 database
+</span>./maxinst.sh -e -iUnlcvt -tMAXDATA -sMAXINDEX</pre></section><section class="s" id="s4"><div class="h"><div><b>Output</b> <small>4 lines</small></div><div class="a"><button data-c="c4">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/04-output.sql" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c4"><span style="color:#ff7b72;">insert into </span>reportoutputcnt ( jobnum, filename, filetype, content, reportoutputcntid, rowstamp)
+  <span style="color:#ff7b72;">values </span>(<span style="color:#a5d6ff;">&#x27;1006&#x27;</span>, <span style="color:#a5d6ff;">&#x27;service_target_compliance&#x27;</span>, <span style="color:#a5d6ff;">&#x27;XLS&#x27;</span>, <span style="color:#ff7b72;">null</span>, <span style="color:#79c0ff;">122</span>, NEXTVAL <span style="color:#ff7b72;">FOR </span>MAXSEQ)
+DB2 <span style="color:#ff7b72;">SQL </span>Error: <span style="color:#ff7b72;">SQLCODE</span>=-<span style="color:#79c0ff;">407</span>, <span style="color:#ff7b72;">SQLSTATE</span>=<span style="color:#79c0ff;">23502 </span>...
+BMXAA6819I - Maxinst completed <span style="color:#ff7b72;">with </span>errors.</pre></section><section class="s" id="s5"><div class="h"><div><b>SQL</b> <small>5 lines</small></div><div class="a"><button data-c="c5">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/05-sql.sql" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c5"><span style="color:#ff7b72;">select table_name </span>|| <span style="color:#a5d6ff;">&#x27;.&#x27; </span>|| <span style="color:#ff7b72;">column_name from </span>user_tab_columns
+ <span style="color:#ff7b72;">where </span>data_type = <span style="color:#a5d6ff;">&#x27;BLOB&#x27; </span><span style="color:#ff7b72;">and nullable </span>= <span style="color:#a5d6ff;">&#x27;N&#x27;
+   </span><span style="color:#ff7b72;">and table_name in </span>(<span style="color:#ff7b72;">select </span>tablename <span style="color:#ff7b72;">from </span>maxtable);   <span style="color:#8b949e;">-- 30 columns in Manage 9.3
+
+</span>python fix_not_null_blobs.py Unlcvt.db2 Unlcvt.fixed.db2 REPORTOUTPUTCNT.CONTENT MAFAPPDATA.APP ...</pre></section><section class="s" id="s6"><div class="h"><div><b>Shell</b> <small>4 lines</small></div><div class="a"><button data-c="c6">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/06-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c6"><span style="color:#d2a8ff;">export </span>SRC_URL=jdbc:oracle:thin:@//&lt;oracle-host&gt;:1521/&lt;service&gt; SRC_USER=maximo SRC_PASS=... SRC_SCHEMA=MAXIMO
+<span style="color:#d2a8ff;">export </span>TGT_URL=<span style="color:#a5d6ff;">&#x27;jdbc:db2://&lt;db2-host&gt;:50000/MAXDB&#x27; </span>TGT_USER=maximo TGT_PASS=... TGT_SCHEMA=MAXIMO
+L=&lt;SMP&gt;/maximo/applications/maximo/lib
+java -cp $L/oraclethin.jar:$L/db2jcc.jar CvtTool.java blobs blobs.csv</pre></section><section class="s" id="s7"><div class="h"><div><b>Shell</b> <small>2 lines</small></div><div class="a"><button data-c="c7">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/07-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c7">python ibm_db2_text_fix.py ibm_platform_diff.csv ibm_db2_text_fix.sql
+db2 connect to MAXDB; db2 <span style="color:#d2a8ff;">set </span>schema MAXIMO; db2 -tvf ibm_db2_text_fix.sql</pre></section><section class="s" id="s8"><div class="h"><div><b>Shell</b> <small>3 lines</small></div><div class="a"><button data-c="c8">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/08-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c8">python dual_run.py --ora-shell <span style="color:#a5d6ff;">&#x27;ssh oracle-host bash -s&#x27; </span>--db2-shell <span style="color:#a5d6ff;">&#x27;ssh db2inst1@db2-host bash -s&#x27; \
+                   </span>--ora-conn <span style="color:#a5d6ff;">&#x27;maximo/&lt;password&gt;@//&lt;host&gt;:1521/&lt;service&gt;&#x27; </span>--out before.csv
+python dual_run.py ... --rewrites db2_rewrites.csv --out after.csv</pre></section><section class="s" id="s9"><div class="h"><div><b>Python</b> <small>109 lines</small></div><div class="a"><button data-c="c9">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/09-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c9"><span style="color:#a5d6ff;">&quot;&quot;&quot;Find Oracle-only SQL stored inside a Maximo database (run against the SOURCE Oracle schema).
+
+Created by Mohamed Chihaoui.
+
+Maximo keeps SQL fragments in its own records: saved queries, relationships, conditions,
+escalations, workflow, KPIs, object-structure restrictions, table domains, automation
+scripts, BIRT report designs...  Unlcvt moves these rows across as data; it does not
+rewrite them.  This script writes find_oracle_sql.sql, one SELECT that lists every stored
+fragment matching a rule, with the rule&#x27;s class:
+
+  FAILS   - DB2 11.5 rejects it (tested on DB2 11.5.8, Varchar2 compatibility OFF)
+  SILENT  - DB2 runs it but can return different rows (empty string versus NULL)
+
+Usage:  python find_oracle_sql.py  -&gt;  find_oracle_sql.sql
+        sqlplus -s &lt;owner&gt;/&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;service&gt; @find_oracle_sql.sql &gt; findings.csv
+Output: one row per finding, fields separated by ~ :
+        class ~ rule ~ table.column ~ record key ~ first 300 characters ~ what to do on DB2
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">from </span>pathlib <span style="color:#ff7b72;">import </span>Path
+
+<span style="color:#8b949e;"># (table, readable record key, SQL-bearing column)
+</span>SOURCES = [
+    (<span style="color:#a5d6ff;">&quot;QUERY&quot;</span>, <span style="color:#a5d6ff;">&quot;APP||&#x27;:&#x27;||CLAUSENAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXRELATIONSHIP&quot;</span>, <span style="color:#a5d6ff;">&quot;PARENT||&#x27;.&#x27;||NAME&quot;</span>, <span style="color:#a5d6ff;">&quot;WHERECLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITIONNUM&quot;</span>, <span style="color:#a5d6ff;">&quot;EXPRESSION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;ESCALATION&quot;</span>, <span style="color:#a5d6ff;">&quot;ESCALATION&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;WFCONDITION&quot;</span>, <span style="color:#a5d6ff;">&quot;PROCESSNAME||&#x27;:&#x27;||NODEID&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;WFACTION&quot;</span>, <span style="color:#a5d6ff;">&quot;PROCESSNAME||&#x27;:&#x27;||ACTIONID&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;WFASSIGNMENT&quot;</span>, <span style="color:#a5d6ff;">&quot;PROCESSNAME||&#x27;:&#x27;||NODEID||&#x27;:&#x27;||ASSIGNID&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;KPIMAIN&quot;</span>, <span style="color:#a5d6ff;">&quot;KPINAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;KPIMAIN&quot;</span>, <span style="color:#a5d6ff;">&quot;KPINAME&quot;</span>, <span style="color:#a5d6ff;">&quot;SELECTSTMT&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXINTOBJECT&quot;</span>, <span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;RESTRICTWHERE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXIFACEEXPORT&quot;</span>, <span style="color:#a5d6ff;">&quot;IFACENAME&quot;</span>, <span style="color:#a5d6ff;">&quot;EXPORTWHERE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;OSLCQUERY&quot;</span>, <span style="color:#a5d6ff;">&quot;INTOBJECTNAME||&#x27;:&#x27;||CLAUSENAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;OSLCINTQUERY&quot;</span>, <span style="color:#a5d6ff;">&quot;PROVIDERNAME||&#x27;:&#x27;||QUERYNUM&quot;</span>, <span style="color:#a5d6ff;">&quot;WHERECLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXTABLEDOMAIN&quot;</span>, <span style="color:#a5d6ff;">&quot;DOMAINID||&#x27;:&#x27;||OBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;VALIDTNWHERECLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXTABLEDOMAIN&quot;</span>, <span style="color:#a5d6ff;">&quot;DOMAINID||&#x27;:&#x27;||OBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;LISTWHERECLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXDYNAMICDOMLINK&quot;</span>, <span style="color:#a5d6ff;">&quot;OBJECTNAME||&#x27;.&#x27;||ATTRIBUTENAME&quot;</span>, <span style="color:#a5d6ff;">&quot;DOMAINWHERE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXVIEW&quot;</span>, <span style="color:#a5d6ff;">&quot;VIEWNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;VIEWWHERE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;MAXVIEW&quot;</span>, <span style="color:#a5d6ff;">&quot;VIEWNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;VIEWSELECT&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;SCRIPTLAUNCHPOINT&quot;</span>, <span style="color:#a5d6ff;">&quot;LAUNCHPOINTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;SLA&quot;</span>, <span style="color:#a5d6ff;">&quot;SLANUM&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;REPORTADHOC&quot;</span>, <span style="color:#a5d6ff;">&quot;REPORTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;WHERECLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;PLUSGSEQOFEVENTS&quot;</span>, <span style="color:#a5d6ff;">&quot;TICKETID||&#x27;:&#x27;||NAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;SKDQUERY&quot;</span>, <span style="color:#a5d6ff;">&quot;OBJECTNAME||&#x27;:&#x27;||QUERYNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;WHERECLAUSE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>, <span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>, <span style="color:#a5d6ff;">&quot;SOURCE&quot;</span>),          <span style="color:#8b949e;"># CLOB: scripts that build SQL strings
+    </span>(<span style="color:#a5d6ff;">&quot;REPORTDESIGN&quot;</span>, <span style="color:#a5d6ff;">&quot;REPORTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;DESIGN&quot;</span>),        <span style="color:#8b949e;"># CLOB: BIRT data-set SQL
+</span>]
+CLOBS = {(<span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>, <span style="color:#a5d6ff;">&quot;SOURCE&quot;</span>), (<span style="color:#a5d6ff;">&quot;REPORTDESIGN&quot;</span>, <span style="color:#a5d6ff;">&quot;DESIGN&quot;</span>), (<span style="color:#a5d6ff;">&quot;KPIMAIN&quot;</span>, <span style="color:#a5d6ff;">&quot;SELECTSTMT&quot;</span>), (<span style="color:#a5d6ff;">&quot;KPIMAIN&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>)}
+
+<span style="color:#8b949e;"># Oracle regular expressions have no \b word boundary: spell it out
+</span>B = <span style="color:#a5d6ff;">r&quot;(^|[^a-z0-9_])&quot;
+</span>E = <span style="color:#a5d6ff;">r&quot;([^a-z0-9_]|$)&quot;
+
+</span><span style="color:#8b949e;"># (rule, class, Oracle regexp matched case-insensitively, regexp that clears the finding or None, DB2 fix)
+</span>RULES = [
+    (<span style="color:#a5d6ff;">&quot;DUAL&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;from\s+dual&quot; </span>+ E, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;use SYSIBM.SYSDUMMY1 (or VALUES ...)&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;ROWNUM/ROWID&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, B + <span style="color:#a5d6ff;">r&quot;(rownum|rowid)&quot; </span>+ E, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;FETCH FIRST n ROWS ONLY / ROW_NUMBER() OVER ()&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;CONNECT BY&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;connect\s+by\s+(nocycle\s+)?prior&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;recursive WITH (common table expression)&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;VARCHAR2/NUMBER type&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, B + <span style="color:#a5d6ff;">r&quot;(varchar2|nvarchar2|number)\s*\(&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;VARCHAR(n) / DECIMAL(p,s)&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;SYSTIMESTAMP&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, B + <span style="color:#a5d6ff;">r&quot;systimestamp&quot; </span>+ E, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;CURRENT TIMESTAMP&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;INTERVAL literal&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;interval\s+&#x27;&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;labelled duration: - 1 DAY, + 3 MONTHS&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;SUBSTR negative start&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;substr\s*\([^,()]+,\s*-\s*[0-9]&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;RIGHT(s, n)&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;WM_CONCAT&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;wm_concat\s*\(&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;LISTAGG(x, &#x27;,&#x27;) WITHIN GROUP (ORDER BY ...)&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;SYS_GUID&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;sys_guid\s*\(&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;GENERATE_UNIQUE() / HEX(GENERATE_UNIQUE())&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;Oracle hint&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;/\*\+&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;remove the hint&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;(a,b) = (select)&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;,[^()]*\)\s*=\s*\(\s*select&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;EXISTS (select ... where a = x.a and b = x.b)&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;Oracle Text CONTAINS&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, B + <span style="color:#a5d6ff;">r&quot;contains\s*\(&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;set up Db2 Text Search for the attribute, or use LIKE&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;date +/- fraction of a day&quot;</span>, <span style="color:#a5d6ff;">&quot;FAILS&quot;</span>, <span style="color:#a5d6ff;">r&quot;(sysdate|date)\s*[-+]\s*\(?\s*[0-9]*\.[0-9]&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;labelled duration: - 12 HOURS&quot;</span>),
+    <span style="color:#8b949e;"># date arithmetic: Oracle date - date = days; DB2 timestamp - timestamp = a yyyymmddhhmmss duration
+    </span>(<span style="color:#a5d6ff;">&quot;date - date&quot;</span>, <span style="color:#a5d6ff;">&quot;SILENT&quot;</span>, <span style="color:#a5d6ff;">r&quot;(sysdate|date)\s*-\s*\(?\s*[a-z_.]*[a-z_]&quot;</span>, <span style="color:#a5d6ff;">r&quot;-\s*(interval|[0-9])&quot;</span>, <span style="color:#a5d6ff;">&quot;DAYS(a) - DAYS(b), or TIMESTAMPDIFF(16, CHAR(a - b))&quot;</span>),
+    <span style="color:#8b949e;"># empty string: on Oracle &#x27;&#x27; IS NULL, on DB2 &#x27;&#x27; is a real value
+    </span>(<span style="color:#a5d6ff;">&quot;= &#x27;&#x27; alone&quot;</span>, <span style="color:#a5d6ff;">&quot;SILENT&quot;</span>, <span style="color:#a5d6ff;">r&quot;(=|&lt;&gt;|!=)\s*&#x27;&#x27;&quot;</span>, <span style="color:#a5d6ff;">r&quot;is\s+(not\s+)?null&quot;</span>, <span style="color:#a5d6ff;">&quot;Oracle: never true. DB2: matches empty strings. Add the IS NULL test&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;NVL(x,&#x27;&#x27;)&quot;</span>, <span style="color:#a5d6ff;">&quot;SILENT&quot;</span>, <span style="color:#a5d6ff;">r&quot;(nvl|coalesce)\s*\([^()]*,\s*&#x27;&#x27;\s*\)&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;Oracle returns NULL, DB2 returns &#x27;&#x27;; compare with IS NULL instead&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;concat ||&quot;</span>, <span style="color:#a5d6ff;">&quot;SILENT&quot;</span>, <span style="color:#a5d6ff;">r&quot;[|][|]&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;Oracle skips NULL in ||, DB2 returns NULL: COALESCE(x,&#x27;&#x27;) each nullable part&quot;</span>),
+    (<span style="color:#a5d6ff;">&quot;LENGTH&quot;</span>, <span style="color:#a5d6ff;">&quot;SILENT&quot;</span>, B + <span style="color:#a5d6ff;">r&quot;length\s*\(&quot;</span>, <span style="color:#79c0ff;">None</span>, <span style="color:#a5d6ff;">&quot;LENGTH(&#x27;&#x27;) is NULL on Oracle, 0 on DB2&quot;</span>),
+]
+SKIP_IN_CLOBS = {<span style="color:#a5d6ff;">&quot;concat ||&quot;</span>, <span style="color:#a5d6ff;">&quot;LENGTH&quot;</span>}   <span style="color:#8b949e;"># far too common inside scripts and BIRT XML to be useful
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">q</span>(v):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Quote a value for an Oracle string literal.&quot;&quot;&quot;
+    </span><span style="color:#ff7b72;">return </span>v.replace(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;&#x27;&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">build</span>():
+    parts = []
+    <span style="color:#ff7b72;">for </span>table, key, col <span style="color:#ff7b72;">in </span>SOURCES:
+        clob = (table, col) <span style="color:#ff7b72;">in </span>CLOBS
+        text = <span style="color:#a5d6ff;">f&quot;dbms_lob.substr({</span>col<span style="color:#a5d6ff;">}, 300, 1)&quot; </span><span style="color:#ff7b72;">if </span>clob <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">f&quot;substr({</span>col<span style="color:#a5d6ff;">}, 1, 300)&quot;
+        </span><span style="color:#ff7b72;">for </span>rid, <span style="color:#d2a8ff;">cls</span>, rx, clear, fix <span style="color:#ff7b72;">in </span>RULES:
+            <span style="color:#ff7b72;">if </span>clob <span style="color:#ff7b72;">and </span>rid <span style="color:#ff7b72;">in </span>SKIP_IN_CLOBS:
+                <span style="color:#ff7b72;">continue
+            </span>where = <span style="color:#a5d6ff;">f&quot;regexp_like({</span>col<span style="color:#a5d6ff;">}, &#x27;{</span>q(rx)<span style="color:#a5d6ff;">}&#x27;, &#x27;i&#x27;)&quot;
+            </span><span style="color:#ff7b72;">if </span>clear:
+                where += <span style="color:#a5d6ff;">f&quot; and not regexp_like({</span>col<span style="color:#a5d6ff;">}, &#x27;{</span>q(clear)<span style="color:#a5d6ff;">}&#x27;, &#x27;i&#x27;)&quot;
+            </span>parts.append(
+                <span style="color:#a5d6ff;">f&quot;select &#x27;{</span><span style="color:#d2a8ff;">cls</span><span style="color:#a5d6ff;">}&#x27; cls, &#x27;{</span>q(rid)<span style="color:#a5d6ff;">}&#x27; rule_id, &#x27;{</span>table<span style="color:#a5d6ff;">}.{</span>col<span style="color:#a5d6ff;">}&#x27; where_stored, to_char({</span>key<span style="color:#a5d6ff;">}) record_key, &quot;
+                f&quot;replace(replace({</span>text<span style="color:#a5d6ff;">}, chr(10), &#x27; &#x27;), chr(13), &#x27; &#x27;) sql_text, &#x27;{</span>q(fix)<span style="color:#a5d6ff;">}&#x27; db2_fix &quot;
+                f&quot;from {</span>table<span style="color:#a5d6ff;">} where {</span>where<span style="color:#a5d6ff;">}&quot;</span>)
+    head = (<span style="color:#a5d6ff;">&quot;-- Generated by find_oracle_sql.py (Created by Mohamed Chihaoui)\n&quot;
+            &quot;set pagesize 0 linesize 32767 trimspool on feedback off heading off\n&quot;
+            &quot;set markup csv on quote off delimiter ~\n&quot;</span>)
+    body = <span style="color:#a5d6ff;">&quot;\nunion all\n&quot;</span>.join(parts)
+    <span style="color:#ff7b72;">return </span>(head + <span style="color:#a5d6ff;">&quot;select cls, rule_id, where_stored, record_key, sql_text, db2_fix from (\n&quot;
+            </span>+ body + <span style="color:#a5d6ff;">&quot;\n) order by 1, 3, 4;\nexit\n&quot;</span>)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    out = Path(__file__).with_name(<span style="color:#a5d6ff;">&quot;find_oracle_sql.sql&quot;</span>)
+    out.write_text(build(), encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;\n&quot;</span>)
+    <span style="color:#d2a8ff;">print</span>(out, <span style="color:#d2a8ff;">len</span>(SOURCES), <span style="color:#a5d6ff;">&quot;columns x&quot;</span>, <span style="color:#d2a8ff;">len</span>(RULES), <span style="color:#a5d6ff;">&quot;rules&quot;</span>)</pre></section><section class="s" id="s10"><div class="h"><div><b>Shell</b> <small>17 lines</small></div><div class="a"><button data-c="c10">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/10-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c10"><span style="color:#8b949e;">#!/bin/sh
+# unlcvt.sh - run IBM&#x27;s Unlcvt utility (psdi.configure.Unlcvt), which ships in Manage but has no launcher.
+# Created by Mohamed Chihaoui.
+#
+# Put this file in &lt;SMP&gt;/maximo/tools/maximo/internal next to IBM&#x27;s cleandatabase.sh (same pattern),
+# point maximo.properties at the SOURCE database, stop every Maximo server, then run it from that folder:
+#
+#   cd &lt;SMP&gt;/maximo/tools/maximo/internal
+#   ./unlcvt.sh -x3          # -x1 Oracle, -x2 SQL Server, -x3 Db2; no -x = same platform as the source
+#
+# Output: Unlcvt.db2 in the same folder (Unlcvt.ora / Unlcvt.sqs for the other platforms).
+# Other flags read by the class: -m&lt;n&gt; split the output every n lines, -b alternative output format.
+</span>pathToScript=<span style="color:#a5d6ff;">`</span>dirname $0<span style="color:#a5d6ff;">`
+</span><span style="color:#d2a8ff;">cd </span><span style="color:#a5d6ff;">&quot;</span>$pathToScript<span style="color:#a5d6ff;">&quot;
+</span>. ./commonEnv.sh
+../../java/jre/bin/java -Xmx6g -classpath ..:../classes:$MAXIMO_CLASSPATH psdi.configure.Unlcvt <span style="color:#a5d6ff;">&quot;</span>$@<span style="color:#a5d6ff;">&quot;
+</span><span style="color:#d2a8ff;">exit </span>$?</pre></section><section class="s" id="s11"><div class="h"><div><b>Python</b> <small>83 lines</small></div><div class="a"><button data-c="c11">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/11-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c11"><span style="color:#a5d6ff;">&quot;&quot;&quot;Patch an Unlcvt DB2 script so rows with a NOT NULL BLOB column load.
+
+Created by Mohamed Chihaoui.
+
+Unlcvt does not unload BLOB data: it writes null for every BLOB value. Where the column is
+NOT NULL (REPORTOUTPUTCNT.CONTENT, MAFAPPDATA.APP ...), maxinst stops on DB2 with
+SQLCODE=-407. This script rewrites those nulls to an empty BLOB, BLOB(X&#x27;&#x27;), so the load
+finishes; blob_copy (CvtTool.java blobs) then copies the real bytes from the source.
+
+Usage: python fix_not_null_blobs.py &lt;in Unlcvt.db2&gt; &lt;out Unlcvt.db2&gt; TABLE.COLUMN [TABLE.COLUMN ...]
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>re
+<span style="color:#ff7b72;">import </span>sys
+
+INS = re.compile(<span style="color:#a5d6ff;">r&quot;^\s*insert\s+into\s+(\w+)&quot;</span>, re.I)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">split_top</span>(s):
+    out, cur, depth, q, i = [], [], <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">False</span>, <span style="color:#79c0ff;">0
+    </span><span style="color:#ff7b72;">while </span>i &lt; <span style="color:#d2a8ff;">len</span>(s):
+        c = s[i]
+        <span style="color:#ff7b72;">if </span>q:
+            cur.append(c)
+            <span style="color:#ff7b72;">if </span>c == <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>:
+                <span style="color:#ff7b72;">if </span>i + <span style="color:#79c0ff;">1 </span>&lt; <span style="color:#d2a8ff;">len</span>(s) <span style="color:#ff7b72;">and </span>s[i + <span style="color:#79c0ff;">1</span>] == <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>:
+                    cur.append(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>); i += <span style="color:#79c0ff;">1
+                </span><span style="color:#ff7b72;">else</span>:
+                    q = <span style="color:#79c0ff;">False
+        </span><span style="color:#ff7b72;">elif </span>c == <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>:
+            q = <span style="color:#79c0ff;">True</span>; cur.append(c)
+        <span style="color:#ff7b72;">elif </span>c <span style="color:#ff7b72;">in </span><span style="color:#a5d6ff;">&quot;()&quot;</span>:
+            depth += <span style="color:#79c0ff;">1 </span><span style="color:#ff7b72;">if </span>c == <span style="color:#a5d6ff;">&quot;(&quot; </span><span style="color:#ff7b72;">else </span>-<span style="color:#79c0ff;">1</span>; cur.append(c)
+        <span style="color:#ff7b72;">elif </span>c == <span style="color:#a5d6ff;">&quot;,&quot; </span><span style="color:#ff7b72;">and </span>depth == <span style="color:#79c0ff;">0</span>:
+            out.append(<span style="color:#a5d6ff;">&quot;&quot;</span>.join(cur)); cur = []
+        <span style="color:#ff7b72;">else</span>:
+            cur.append(c)
+        i += <span style="color:#79c0ff;">1
+    </span>out.append(<span style="color:#a5d6ff;">&quot;&quot;</span>.join(cur))
+    <span style="color:#ff7b72;">return </span>out
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">patch</span>(stmt, cols_to_fix):
+    m = re.match(<span style="color:#a5d6ff;">r&quot;(\s*insert\s+into\s+\w+\s*)\((.*?)\)(\s*values\s*)\((.*)\)(\s*)$&quot;</span>, stmt, re.S | re.I)
+    <span style="color:#ff7b72;">if not </span>m:
+        <span style="color:#ff7b72;">return </span>stmt, <span style="color:#79c0ff;">False
+    </span>cols = [c.strip().upper() <span style="color:#ff7b72;">for </span>c <span style="color:#ff7b72;">in </span>m.group(<span style="color:#79c0ff;">2</span>).replace(<span style="color:#a5d6ff;">&quot;\n&quot;</span>, <span style="color:#a5d6ff;">&quot; &quot;</span>).split(<span style="color:#a5d6ff;">&quot;,&quot;</span>)]
+    vals = split_top(m.group(<span style="color:#79c0ff;">4</span>))
+    <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(cols) != <span style="color:#d2a8ff;">len</span>(vals):
+        <span style="color:#ff7b72;">return </span>stmt, <span style="color:#79c0ff;">False
+    </span>changed = <span style="color:#79c0ff;">False
+    </span><span style="color:#ff7b72;">for </span>i, c <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(cols):
+        <span style="color:#ff7b72;">if </span>c <span style="color:#ff7b72;">in </span>cols_to_fix <span style="color:#ff7b72;">and </span>vals[i].strip().lower() == <span style="color:#a5d6ff;">&quot;null&quot;</span>:
+            vals[i] = vals[i].lower().replace(<span style="color:#a5d6ff;">&quot;null&quot;</span>, <span style="color:#a5d6ff;">&quot;blob(x&#x27;&#x27;)&quot;</span>); changed = <span style="color:#79c0ff;">True
+    </span><span style="color:#ff7b72;">if not </span>changed:
+        <span style="color:#ff7b72;">return </span>stmt, <span style="color:#79c0ff;">False
+    </span><span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">f&quot;{</span>m.group(<span style="color:#79c0ff;">1</span>)<span style="color:#a5d6ff;">}({</span>m.group(<span style="color:#79c0ff;">2</span>)<span style="color:#a5d6ff;">}){</span>m.group(<span style="color:#79c0ff;">3</span>)<span style="color:#a5d6ff;">}({&#x27;,&#x27;</span>.join(vals)<span style="color:#a5d6ff;">}){</span>m.group(<span style="color:#79c0ff;">5</span>)<span style="color:#a5d6ff;">}&quot;</span>, <span style="color:#79c0ff;">True
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">main</span>(src, dst, *targets):
+    fix = {}
+    <span style="color:#ff7b72;">for </span>t <span style="color:#ff7b72;">in </span>targets:
+        tb, col = t.upper().split(<span style="color:#a5d6ff;">&quot;.&quot;</span>)
+        fix.setdefault(tb, <span style="color:#d2a8ff;">set</span>()).add(col)
+    n = <span style="color:#79c0ff;">0
+    </span><span style="color:#ff7b72;">with </span><span style="color:#d2a8ff;">open</span>(src, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, errors=<span style="color:#a5d6ff;">&quot;surrogateescape&quot;</span>) <span style="color:#ff7b72;">as </span>f, \
+         <span style="color:#d2a8ff;">open</span>(dst, <span style="color:#a5d6ff;">&quot;w&quot;</span>, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, errors=<span style="color:#a5d6ff;">&quot;surrogateescape&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;&quot;</span>) <span style="color:#ff7b72;">as </span>o:
+        buf, table = [], <span style="color:#79c0ff;">None
+        </span><span style="color:#ff7b72;">for </span>line <span style="color:#ff7b72;">in </span>f:
+            <span style="color:#ff7b72;">if </span>table <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+                m = INS.match(line)
+                <span style="color:#ff7b72;">if </span>m <span style="color:#ff7b72;">and </span>m.group(<span style="color:#79c0ff;">1</span>).upper() <span style="color:#ff7b72;">in </span>fix:
+                    table, buf = m.group(<span style="color:#79c0ff;">1</span>).upper(), [line]
+                <span style="color:#ff7b72;">else</span>:
+                    o.write(line)
+                <span style="color:#ff7b72;">continue
+            if </span>line.strip() == <span style="color:#a5d6ff;">&quot;;&quot;</span>:
+                stmt, ok = patch(<span style="color:#a5d6ff;">&quot;&quot;</span>.join(buf), fix[table])
+                n += ok
+                o.write(stmt); o.write(line)
+                table, buf = <span style="color:#79c0ff;">None</span>, []
+            <span style="color:#ff7b72;">else</span>:
+                buf.append(line)
+    <span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">f&quot;{</span>n<span style="color:#a5d6ff;">} inserts patched -&gt; {</span>dst<span style="color:#a5d6ff;">}&quot;</span>)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    main(*sys.argv[<span style="color:#79c0ff;">1</span>:])</pre></section><section class="s" id="s12"><div class="h"><div><b>Java</b> <small>133 lines</small></div><div class="a"><button data-c="c12">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/12-java.java" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c12"><span style="color:#8b949e;">// CvtTool - checks and fixes after a Maximo Oracle-to-DB2 move with Unlcvt + maxinst.
+// Created by Mohamed Chihaoui.
+//
+//   java CvtTool.java counts   -&gt; row count of every Maximo table on both sides (counts.csv)
+//   java CvtTool.java blobs    -&gt; copy BLOB bytes Unlcvt leaves out (images, BIRT resources,
+//                                 geometry, report output)
+//   java CvtTool.java empties  -&gt; count &#x27;&#x27; values in text columns on DB2 (Oracle cannot store &#x27;&#x27;)
+//
+// Connections come from environment variables:
+//   SRC_URL SRC_USER SRC_PASS SRC_SCHEMA   (Oracle)
+//   TGT_URL TGT_USER TGT_PASS TGT_SCHEMA   (DB2)
+// Run with the Maximo JDBC drivers on the class path:
+//   java -cp oraclethin.jar:db2jcc.jar CvtTool.java counts
+</span><span style="color:#ff7b72;">import </span>java.io.*;
+<span style="color:#ff7b72;">import </span>java.sql.*;
+<span style="color:#ff7b72;">import </span>java.util.*;
+
+<span style="color:#ff7b72;">public class </span><span style="color:#ffa657;">CvtTool </span>{
+    <span style="color:#ff7b72;">static </span>String <span style="color:#d2a8ff;">env</span>(String k) { String v = System.<span style="color:#79c0ff;">getenv</span>(k); <span style="color:#ff7b72;">if </span>(v == <span style="color:#79c0ff;">null</span>) <span style="color:#ff7b72;">throw new </span>IllegalArgumentException(k + <span style="color:#a5d6ff;">&quot; not set&quot;</span>); <span style="color:#ff7b72;">return </span>v; }
+    <span style="color:#ff7b72;">static </span>Connection <span style="color:#d2a8ff;">src</span>() <span style="color:#ff7b72;">throws </span>SQLException { <span style="color:#ff7b72;">return </span>DriverManager.<span style="color:#79c0ff;">getConnection</span>(env(<span style="color:#a5d6ff;">&quot;SRC_URL&quot;</span>), env(<span style="color:#a5d6ff;">&quot;SRC_USER&quot;</span>), env(<span style="color:#a5d6ff;">&quot;SRC_PASS&quot;</span>)); }
+    <span style="color:#ff7b72;">static </span>Connection <span style="color:#d2a8ff;">tgt</span>() <span style="color:#ff7b72;">throws </span>SQLException { <span style="color:#ff7b72;">return </span>DriverManager.<span style="color:#79c0ff;">getConnection</span>(env(<span style="color:#a5d6ff;">&quot;TGT_URL&quot;</span>), env(<span style="color:#a5d6ff;">&quot;TGT_USER&quot;</span>), env(<span style="color:#a5d6ff;">&quot;TGT_PASS&quot;</span>)); }
+
+    <span style="color:#ff7b72;">public static void </span><span style="color:#d2a8ff;">main</span>(String[] a) <span style="color:#ff7b72;">throws </span>Exception {
+        String out = a.<span style="color:#79c0ff;">length </span>&gt; <span style="color:#79c0ff;">1 </span>? a[<span style="color:#79c0ff;">1</span>] : <span style="color:#a5d6ff;">&quot;/work/&quot; </span>+ a[<span style="color:#79c0ff;">0</span>] + <span style="color:#a5d6ff;">&quot;.csv&quot;</span>;
+        <span style="color:#ff7b72;">switch </span>(a[<span style="color:#79c0ff;">0</span>]) {
+            <span style="color:#ff7b72;">case </span><span style="color:#a5d6ff;">&quot;counts&quot; </span>-&gt; counts(out);
+            <span style="color:#ff7b72;">case </span><span style="color:#a5d6ff;">&quot;blobs&quot; </span>-&gt; blobs(out);
+            <span style="color:#ff7b72;">case </span><span style="color:#a5d6ff;">&quot;empties&quot; </span>-&gt; empties(out, a.<span style="color:#79c0ff;">length </span>&gt; <span style="color:#79c0ff;">2 </span>? a[<span style="color:#79c0ff;">2</span>] : <span style="color:#a5d6ff;">&quot;WORKORDER,ASSET,LOCATIONS,PERSON,LABOR,ITEM,INVENTORY,PO,POLINE,PR,TICKET,JOBPLAN,PM,MATUSETRANS,COMPANIES&quot;</span>);
+            <span style="color:#ff7b72;">default </span>-&gt; <span style="color:#ff7b72;">throw new </span>IllegalArgumentException(<span style="color:#a5d6ff;">&quot;counts | blobs | empties&quot;</span>);
+        }
+    }
+
+    <span style="color:#8b949e;">// Persistent Maximo tables (not views), from the source data dictionary
+    </span><span style="color:#ff7b72;">static </span>List&lt;String[]&gt; <span style="color:#d2a8ff;">tables</span>(Connection s) <span style="color:#ff7b72;">throws </span>SQLException {
+        List&lt;String[]&gt; l = <span style="color:#ff7b72;">new </span>ArrayList&lt;&gt;();
+        <span style="color:#ff7b72;">try </span>(ResultSet r = s.<span style="color:#79c0ff;">createStatement</span>().<span style="color:#79c0ff;">executeQuery</span>(
+                <span style="color:#a5d6ff;">&quot;select t.tablename, t.uniquecolumnname from maxtable t join maxobject o on o.objectname = t.tablename &quot;
+                </span>+ <span style="color:#a5d6ff;">&quot;where o.persistent = 1 and o.isview = 0 order by 1&quot;</span>)) {
+            <span style="color:#ff7b72;">while </span>(r.<span style="color:#79c0ff;">next</span>()) l.<span style="color:#79c0ff;">add</span>(<span style="color:#ff7b72;">new </span>String[]{r.<span style="color:#79c0ff;">getString</span>(<span style="color:#79c0ff;">1</span>), r.<span style="color:#79c0ff;">getString</span>(<span style="color:#79c0ff;">2</span>)});
+        }
+        <span style="color:#ff7b72;">return </span>l;
+    }
+
+    <span style="color:#ff7b72;">static long </span><span style="color:#d2a8ff;">count</span>(Connection c, String sql) {
+        <span style="color:#8b949e;">// close the statement too: Db2 runs out of JDBC packages (SQL0805N) otherwise
+        </span><span style="color:#ff7b72;">try </span>(Statement st = c.<span style="color:#79c0ff;">createStatement</span>(); ResultSet r = st.<span style="color:#79c0ff;">executeQuery</span>(sql)) { r.<span style="color:#79c0ff;">next</span>(); <span style="color:#ff7b72;">return </span>r.<span style="color:#79c0ff;">getLong</span>(<span style="color:#79c0ff;">1</span>); }
+        <span style="color:#ff7b72;">catch </span>(SQLException e) { <span style="color:#ff7b72;">return </span>-<span style="color:#79c0ff;">1</span>; }
+    }
+
+    <span style="color:#ff7b72;">static void </span><span style="color:#d2a8ff;">counts</span>(String out) <span style="color:#ff7b72;">throws </span>Exception {
+        <span style="color:#ff7b72;">try </span>(Connection s = src(); Connection t = tgt(); PrintWriter w = <span style="color:#ff7b72;">new </span>PrintWriter(out, <span style="color:#a5d6ff;">&quot;UTF-8&quot;</span>)) {
+            String ts = env(<span style="color:#a5d6ff;">&quot;TGT_SCHEMA&quot;</span>);
+            w.<span style="color:#79c0ff;">println</span>(<span style="color:#a5d6ff;">&quot;table,oracle_rows,db2_rows,verdict&quot;</span>);
+            <span style="color:#ff7b72;">int </span>same = <span style="color:#79c0ff;">0</span>, diff = <span style="color:#79c0ff;">0</span>;
+            <span style="color:#ff7b72;">for </span>(String[] tb : tables(s)) {
+                <span style="color:#ff7b72;">long </span>o = count(s, <span style="color:#a5d6ff;">&quot;select count(*) from &quot; </span>+ tb[<span style="color:#79c0ff;">0</span>]);
+                <span style="color:#ff7b72;">long </span>d = count(t, <span style="color:#a5d6ff;">&quot;select count(*) from &quot; </span>+ ts + <span style="color:#a5d6ff;">&quot;.&quot; </span>+ tb[<span style="color:#79c0ff;">0</span>]);
+                String v = o == d ? <span style="color:#a5d6ff;">&quot;SAME&quot; </span>: (d &lt; <span style="color:#79c0ff;">0 </span>? <span style="color:#a5d6ff;">&quot;MISSING ON DB2&quot; </span>: <span style="color:#a5d6ff;">&quot;DIFFERENT&quot;</span>);
+                <span style="color:#ff7b72;">if </span>(o == d) same++; <span style="color:#ff7b72;">else </span>diff++;
+                w.<span style="color:#79c0ff;">println</span>(tb[<span style="color:#79c0ff;">0</span>] + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ o + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ d + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ v);
+            }
+            System.<span style="color:#79c0ff;">out</span>.<span style="color:#79c0ff;">println</span>(<span style="color:#a5d6ff;">&quot;tables same=&quot; </span>+ same + <span style="color:#a5d6ff;">&quot; different=&quot; </span>+ diff + <span style="color:#a5d6ff;">&quot; -&gt; &quot; </span>+ out);
+        }
+    }
+
+    <span style="color:#8b949e;">// Tables whose ids maxinst renumbers: match on the record they belong to instead of the id.
+    </span><span style="color:#ff7b72;">static final </span>Map&lt;String, String[]&gt; MATCH_ON = Map.<span style="color:#79c0ff;">of</span>(<span style="color:#a5d6ff;">&quot;IMGLIB&quot;</span>, <span style="color:#ff7b72;">new </span>String[]{<span style="color:#a5d6ff;">&quot;REFOBJECT&quot;</span>, <span style="color:#a5d6ff;">&quot;REFOBJECTID&quot;</span>});
+    <span style="color:#8b949e;">// Rebuilt by the Manage build on the new database: redeploy customised mobile apps, do not copy.
+    </span><span style="color:#ff7b72;">static final </span>Set&lt;String&gt; SKIP = Set.<span style="color:#79c0ff;">of</span>(<span style="color:#a5d6ff;">&quot;MAFAPPDATA&quot;</span>);
+
+    <span style="color:#ff7b72;">static void </span><span style="color:#d2a8ff;">blobs</span>(String out) <span style="color:#ff7b72;">throws </span>Exception {
+        <span style="color:#ff7b72;">try </span>(Connection s = src(); Connection t = tgt(); PrintWriter w = <span style="color:#ff7b72;">new </span>PrintWriter(out, <span style="color:#a5d6ff;">&quot;UTF-8&quot;</span>)) {
+            t.<span style="color:#79c0ff;">setAutoCommit</span>(<span style="color:#79c0ff;">false</span>);
+            String ts = env(<span style="color:#a5d6ff;">&quot;TGT_SCHEMA&quot;</span>);
+            Map&lt;String, String&gt; keyOf = <span style="color:#ff7b72;">new </span>HashMap&lt;&gt;();
+            <span style="color:#ff7b72;">for </span>(String[] tb : tables(s)) keyOf.<span style="color:#79c0ff;">put</span>(tb[<span style="color:#79c0ff;">0</span>], tb[<span style="color:#79c0ff;">1</span>]);
+            List&lt;String[]&gt; cols = <span style="color:#ff7b72;">new </span>ArrayList&lt;&gt;();
+            <span style="color:#ff7b72;">try </span>(Statement st = s.<span style="color:#79c0ff;">createStatement</span>(); ResultSet r = st.<span style="color:#79c0ff;">executeQuery</span>(
+                    <span style="color:#a5d6ff;">&quot;select table_name, column_name from user_tab_columns where data_type = &#x27;BLOB&#x27; order by 1, 2&quot;</span>)) {
+                <span style="color:#ff7b72;">while </span>(r.<span style="color:#79c0ff;">next</span>()) <span style="color:#ff7b72;">if </span>(keyOf.<span style="color:#79c0ff;">containsKey</span>(r.<span style="color:#79c0ff;">getString</span>(<span style="color:#79c0ff;">1</span>))) cols.<span style="color:#79c0ff;">add</span>(<span style="color:#ff7b72;">new </span>String[]{r.<span style="color:#79c0ff;">getString</span>(<span style="color:#79c0ff;">1</span>), r.<span style="color:#79c0ff;">getString</span>(<span style="color:#79c0ff;">2</span>)});
+            }
+            w.<span style="color:#79c0ff;">println</span>(<span style="color:#a5d6ff;">&quot;table,column,matched_on,rows_with_bytes,copied_to_db2,not_found_on_db2,bytes&quot;</span>);
+            <span style="color:#ff7b72;">for </span>(String[] c : cols) {
+                String tb = c[<span style="color:#79c0ff;">0</span>], col = c[<span style="color:#79c0ff;">1</span>];
+                String[] match = MATCH_ON.<span style="color:#79c0ff;">getOrDefault</span>(tb, <span style="color:#ff7b72;">new </span>String[]{keyOf.<span style="color:#79c0ff;">get</span>(tb)});
+                String sel = String.<span style="color:#79c0ff;">join</span>(<span style="color:#a5d6ff;">&quot;, &quot;</span>, match), where = String.<span style="color:#79c0ff;">join</span>(<span style="color:#a5d6ff;">&quot; = ? and &quot;</span>, match) + <span style="color:#a5d6ff;">&quot; = ?&quot;</span>;
+                <span style="color:#ff7b72;">int </span>found = <span style="color:#79c0ff;">0</span>, upd = <span style="color:#79c0ff;">0</span>, miss = <span style="color:#79c0ff;">0</span>; <span style="color:#ff7b72;">long </span>bytes = <span style="color:#79c0ff;">0</span>;
+                <span style="color:#ff7b72;">try </span>(Statement st = s.<span style="color:#79c0ff;">createStatement</span>();
+                     ResultSet r = st.<span style="color:#79c0ff;">executeQuery</span>(<span style="color:#a5d6ff;">&quot;select &quot; </span>+ sel + <span style="color:#a5d6ff;">&quot;, &quot; </span>+ col + <span style="color:#a5d6ff;">&quot; from &quot; </span>+ tb
+                         + <span style="color:#a5d6ff;">&quot; where &quot; </span>+ col + <span style="color:#a5d6ff;">&quot; is not null and dbms_lob.getlength(&quot; </span>+ col + <span style="color:#a5d6ff;">&quot;) &gt; 0&quot;</span>);
+                     PreparedStatement u = t.<span style="color:#79c0ff;">prepareStatement</span>(<span style="color:#a5d6ff;">&quot;update &quot; </span>+ ts + <span style="color:#a5d6ff;">&quot;.&quot; </span>+ tb + <span style="color:#a5d6ff;">&quot; set &quot; </span>+ col + <span style="color:#a5d6ff;">&quot; = ? where &quot; </span>+ where)) {
+                    <span style="color:#ff7b72;">while </span>(r.<span style="color:#79c0ff;">next</span>()) {
+                        found++;
+                        <span style="color:#ff7b72;">if </span>(SKIP.<span style="color:#79c0ff;">contains</span>(tb)) <span style="color:#ff7b72;">continue</span>;
+                        <span style="color:#ff7b72;">byte</span>[] b = r.<span style="color:#79c0ff;">getBytes</span>(match.<span style="color:#79c0ff;">length </span>+ <span style="color:#79c0ff;">1</span>); bytes += b.<span style="color:#79c0ff;">length</span>;
+                        u.<span style="color:#79c0ff;">setBytes</span>(<span style="color:#79c0ff;">1</span>, b);
+                        <span style="color:#ff7b72;">for </span>(<span style="color:#ff7b72;">int </span>i = <span style="color:#79c0ff;">0</span>; i &lt; match.<span style="color:#79c0ff;">length</span>; i++) u.<span style="color:#79c0ff;">setObject</span>(i + <span style="color:#79c0ff;">2</span>, r.<span style="color:#79c0ff;">getObject</span>(i + <span style="color:#79c0ff;">1</span>));
+                        <span style="color:#ff7b72;">if </span>(u.<span style="color:#79c0ff;">executeUpdate</span>() &gt;= <span style="color:#79c0ff;">1</span>) upd++; <span style="color:#ff7b72;">else </span>miss++;
+                    }
+                }
+                t.<span style="color:#79c0ff;">commit</span>();
+                <span style="color:#ff7b72;">if </span>(found &gt; <span style="color:#79c0ff;">0</span>) {
+                    String note = SKIP.<span style="color:#79c0ff;">contains</span>(tb) ? <span style="color:#a5d6ff;">&quot;SKIPPED (redeploy)&quot; </span>: String.<span style="color:#79c0ff;">join</span>(<span style="color:#a5d6ff;">&quot;+&quot;</span>, match);
+                    w.<span style="color:#79c0ff;">println</span>(tb + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ col + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ note + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ found + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ upd + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ miss + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ bytes);
+                    System.<span style="color:#79c0ff;">out</span>.<span style="color:#79c0ff;">println</span>(tb + <span style="color:#a5d6ff;">&quot;.&quot; </span>+ col + <span style="color:#a5d6ff;">&quot;: &quot; </span>+ found + <span style="color:#a5d6ff;">&quot; with bytes, &quot; </span>+ upd + <span style="color:#a5d6ff;">&quot; copied, &quot; </span>+ miss + <span style="color:#a5d6ff;">&quot; not found [&quot; </span>+ note + <span style="color:#a5d6ff;">&quot;]&quot;</span>);
+                }
+            }
+        }
+    }
+
+    <span style="color:#ff7b72;">static void </span><span style="color:#d2a8ff;">empties</span>(String out, String list) <span style="color:#ff7b72;">throws </span>Exception {
+        <span style="color:#ff7b72;">try </span>(Connection t = tgt(); PrintWriter w = <span style="color:#ff7b72;">new </span>PrintWriter(out, <span style="color:#a5d6ff;">&quot;UTF-8&quot;</span>)) {
+            String ts = env(<span style="color:#a5d6ff;">&quot;TGT_SCHEMA&quot;</span>);
+            w.<span style="color:#79c0ff;">println</span>(<span style="color:#a5d6ff;">&quot;table,column,empty_string_rows&quot;</span>);
+            <span style="color:#ff7b72;">long </span>total = <span style="color:#79c0ff;">0</span>; <span style="color:#ff7b72;">int </span>checked = <span style="color:#79c0ff;">0</span>;
+            <span style="color:#ff7b72;">for </span>(String tb : list.<span style="color:#79c0ff;">split</span>(<span style="color:#a5d6ff;">&quot;,&quot;</span>)) {
+                List&lt;String&gt; cs = <span style="color:#ff7b72;">new </span>ArrayList&lt;&gt;();
+                <span style="color:#ff7b72;">try </span>(PreparedStatement p = t.<span style="color:#79c0ff;">prepareStatement</span>(
+                        <span style="color:#a5d6ff;">&quot;select colname from syscat.columns where tabschema = ? and tabname = ? and typename in (&#x27;VARCHAR&#x27;,&#x27;CHARACTER&#x27;)&quot;</span>)) {
+                    p.<span style="color:#79c0ff;">setString</span>(<span style="color:#79c0ff;">1</span>, ts); p.<span style="color:#79c0ff;">setString</span>(<span style="color:#79c0ff;">2</span>, tb);
+                    <span style="color:#ff7b72;">try </span>(ResultSet r = p.<span style="color:#79c0ff;">executeQuery</span>()) { <span style="color:#ff7b72;">while </span>(r.<span style="color:#79c0ff;">next</span>()) cs.<span style="color:#79c0ff;">add</span>(r.<span style="color:#79c0ff;">getString</span>(<span style="color:#79c0ff;">1</span>)); }
+                }
+                <span style="color:#ff7b72;">for </span>(String c : cs) {
+                    <span style="color:#ff7b72;">long </span>n = count(t, <span style="color:#a5d6ff;">&quot;select count(*) from &quot; </span>+ ts + <span style="color:#a5d6ff;">&quot;.&quot; </span>+ tb + <span style="color:#a5d6ff;">&quot; where &quot; </span>+ c + <span style="color:#a5d6ff;">&quot; = &#x27;&#x27;&quot;</span>);
+                    checked++; total += Math.<span style="color:#79c0ff;">max</span>(n, <span style="color:#79c0ff;">0</span>);
+                    <span style="color:#ff7b72;">if </span>(n != <span style="color:#79c0ff;">0</span>) w.<span style="color:#79c0ff;">println</span>(tb + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ c + <span style="color:#a5d6ff;">&quot;,&quot; </span>+ n);
+                }
+            }
+            w.<span style="color:#79c0ff;">println</span>(<span style="color:#a5d6ff;">&quot;TOTAL,&quot; </span>+ checked + <span style="color:#a5d6ff;">&quot; columns,&quot; </span>+ total);
+            System.<span style="color:#79c0ff;">out</span>.<span style="color:#79c0ff;">println</span>(checked + <span style="color:#a5d6ff;">&quot; text columns checked, &quot; </span>+ total + <span style="color:#a5d6ff;">&quot; rows hold &#x27;&#x27; -&gt; &quot; </span>+ out);
+        }
+    }
+}</pre></section><section class="s" id="s13"><div class="h"><div><b>Python</b> <small>140 lines</small></div><div class="a"><button data-c="c13">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/13-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c13"><span style="color:#a5d6ff;">&quot;&quot;&quot;List the Maximo records IBM writes differently for Oracle and for DB2.
+
+Created by Mohamed Chihaoui.
+
+Every Maximo release ships tools/maximo/en/maxdemo.ora and maxdemo.db2: the same demo database,
+unloaded by Unlcvt from an Oracle and from a DB2 database.  Where IBM had to write a record
+differently per database (a relationship with ROWNUM on Oracle and ROW_NUMBER() on DB2, for
+example), the two files disagree.  After an Oracle-to-DB2 conversion those records still hold
+the Oracle text, because Unlcvt copies rows as data.  This script lists them, with the DB2 text
+IBM uses, so they can be set back to IBM&#x27;s DB2 version.
+
+Usage: python diff_ibm_platform_rows.py &lt;maxdemo.ora&gt; &lt;maxdemo.db2&gt; &lt;out.csv&gt;
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>csv
+<span style="color:#ff7b72;">import </span>re
+<span style="color:#ff7b72;">import </span>sys
+
+IGNORE_COLS = {<span style="color:#a5d6ff;">&quot;ROWSTAMP&quot;</span>}
+<span style="color:#8b949e;"># SQL-bearing Maximo tables and their natural keys (ids differ between the two IBM files)
+</span>KEYS = {
+    <span style="color:#a5d6ff;">&quot;MAXRELATIONSHIP&quot;</span>: (<span style="color:#a5d6ff;">&quot;PARENT&quot;</span>, <span style="color:#a5d6ff;">&quot;NAME&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;QUERY&quot;</span>: (<span style="color:#a5d6ff;">&quot;APP&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSENAME&quot;</span>, <span style="color:#a5d6ff;">&quot;OWNER&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>: (<span style="color:#a5d6ff;">&quot;CONDITIONNUM&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;ESCALATION&quot;</span>: (<span style="color:#a5d6ff;">&quot;ESCALATION&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;WFCONDITION&quot;</span>: (<span style="color:#a5d6ff;">&quot;PROCESSNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;PROCESSREV&quot;</span>, <span style="color:#a5d6ff;">&quot;NODEID&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;WFACTION&quot;</span>: (<span style="color:#a5d6ff;">&quot;PROCESSNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;PROCESSREV&quot;</span>, <span style="color:#a5d6ff;">&quot;ACTIONID&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;WFASSIGNMENT&quot;</span>: (<span style="color:#a5d6ff;">&quot;PROCESSNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;PROCESSREV&quot;</span>, <span style="color:#a5d6ff;">&quot;NODEID&quot;</span>, <span style="color:#a5d6ff;">&quot;ASSIGNID&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;KPIMAIN&quot;</span>: (<span style="color:#a5d6ff;">&quot;KPINAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;MAXINTOBJECT&quot;</span>: (<span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;MAXIFACEEXPORT&quot;</span>: (<span style="color:#a5d6ff;">&quot;IFACENAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;OSLCQUERY&quot;</span>: (<span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSENAME&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;MAXTABLEDOMAIN&quot;</span>: (<span style="color:#a5d6ff;">&quot;DOMAINID&quot;</span>, <span style="color:#a5d6ff;">&quot;OBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;ORGID&quot;</span>, <span style="color:#a5d6ff;">&quot;SITEID&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;MAXDYNAMICDOMLINK&quot;</span>: (<span style="color:#a5d6ff;">&quot;OBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;ATTRIBUTENAME&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;MAXVIEW&quot;</span>: (<span style="color:#a5d6ff;">&quot;VIEWNAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;SCRIPTLAUNCHPOINT&quot;</span>: (<span style="color:#a5d6ff;">&quot;LAUNCHPOINTNAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;SLA&quot;</span>: (<span style="color:#a5d6ff;">&quot;SLANUM&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;REPORTADHOC&quot;</span>: (<span style="color:#a5d6ff;">&quot;REPORTNAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>: (<span style="color:#a5d6ff;">&quot;AUTOSCRIPT&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;MAXPROPVALUE&quot;</span>: (<span style="color:#a5d6ff;">&quot;PROPNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;SERVERNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;SERVERHOST&quot;</span>),
+    <span style="color:#a5d6ff;">&quot;MAXPROP&quot;</span>: (<span style="color:#a5d6ff;">&quot;PROPNAME&quot;</span>,),
+    <span style="color:#a5d6ff;">&quot;MAXVARS&quot;</span>: (<span style="color:#a5d6ff;">&quot;VARNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;ORGID&quot;</span>, <span style="color:#a5d6ff;">&quot;SITEID&quot;</span>),
+}
+INS = re.compile(<span style="color:#a5d6ff;">r&quot;^\s*insert\s+into\s+(\w+)&quot;</span>, re.I)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">statements</span>(path):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Yield (table, [cols], [values]) for every INSERT in an Unlcvt file.&quot;&quot;&quot;
+    </span>buf, table = [], <span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">with </span><span style="color:#d2a8ff;">open</span>(path, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, errors=<span style="color:#a5d6ff;">&quot;replace&quot;</span>) <span style="color:#ff7b72;">as </span>f:
+        <span style="color:#ff7b72;">for </span>line <span style="color:#ff7b72;">in </span>f:
+            m = INS.match(line)
+            <span style="color:#ff7b72;">if </span>m <span style="color:#ff7b72;">and </span>table <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+                table, buf = m.group(<span style="color:#79c0ff;">1</span>).upper(), [line[m.end():]]
+                <span style="color:#ff7b72;">continue
+            if </span>table <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>:
+                <span style="color:#ff7b72;">continue
+            </span>buf.append(line)
+            s = line.rstrip()
+            <span style="color:#8b949e;"># Oracle files end a statement with &#x27;;&#x27; or &#x27;/&#x27;, DB2 files with &#x27;;&#x27;
+            </span><span style="color:#ff7b72;">if </span>s <span style="color:#ff7b72;">in </span>(<span style="color:#a5d6ff;">&quot;;&quot;</span>, <span style="color:#a5d6ff;">&quot;/&quot;</span>) <span style="color:#ff7b72;">or </span>(s.endswith(<span style="color:#a5d6ff;">&quot;;&quot;</span>) <span style="color:#ff7b72;">and </span>balanced(<span style="color:#a5d6ff;">&quot;&quot;</span>.join(buf))):
+                text = <span style="color:#a5d6ff;">&quot;&quot;</span>.join(buf).strip().rstrip(<span style="color:#a5d6ff;">&quot;;/&quot;</span>).strip()
+                parsed = parse(text)
+                <span style="color:#ff7b72;">if </span>parsed:
+                    <span style="color:#ff7b72;">yield </span>(table,) + parsed
+                table, buf = <span style="color:#79c0ff;">None</span>, []
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">balanced</span>(text):
+    <span style="color:#ff7b72;">return </span>text.count(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>) % <span style="color:#79c0ff;">2 </span>== <span style="color:#79c0ff;">0
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">split_top</span>(s):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Split on commas outside quotes and parentheses.&quot;&quot;&quot;
+    </span>out, cur, depth, q, i = [], [], <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">False</span>, <span style="color:#79c0ff;">0
+    </span><span style="color:#ff7b72;">while </span>i &lt; <span style="color:#d2a8ff;">len</span>(s):
+        c = s[i]
+        <span style="color:#ff7b72;">if </span>q:
+            cur.append(c)
+            <span style="color:#ff7b72;">if </span>c == <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>:
+                <span style="color:#ff7b72;">if </span>i + <span style="color:#79c0ff;">1 </span>&lt; <span style="color:#d2a8ff;">len</span>(s) <span style="color:#ff7b72;">and </span>s[i + <span style="color:#79c0ff;">1</span>] == <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>:
+                    cur.append(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>); i += <span style="color:#79c0ff;">1
+                </span><span style="color:#ff7b72;">else</span>:
+                    q = <span style="color:#79c0ff;">False
+        </span><span style="color:#ff7b72;">elif </span>c == <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>:
+            q = <span style="color:#79c0ff;">True</span>; cur.append(c)
+        <span style="color:#ff7b72;">elif </span>c == <span style="color:#a5d6ff;">&quot;(&quot;</span>:
+            depth += <span style="color:#79c0ff;">1</span>; cur.append(c)
+        <span style="color:#ff7b72;">elif </span>c == <span style="color:#a5d6ff;">&quot;)&quot;</span>:
+            depth -= <span style="color:#79c0ff;">1</span>; cur.append(c)
+        <span style="color:#ff7b72;">elif </span>c == <span style="color:#a5d6ff;">&quot;,&quot; </span><span style="color:#ff7b72;">and </span>depth == <span style="color:#79c0ff;">0</span>:
+            out.append(<span style="color:#a5d6ff;">&quot;&quot;</span>.join(cur).strip()); cur = []
+        <span style="color:#ff7b72;">else</span>:
+            cur.append(c)
+        i += <span style="color:#79c0ff;">1
+    </span>out.append(<span style="color:#a5d6ff;">&quot;&quot;</span>.join(cur).strip())
+    <span style="color:#ff7b72;">return </span>out
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">parse</span>(text):
+    m = re.match(<span style="color:#a5d6ff;">r&quot;\((.*?)\)\s*values\s*\((.*)\)\s*$&quot;</span>, text, re.S | re.I)
+    <span style="color:#ff7b72;">if not </span>m:
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None
+    </span>cols = [c.strip().upper() <span style="color:#ff7b72;">for </span>c <span style="color:#ff7b72;">in </span>m.group(<span style="color:#79c0ff;">1</span>).replace(<span style="color:#a5d6ff;">&quot;\n&quot;</span>, <span style="color:#a5d6ff;">&quot; &quot;</span>).split(<span style="color:#a5d6ff;">&quot;,&quot;</span>)]
+    vals = split_top(m.group(<span style="color:#79c0ff;">2</span>))
+    <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(cols) != <span style="color:#d2a8ff;">len</span>(vals):
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">return </span>cols, vals
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">norm</span>(v):
+    v = v.strip()
+    <span style="color:#ff7b72;">if </span>v.startswith(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>) <span style="color:#ff7b72;">and </span>v.endswith(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>):
+        <span style="color:#ff7b72;">return </span>v[<span style="color:#79c0ff;">1</span>:-<span style="color:#79c0ff;">1</span>].replace(<span style="color:#a5d6ff;">&quot;&#x27;&#x27;&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>).replace(<span style="color:#a5d6ff;">&quot;\r&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>)
+    <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None   </span><span style="color:#8b949e;"># number, NULL or a function call: not SQL text
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">load</span>(path):
+    rows = {}
+    <span style="color:#ff7b72;">for </span>table, cols, vals <span style="color:#ff7b72;">in </span>statements(path):
+        <span style="color:#ff7b72;">if </span>table <span style="color:#ff7b72;">not in </span>KEYS:
+            <span style="color:#ff7b72;">continue
+        </span>d = <span style="color:#d2a8ff;">dict</span>(<span style="color:#d2a8ff;">zip</span>(cols, vals))
+        rows[(table, <span style="color:#a5d6ff;">&quot;|&quot;</span>.join(<span style="color:#d2a8ff;">str</span>(norm(d.get(c, <span style="color:#a5d6ff;">&quot;null&quot;</span>))) <span style="color:#ff7b72;">for </span>c <span style="color:#ff7b72;">in </span>KEYS[table]))] = d
+    <span style="color:#ff7b72;">return </span>rows
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">main</span>(ora, db2, out):
+    a, b = load(ora), load(db2)
+    n = <span style="color:#79c0ff;">0
+    </span><span style="color:#ff7b72;">with </span><span style="color:#d2a8ff;">open</span>(out, <span style="color:#a5d6ff;">&quot;w&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;&quot;</span>, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>) <span style="color:#ff7b72;">as </span>f:
+        w = csv.writer(f)
+        w.writerow([<span style="color:#a5d6ff;">&quot;table&quot;</span>, <span style="color:#a5d6ff;">&quot;key&quot;</span>, <span style="color:#a5d6ff;">&quot;column&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle_text&quot;</span>, <span style="color:#a5d6ff;">&quot;db2_text&quot;</span>])
+        <span style="color:#ff7b72;">for </span>k, ra <span style="color:#ff7b72;">in </span>a.items():
+            rb = b.get(k)
+            <span style="color:#ff7b72;">if not </span>rb:
+                <span style="color:#ff7b72;">continue
+            for </span>col, va <span style="color:#ff7b72;">in </span>ra.items():
+                <span style="color:#ff7b72;">if </span>col <span style="color:#ff7b72;">in </span>IGNORE_COLS <span style="color:#ff7b72;">or </span>col <span style="color:#ff7b72;">not in </span>rb:
+                    <span style="color:#ff7b72;">continue
+                </span>ta, tb = norm(va), norm(rb[col])
+                <span style="color:#ff7b72;">if </span>ta <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">or </span>tb <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">or </span>ta == tb:
+                    <span style="color:#ff7b72;">continue
+                </span>w.writerow([k[<span style="color:#79c0ff;">0</span>], k[<span style="color:#79c0ff;">1</span>], col, ta, tb]); n += <span style="color:#79c0ff;">1
+    </span><span style="color:#d2a8ff;">print</span>(<span style="color:#a5d6ff;">f&quot;{</span><span style="color:#d2a8ff;">len</span>(a)<span style="color:#a5d6ff;">} Oracle rows, {</span><span style="color:#d2a8ff;">len</span>(b)<span style="color:#a5d6ff;">} DB2 rows, {</span>n<span style="color:#a5d6ff;">} text columns differ -&gt; {</span>out<span style="color:#a5d6ff;">}&quot;</span>)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    main(*sys.argv[<span style="color:#79c0ff;">1</span>:<span style="color:#79c0ff;">4</span>])</pre></section><section class="s" id="s14"><div class="h"><div><b>Python</b> <small>59 lines</small></div><div class="a"><button data-c="c14">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/14-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c14"><span style="color:#a5d6ff;">&quot;&quot;&quot;Write a DB2 script that puts IBM&#x27;s DB2 wording back on IBM&#x27;s own records after an Oracle-to-DB2 move.
+
+Created by Mohamed Chihaoui.
+
+Input : ibm_platform_diff.csv from diff_ibm_platform_rows.py (same Maximo version and add-ons
+        as the converted database: the maxdemo files must come from the same build).
+Output: ibm_db2_text_fix.sql, one guarded UPDATE per record. The guard (column = IBM&#x27;s Oracle
+        text) means a record the customer has changed is left alone and shows up in the
+        finder report instead.
+
+Usage: python ibm_db2_text_fix.py ibm_platform_diff.csv ibm_db2_text_fix.sql
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>csv
+<span style="color:#ff7b72;">import </span>re
+<span style="color:#ff7b72;">import </span>sys
+
+<span style="color:#8b949e;"># table -&gt; (SQL-bearing columns, natural key columns in the order the diff wrote them)
+</span>TABLES = {
+    <span style="color:#a5d6ff;">&quot;MAXRELATIONSHIP&quot;</span>: ((<span style="color:#a5d6ff;">&quot;WHERECLAUSE&quot;</span>,), (<span style="color:#a5d6ff;">&quot;PARENT&quot;</span>, <span style="color:#a5d6ff;">&quot;NAME&quot;</span>)),
+    <span style="color:#a5d6ff;">&quot;QUERY&quot;</span>: ((<span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>,), (<span style="color:#a5d6ff;">&quot;APP&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSENAME&quot;</span>, <span style="color:#a5d6ff;">&quot;OWNER&quot;</span>)),
+    <span style="color:#a5d6ff;">&quot;OSLCQUERY&quot;</span>: ((<span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>,), (<span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;CLAUSENAME&quot;</span>)),
+    <span style="color:#a5d6ff;">&quot;KPIMAIN&quot;</span>: ((<span style="color:#a5d6ff;">&quot;CLAUSE&quot;</span>,), (<span style="color:#a5d6ff;">&quot;KPINAME&quot;</span>,)),
+    <span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>: ((<span style="color:#a5d6ff;">&quot;EXPRESSION&quot;</span>,), (<span style="color:#a5d6ff;">&quot;CONDITIONNUM&quot;</span>,)),
+    <span style="color:#a5d6ff;">&quot;ESCALATION&quot;</span>: ((<span style="color:#a5d6ff;">&quot;CONDITION&quot;</span>,), (<span style="color:#a5d6ff;">&quot;ESCALATION&quot;</span>,)),
+    <span style="color:#a5d6ff;">&quot;MAXINTOBJECT&quot;</span>: ((<span style="color:#a5d6ff;">&quot;RESTRICTWHERE&quot;</span>,), (<span style="color:#a5d6ff;">&quot;INTOBJECTNAME&quot;</span>,)),
+    <span style="color:#a5d6ff;">&quot;MAXTABLEDOMAIN&quot;</span>: ((<span style="color:#a5d6ff;">&quot;VALIDTNWHERECLAUSE&quot;</span>, <span style="color:#a5d6ff;">&quot;LISTWHERECLAUSE&quot;</span>), (<span style="color:#a5d6ff;">&quot;DOMAINID&quot;</span>, <span style="color:#a5d6ff;">&quot;OBJECTNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;ORGID&quot;</span>, <span style="color:#a5d6ff;">&quot;SITEID&quot;</span>)),
+    <span style="color:#a5d6ff;">&quot;MAXPROP&quot;</span>: ((<span style="color:#a5d6ff;">&quot;MAXIMODEFAULT&quot;</span>,), (<span style="color:#a5d6ff;">&quot;PROPNAME&quot;</span>,)),
+    <span style="color:#a5d6ff;">&quot;MAXPROPVALUE&quot;</span>: ((<span style="color:#a5d6ff;">&quot;PROPVALUE&quot;</span>,), (<span style="color:#a5d6ff;">&quot;PROPNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;SERVERNAME&quot;</span>, <span style="color:#a5d6ff;">&quot;SERVERHOST&quot;</span>)),
+}
+WS = re.compile(<span style="color:#a5d6ff;">r&quot;\s+&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">lit</span>(v):
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;&#x27;&quot; </span>+ v.replace(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;&#x27;&quot;</span>) + <span style="color:#a5d6ff;">&quot;&#x27;&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">main</span>(src, out):
+    n = <span style="color:#79c0ff;">0
+    </span>lines = [<span style="color:#a5d6ff;">&quot;-- Generated by ibm_db2_text_fix.py (Created by Mohamed Chihaoui)&quot;</span>,
+             <span style="color:#a5d6ff;">&quot;-- Run on the converted DB2 database:  db2 -tvf ibm_db2_text_fix.sql&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>]
+    <span style="color:#ff7b72;">for </span>r <span style="color:#ff7b72;">in </span>csv.DictReader(<span style="color:#d2a8ff;">open</span>(src, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>)):
+        spec = TABLES.get(r[<span style="color:#a5d6ff;">&quot;table&quot;</span>])
+        <span style="color:#ff7b72;">if not </span>spec <span style="color:#ff7b72;">or </span>r[<span style="color:#a5d6ff;">&quot;column&quot;</span>] <span style="color:#ff7b72;">not in </span>spec[<span style="color:#79c0ff;">0</span>]:
+            <span style="color:#ff7b72;">continue
+        if </span>WS.sub(<span style="color:#a5d6ff;">&quot; &quot;</span>, r[<span style="color:#a5d6ff;">&quot;oracle_text&quot;</span>]).strip().lower() == WS.sub(<span style="color:#a5d6ff;">&quot; &quot;</span>, r[<span style="color:#a5d6ff;">&quot;db2_text&quot;</span>]).strip().lower():
+            <span style="color:#ff7b72;">continue   </span><span style="color:#8b949e;"># only spacing differs
+        </span>keys = r[<span style="color:#a5d6ff;">&quot;key&quot;</span>].split(<span style="color:#a5d6ff;">&quot;|&quot;</span>)
+        cond = []
+        <span style="color:#ff7b72;">for </span>c, v <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">zip</span>(spec[<span style="color:#79c0ff;">1</span>], keys):
+            cond.append(<span style="color:#a5d6ff;">f&quot;{</span>c<span style="color:#a5d6ff;">} is null&quot; </span><span style="color:#ff7b72;">if </span>v == <span style="color:#a5d6ff;">&quot;None&quot; </span><span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">f&quot;{</span>c<span style="color:#a5d6ff;">} = {</span>lit(v)<span style="color:#a5d6ff;">}&quot;</span>)
+        cond.append(<span style="color:#a5d6ff;">f&quot;{</span>r[<span style="color:#a5d6ff;">&#x27;column&#x27;</span>]<span style="color:#a5d6ff;">} = {</span>lit(r[<span style="color:#a5d6ff;">&#x27;oracle_text&#x27;</span>])<span style="color:#a5d6ff;">}&quot;</span>)
+        lines.append(<span style="color:#a5d6ff;">f&quot;-- {</span>r[<span style="color:#a5d6ff;">&#x27;table&#x27;</span>]<span style="color:#a5d6ff;">} {</span>r[<span style="color:#a5d6ff;">&#x27;key&#x27;</span>]<span style="color:#a5d6ff;">}&quot;</span>)
+        lines.append(<span style="color:#a5d6ff;">f&quot;update {</span>r[<span style="color:#a5d6ff;">&#x27;table&#x27;</span>].lower()<span style="color:#a5d6ff;">} set {</span>r[<span style="color:#a5d6ff;">&#x27;column&#x27;</span>].lower()<span style="color:#a5d6ff;">} = {</span>lit(r[<span style="color:#a5d6ff;">&#x27;db2_text&#x27;</span>])<span style="color:#a5d6ff;">}\n  where &quot;
+                     </span>+ <span style="color:#a5d6ff;">&quot;\n    and &quot;</span>.join(cond) + <span style="color:#a5d6ff;">&quot;;&quot;</span>)
+        n += <span style="color:#79c0ff;">1
+    </span>lines += [<span style="color:#a5d6ff;">&quot;&quot;</span>, <span style="color:#a5d6ff;">&quot;commit;&quot;</span>]
+    <span style="color:#d2a8ff;">open</span>(out, <span style="color:#a5d6ff;">&quot;w&quot;</span>, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;\n&quot;</span>).write(<span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(lines) + <span style="color:#a5d6ff;">&quot;\n&quot;</span>)
+    <span style="color:#d2a8ff;">print</span>(n, <span style="color:#a5d6ff;">&quot;guarded updates -&gt;&quot;</span>, out)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    main(*sys.argv[<span style="color:#79c0ff;">1</span>:<span style="color:#79c0ff;">3</span>])</pre></section><section class="s" id="s15"><div class="h"><div><b>Python</b> <small>144 lines</small></div><div class="a"><button data-c="c15">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/15-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c15"><span style="color:#a5d6ff;">&quot;&quot;&quot;Dual-run check: run every saved query on the Oracle source and on the Db2 target, compare row counts.
+
+Created by Mohamed Chihaoui.
+
+A rewritten clause is only &quot;converted&quot; when Db2 returns what Oracle returned. This script reads the
+saved queries (QUERY) from the source, turns each into
+    select count(*) from &lt;application main table&gt; where &lt;clause&gt;
+and runs it on both databases. On Db2 it uses the clause stored in the Db2 database, or the rewrite
+from --rewrites (CSV: app,clausename,owner,db2_clause,why) when you are testing a draft.
+
+It drives the two command-line clients, so it runs on any host that has them:
+  --ora-shell   a command that runs a bash script where sqlplus works      (default: bash)
+  --db2-shell   a command that runs a bash script where the db2 CLP works  (default: bash)
+  --ora-conn    sqlplus connect string, e.g. maximo/&lt;password&gt;@//&lt;host&gt;:1521/&lt;service&gt;   (required)
+  --db2-db / --db2-schema                          (default: MAXDB / MAXIMO)
+Example, from a jump host:
+  python dual_run.py --ora-shell &quot;ssh oracle-host bash -s&quot; --db2-shell &quot;ssh db2inst1@db2-host bash -s&quot; \\
+                     --ora-conn &quot;maximo/&lt;password&gt;@//&lt;host&gt;:1521/&lt;service&gt;&quot; --rewrites db2_rewrites.csv --out dual_run.csv
+
+Bind variables: :USER becomes &#x27;MAXADMIN&#x27;; clauses with other Maximo binds (:&amp;...&amp;, :siteid ...) are
+reported as SKIPPED, test those in the application.
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>argparse
+<span style="color:#ff7b72;">import </span>csv
+<span style="color:#ff7b72;">import </span>re
+<span style="color:#ff7b72;">import </span>shlex
+<span style="color:#ff7b72;">import </span>subprocess
+
+SEP = <span style="color:#a5d6ff;">&quot;~&quot;
+</span>A = <span style="color:#79c0ff;">None   </span><span style="color:#8b949e;"># parsed arguments
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">sh</span>(shell, script):
+    <span style="color:#a5d6ff;">&quot;&quot;&quot;Run a bash script through a shell command (local bash, ssh, ...).
+    The script is written to a temp file before it runs: the db2 command line processor reads
+    stdin and would swallow the rest of a script piped into bash. Carriage returns are removed.&quot;&quot;&quot;
+    </span>wrapped = (<span style="color:#a5d6ff;">&quot;f=$(mktemp); cat &gt; \&quot;$f\&quot; &lt;&lt;&#x27;__DUALRUN__&#x27;\n&quot; </span>+ script.replace(<span style="color:#a5d6ff;">&quot;\r&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>)
+               + <span style="color:#a5d6ff;">&quot;\n__DUALRUN__\nbash \&quot;$f\&quot;; rm -f \&quot;$f\&quot;\n&quot;</span>)
+    <span style="color:#8b949e;"># bytes, not text: on Windows a text-mode pipe turns every \n into \r\n
+    </span>out = subprocess.run(shlex.split(shell), <span style="color:#d2a8ff;">input</span>=wrapped.encode(<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>), capture_output=<span style="color:#79c0ff;">True</span>).stdout
+    <span style="color:#ff7b72;">return </span>out.decode(<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, errors=<span style="color:#a5d6ff;">&quot;replace&quot;</span>).replace(<span style="color:#a5d6ff;">&quot;\r&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">sqlplus</span>(body):
+    <span style="color:#ff7b72;">return </span>(<span style="color:#a5d6ff;">&quot;sqlplus -s &quot; </span>+ A.ora_conn + <span style="color:#a5d6ff;">&quot; &lt;&lt;&#x27;EOF&#x27;\nset pagesize 0 linesize 32767 trimspool on feedback off heading off\n&quot;
+            </span>+ body + <span style="color:#a5d6ff;">&quot;\nexit\nEOF\n&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">db2_head</span>():
+    <span style="color:#ff7b72;">return </span>[<span style="color:#a5d6ff;">&quot;. ~/sqllib/db2profile 2&gt;/dev/null&quot;</span>, <span style="color:#a5d6ff;">f&quot;db2 connect to {</span>A.db2_db<span style="color:#a5d6ff;">} &gt; /dev/null&quot;</span>, <span style="color:#a5d6ff;">f&quot;db2 set schema {</span>A.db2_schema<span style="color:#a5d6ff;">} &gt; /dev/null&quot;</span>]
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">queries</span>():
+    sql = (<span style="color:#a5d6ff;">&quot;set markup csv on quote off delimiter ~\n&quot;
+           &quot;select q.app, q.clausename, q.owner, a.maintbname, replace(replace(q.clause, chr(10), &#x27; &#x27;), chr(13), &#x27; &#x27;) &quot;
+           &quot;from query q join maxapps a on a.app = q.app where a.maintbname is not null order by 1, 2, 3;&quot;</span>)
+    <span style="color:#ff7b72;">return </span>[l.split(SEP) <span style="color:#ff7b72;">for </span>l <span style="color:#ff7b72;">in </span>sh(A.ora_shell, sqlplus(sql)).splitlines() <span style="color:#ff7b72;">if </span>SEP <span style="color:#ff7b72;">in </span>l]
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">db2_clauses</span>():
+    lines = db2_head() + [<span style="color:#a5d6ff;">&quot;db2 -x \&quot;select app || &#x27;~&#x27; || clausename || &#x27;~&#x27; || owner || &#x27;~&#x27; || &quot;
+                          &quot;replace(replace(clause, chr(10), &#x27; &#x27;), chr(13), &#x27; &#x27;) from query\&quot;&quot;</span>]
+    d = {}
+    <span style="color:#ff7b72;">for </span>l <span style="color:#ff7b72;">in </span>sh(A.db2_shell, <span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(lines)).splitlines():
+        p = l.rstrip().split(SEP, <span style="color:#79c0ff;">3</span>)
+        <span style="color:#ff7b72;">if </span><span style="color:#d2a8ff;">len</span>(p) == <span style="color:#79c0ff;">4</span>:
+            d[<span style="color:#d2a8ff;">tuple</span>(p[:<span style="color:#79c0ff;">3</span>])] = p[<span style="color:#79c0ff;">3</span>]
+    <span style="color:#ff7b72;">return </span>d
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">prep</span>(clause):
+    <span style="color:#8b949e;"># Maximo accepts a stored clause that starts with WHERE or ends with ORDER BY; count(*) does not
+    </span>clause = re.sub(<span style="color:#a5d6ff;">r&quot;^\s*where\s+&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>, clause, flags=re.I)
+    clause = re.sub(<span style="color:#a5d6ff;">r&quot;\s+order\s+by\s+[\w\s,.]+$&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>, clause, flags=re.I)
+    <span style="color:#ff7b72;">if </span>re.search(<span style="color:#a5d6ff;">r&quot;:&amp;|:[a-z]&quot;</span>, re.sub(<span style="color:#a5d6ff;">r&quot;:user\b&quot;</span>, <span style="color:#a5d6ff;">&quot;&quot;</span>, clause, flags=re.I), re.I):
+        <span style="color:#ff7b72;">return </span><span style="color:#79c0ff;">None
+    </span><span style="color:#ff7b72;">return </span>re.sub(<span style="color:#a5d6ff;">r&quot;:user\b&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;MAXADMIN&#x27;&quot;</span>, clause, flags=re.I)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">count_oracle</span>(items):
+    lines = []
+    <span style="color:#ff7b72;">for </span>i, (tbl, clause) <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(items):
+        lines += [<span style="color:#a5d6ff;">f&quot;prompt @@{</span>i<span style="color:#a5d6ff;">}&quot;</span>, <span style="color:#a5d6ff;">f&quot;select count(*) from {</span>tbl<span style="color:#a5d6ff;">} where {</span>clause<span style="color:#a5d6ff;">};&quot;</span>]
+    <span style="color:#ff7b72;">return </span>parse(sh(A.ora_shell, sqlplus(<span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(lines))), <span style="color:#d2a8ff;">len</span>(items), <span style="color:#a5d6ff;">r&quot;(ORA-\d+)&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">count_db2</span>(items):
+    lines = db2_head()
+    <span style="color:#ff7b72;">for </span>i, (tbl, clause) <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">enumerate</span>(items):
+        stmt = <span style="color:#a5d6ff;">f&quot;select count(*) from {</span>tbl<span style="color:#a5d6ff;">} where {</span>clause<span style="color:#a5d6ff;">}&quot;</span>.replace(<span style="color:#a5d6ff;">&#x27;&quot;&#x27;</span>, <span style="color:#a5d6ff;">&#x27;\\&quot;&#x27;</span>)
+        lines.append(<span style="color:#a5d6ff;">f&#x27;echo &quot;@@{</span>i<span style="color:#a5d6ff;">}&quot;; db2 -x &quot;{</span>stmt<span style="color:#a5d6ff;">}&quot; 2&gt;&amp;1&#x27;</span>)
+    <span style="color:#ff7b72;">return </span>parse(sh(A.db2_shell, <span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(lines)), <span style="color:#d2a8ff;">len</span>(items), <span style="color:#a5d6ff;">r&quot;(SQL\d+N)&quot;</span>)
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">parse</span>(out, n, err):
+    res, cur, buf = {}, <span style="color:#79c0ff;">None</span>, []
+    <span style="color:#ff7b72;">for </span>line <span style="color:#ff7b72;">in </span>out.splitlines() + [<span style="color:#a5d6ff;">&quot;@@end&quot;</span>]:
+        m = re.match(<span style="color:#a5d6ff;">r&quot;^@@(\d+|end)&quot;</span>, line.strip())
+        <span style="color:#ff7b72;">if </span>m:
+            <span style="color:#ff7b72;">if </span>cur <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+                e = re.search(err, <span style="color:#a5d6ff;">&quot; &quot;</span>.join(buf))
+                num = re.search(<span style="color:#a5d6ff;">r&quot;^\s*(\d+)\s*$&quot;</span>, <span style="color:#a5d6ff;">&quot;\n&quot;</span>.join(buf), re.M)
+                res[cur] = e.group(<span style="color:#79c0ff;">1</span>) <span style="color:#ff7b72;">if </span>e <span style="color:#ff7b72;">else </span>(num.group(<span style="color:#79c0ff;">1</span>) <span style="color:#ff7b72;">if </span>num <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;?&quot;</span>)
+            cur, buf = (<span style="color:#79c0ff;">None </span><span style="color:#ff7b72;">if </span>m.group(<span style="color:#79c0ff;">1</span>) == <span style="color:#a5d6ff;">&quot;end&quot; </span><span style="color:#ff7b72;">else </span><span style="color:#d2a8ff;">int</span>(m.group(<span style="color:#79c0ff;">1</span>))), []
+        <span style="color:#ff7b72;">elif </span>cur <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+            buf.append(line)
+    <span style="color:#ff7b72;">return </span>[res.get(i, <span style="color:#a5d6ff;">&quot;?&quot;</span>) <span style="color:#ff7b72;">for </span>i <span style="color:#ff7b72;">in </span><span style="color:#d2a8ff;">range</span>(n)]
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">main</span>():
+    <span style="color:#ff7b72;">global </span>A
+    ap = argparse.ArgumentParser()
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--ora-shell&quot;</span>, default=<span style="color:#a5d6ff;">&quot;bash&quot;</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--db2-shell&quot;</span>, default=<span style="color:#a5d6ff;">&quot;bash&quot;</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--ora-conn&quot;</span>, required=<span style="color:#79c0ff;">True</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--db2-db&quot;</span>, default=<span style="color:#a5d6ff;">&quot;MAXDB&quot;</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--db2-schema&quot;</span>, default=<span style="color:#a5d6ff;">&quot;MAXIMO&quot;</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--rewrites&quot;</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--only&quot;</span>, help=<span style="color:#a5d6ff;">&quot;regexp on clausename&quot;</span>)
+    ap.add_argument(<span style="color:#a5d6ff;">&quot;--out&quot;</span>, default=<span style="color:#a5d6ff;">&quot;dual_run.csv&quot;</span>)
+    A = ap.parse_args()
+    rew = {}
+    <span style="color:#ff7b72;">if </span>A.rewrites:
+        <span style="color:#ff7b72;">for </span>r <span style="color:#ff7b72;">in </span>csv.DictReader(<span style="color:#d2a8ff;">open</span>(A.rewrites, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>)):
+            rew[(r[<span style="color:#a5d6ff;">&quot;app&quot;</span>], r[<span style="color:#a5d6ff;">&quot;clausename&quot;</span>], r[<span style="color:#a5d6ff;">&quot;owner&quot;</span>])] = r[<span style="color:#a5d6ff;">&quot;db2_clause&quot;</span>]
+    on_db2 = db2_clauses()
+    rows, o_items, d_items = [], [], []
+    <span style="color:#ff7b72;">for </span>app, name, owner, tbl, clause <span style="color:#ff7b72;">in </span>queries():
+        <span style="color:#ff7b72;">if </span>A.only <span style="color:#ff7b72;">and not </span>re.search(A.only, name):
+            <span style="color:#ff7b72;">continue
+        </span>key = (app, name, owner)
+        d_clause = rew.get(key, on_db2.get(key, clause))
+        po, pd = prep(clause), prep(d_clause)
+        rows.append([app, name, owner, tbl, clause, d_clause, po <span style="color:#ff7b72;">is </span><span style="color:#79c0ff;">None</span>])
+        <span style="color:#ff7b72;">if </span>po <span style="color:#ff7b72;">is not </span><span style="color:#79c0ff;">None</span>:
+            o_items.append((tbl, po)); d_items.append((tbl, pd))
+    oc, dc = count_oracle(o_items), count_db2(d_items)
+    k, tally = <span style="color:#79c0ff;">0</span>, {}
+    <span style="color:#ff7b72;">with </span><span style="color:#d2a8ff;">open</span>(A.out, <span style="color:#a5d6ff;">&quot;w&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;&quot;</span>, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>) <span style="color:#ff7b72;">as </span>f:
+        w = csv.writer(f)
+        w.writerow([<span style="color:#a5d6ff;">&quot;app&quot;</span>, <span style="color:#a5d6ff;">&quot;clausename&quot;</span>, <span style="color:#a5d6ff;">&quot;owner&quot;</span>, <span style="color:#a5d6ff;">&quot;table&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle_count&quot;</span>, <span style="color:#a5d6ff;">&quot;db2_count&quot;</span>, <span style="color:#a5d6ff;">&quot;verdict&quot;</span>, <span style="color:#a5d6ff;">&quot;oracle_clause&quot;</span>, <span style="color:#a5d6ff;">&quot;db2_clause&quot;</span>])
+        <span style="color:#ff7b72;">for </span>app, name, owner, tbl, clause, d_clause, skipped <span style="color:#ff7b72;">in </span>rows:
+            <span style="color:#ff7b72;">if </span>skipped:
+                o = d = <span style="color:#a5d6ff;">&quot;&quot;</span>; v = <span style="color:#a5d6ff;">&quot;SKIPPED (binds)&quot;
+            </span><span style="color:#ff7b72;">else</span>:
+                o, d = oc[k], dc[k]; k += <span style="color:#79c0ff;">1
+                </span>v = (<span style="color:#a5d6ff;">&quot;DB2 ERROR&quot; </span><span style="color:#ff7b72;">if </span>d.startswith(<span style="color:#a5d6ff;">&quot;SQL&quot;</span>) <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;ORACLE ERROR&quot; </span><span style="color:#ff7b72;">if </span>o.startswith(<span style="color:#a5d6ff;">&quot;ORA&quot;</span>) <span style="color:#ff7b72;">else
+                     </span><span style="color:#a5d6ff;">&quot;SAME&quot; </span><span style="color:#ff7b72;">if </span>o == d <span style="color:#ff7b72;">else </span><span style="color:#a5d6ff;">&quot;DIFFERENT&quot;</span>)
+            tally[v] = tally.get(v, <span style="color:#79c0ff;">0</span>) + <span style="color:#79c0ff;">1
+            </span>w.writerow([app, name, owner, tbl, o, d, v, clause, d_clause])
+    <span style="color:#d2a8ff;">print</span>(tally, <span style="color:#a5d6ff;">&quot;-&gt;&quot;</span>, A.out)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    main()</pre></section><section class="s" id="s16"><div class="h"><div><b>Python</b> <small>26 lines</small></div><div class="a"><button data-c="c16">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/16-python.py" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c16"><span style="color:#a5d6ff;">&quot;&quot;&quot;Turn db2_rewrites.csv (rewrites proven by dual_run.py) into UPDATE statements for the DB2 database.
+
+Created by Mohamed Chihaoui.
+
+Usage: python rewrites_to_sql.py db2_rewrites.csv db2_rewrites.sql
+       db2 -tvf db2_rewrites.sql      (connected to the converted database, schema set to the Maximo owner)
+&quot;&quot;&quot;
+</span><span style="color:#ff7b72;">import </span>csv
+<span style="color:#ff7b72;">import </span>sys
+
+<span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">lit</span>(v):
+    <span style="color:#ff7b72;">return </span><span style="color:#a5d6ff;">&quot;&#x27;&quot; </span>+ v.replace(<span style="color:#a5d6ff;">&quot;&#x27;&quot;</span>, <span style="color:#a5d6ff;">&quot;&#x27;&#x27;&quot;</span>) + <span style="color:#a5d6ff;">&quot;&#x27;&quot;
+
+</span><span style="color:#ff7b72;">def </span><span style="color:#d2a8ff;">main</span>(src, out):
+    rows = <span style="color:#d2a8ff;">list</span>(csv.DictReader(<span style="color:#d2a8ff;">open</span>(src, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>)))
+    <span style="color:#ff7b72;">with </span><span style="color:#d2a8ff;">open</span>(out, <span style="color:#a5d6ff;">&quot;w&quot;</span>, encoding=<span style="color:#a5d6ff;">&quot;utf-8&quot;</span>, newline=<span style="color:#a5d6ff;">&quot;\n&quot;</span>) <span style="color:#ff7b72;">as </span>f:
+        f.write(<span style="color:#a5d6ff;">&quot;-- Generated by rewrites_to_sql.py (Created by Mohamed Chihaoui)\n&quot;</span>)
+        <span style="color:#ff7b72;">for </span>r <span style="color:#ff7b72;">in </span>rows:
+            f.write(<span style="color:#a5d6ff;">f&quot;-- {</span>r[<span style="color:#a5d6ff;">&#x27;app&#x27;</span>]<span style="color:#a5d6ff;">} / {</span>r[<span style="color:#a5d6ff;">&#x27;clausename&#x27;</span>]<span style="color:#a5d6ff;">}: {</span>r[<span style="color:#a5d6ff;">&#x27;why&#x27;</span>]<span style="color:#a5d6ff;">}\n&quot;</span>)
+            f.write(<span style="color:#a5d6ff;">f&quot;update query set clause = {</span>lit(r[<span style="color:#a5d6ff;">&#x27;db2_clause&#x27;</span>])<span style="color:#a5d6ff;">}\n&quot;
+                    f&quot;  where app = {</span>lit(r[<span style="color:#a5d6ff;">&#x27;app&#x27;</span>])<span style="color:#a5d6ff;">} and clausename = {</span>lit(r[<span style="color:#a5d6ff;">&#x27;clausename&#x27;</span>])<span style="color:#a5d6ff;">} and owner = {</span>lit(r[<span style="color:#a5d6ff;">&#x27;owner&#x27;</span>])<span style="color:#a5d6ff;">};\n&quot;</span>)
+        f.write(<span style="color:#a5d6ff;">&quot;commit;\n&quot;</span>)
+    <span style="color:#d2a8ff;">print</span>(<span style="color:#d2a8ff;">len</span>(rows), <span style="color:#a5d6ff;">&quot;updates -&gt;&quot;</span>, out)
+
+<span style="color:#ff7b72;">if </span>__name__ == <span style="color:#a5d6ff;">&quot;__main__&quot;</span>:
+    main(*sys.argv[<span style="color:#79c0ff;">1</span>:<span style="color:#79c0ff;">3</span>])</pre></section><section class="s" id="s17"><div class="h"><div><b>Output</b> <small>10 lines</small></div><div class="a"><button data-c="c17">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/17-output.txt" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c17">app,clausename,owner,db2_clause,why
+WOTRACK,CVT_TOP10_WAPPR,MAXADMIN,&quot;woclass = &#x27;WORKORDER&#x27; and workorderid in (select workorderid from workorder where woclass = &#x27;WORKORDER&#x27; and status = &#x27;WAPPR&#x27; fetch first 10 rows only)&quot;,ROWNUM does not exist on DB2; limit the key list in a sub-select instead
+WOTRACK,CVT_LAST30,MAXADMIN,&quot;woclass = &#x27;WORKORDER&#x27; and reportdate &gt; current timestamp - 30 days&quot;,SYSTIMESTAMP and INTERVAL literals become CURRENT TIMESTAMP and a labelled duration
+WOTRACK,CVT_UNDER_11430,MAXADMIN,&quot;assetnum in (select assetnum from assetancestor where ancestor = &#x27;11430&#x27; and siteid = &#x27;BEDFORD&#x27;)&quot;,&quot;CONNECT BY replaced by Maximo&#x27;s own ASSETANCESTOR table, which works on every database&quot;
+WOTRACK,CVT_NOCREW_NVL,MAXADMIN,&quot;woclass = &#x27;WORKORDER&#x27; and crewid is null&quot;,&quot;The Oracle clause never matched anything (NVL(x,&#x27;&#x27;) is NULL on Oracle); the intent was &#x27;no crew&#x27;&quot;
+WOTRACK,CVT_PUMP_TEXT,MAXADMIN,&quot;woclass = &#x27;WORKORDER&#x27; and upper(coalesce(description, &#x27;&#x27;) || &#x27; &#x27; || coalesce(location, &#x27;&#x27;)) like &#x27;%PUMP%&#x27;&quot;,&quot;Oracle skips NULL inside ||, DB2 turns the whole string NULL; COALESCE each nullable part&quot;
+WOTRACK,CVT_BLANK_LEAD,MAXADMIN,&quot;woclass = &#x27;WORKORDER&#x27; and lead is null&quot;,&quot;On Oracle = &#x27;&#x27; is never true; the intent was &#x27;no lead&#x27;&quot;
+KPI,WO,WILSON,&quot;( regexp_like(description, &#x27;(^|[^a-z0-9])work([^a-z0-9]|$)&#x27;, &#x27;i&#x27;) )&quot;,&quot;CONTAINS() needs Oracle Text; its index was stale on the source (13 of 14 matches). Whole-word match, or set up Db2 Text Search&quot;
+KPI,WO_KPI,WILSON,&quot;( regexp_like(description, &#x27;(^|[^a-z0-9])work([^a-z0-9]|$)&#x27;, &#x27;i&#x27;) )&quot;,&quot;Same Oracle Text clause, second saved query&quot;
+PLUSGPTW,RANGE STALE READING,MAXADMIN,&quot;secrgstatus = &#x27;WITHIN&#x27; and secrgwhen &lt; (current timestamp - 12 hours)&quot;,&quot;sysdate - 0.5 (half a day) has no Db2 meaning; use a labelled duration&quot;</pre></section><section class="s" id="s18"><div class="h"><div><b>SQL</b> <small>27 lines</small></div><div class="a"><button data-c="c18">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/18-sql.sql" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c18"><span style="color:#8b949e;">-- Typical customer-written saved queries on an Oracle Maximo (Work Order Tracking).
+-- Seeded into the SOURCE before conversion so they travel through Unlcvt like real ones.
+-- Created by Mohamed Chihaoui.
+</span><span style="color:#ff7b72;">set </span>define <span style="color:#ff7b72;">off </span>feedback <span style="color:#ff7b72;">on
+delete from </span>query <span style="color:#ff7b72;">where </span>app = <span style="color:#a5d6ff;">&#x27;WOTRACK&#x27; </span><span style="color:#ff7b72;">and </span>clausename <span style="color:#ff7b72;">like </span><span style="color:#a5d6ff;">&#x27;CVT_%&#x27;</span>;
+<span style="color:#ff7b72;">insert into </span>query (app, clausename, <span style="color:#ff7b72;">owner</span>, description, clause, ispublic, queryid, langcode, isuserlist, rowstamp)
+<span style="color:#ff7b72;">select </span><span style="color:#a5d6ff;">&#x27;WOTRACK&#x27;</span>, <span style="color:#ff7b72;">c</span>, <span style="color:#a5d6ff;">&#x27;MAXADMIN&#x27;</span>, d, w, <span style="color:#79c0ff;">1</span>, queryseq.nextval, <span style="color:#a5d6ff;">&#x27;EN&#x27;</span>, <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">&#x27;0&#x27; </span><span style="color:#ff7b72;">from </span>(
+  <span style="color:#ff7b72;">select </span><span style="color:#a5d6ff;">&#x27;CVT_OVERDUE7&#x27; </span><span style="color:#ff7b72;">c</span>, <span style="color:#a5d6ff;">&#x27;Approved or in progress, 7+ days past target&#x27; </span>d,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and status in (&#x27;&#x27;APPR&#x27;&#x27;,&#x27;&#x27;INPRG&#x27;&#x27;) and targcompdate &lt; sysdate - 7&#x27; </span>w <span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_NOCREW_SAFE&#x27;</span>, <span style="color:#a5d6ff;">&#x27;No crew assigned (written for both databases)&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and (crewid is null or crewid = &#x27;&#x27;&#x27;&#x27;)&#x27; </span><span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_TOP10_WAPPR&#x27;</span>, <span style="color:#a5d6ff;">&#x27;First 10 waiting for approval&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and status = &#x27;&#x27;WAPPR&#x27;&#x27; and rownum &lt;= 10&#x27; </span><span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_LAST30&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Reported in the last 30 days&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and reportdate &gt; systimestamp - interval &#x27;&#x27;30&#x27;&#x27; day&#x27; </span><span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_UNDER_11430&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Work on asset 11430 and everything below it&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;assetnum in (select assetnum from asset where siteid = &#x27;&#x27;BEDFORD&#x27;&#x27; start with assetnum = &#x27;&#x27;11430&#x27;&#x27; connect by prior assetnum = parent and prior siteid = siteid)&#x27; </span><span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_NOCREW_NVL&#x27;</span>, <span style="color:#a5d6ff;">&#x27;No crew assigned (NVL style)&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and nvl(crewid, &#x27;&#x27;&#x27;&#x27;) = &#x27;&#x27;&#x27;&#x27;&#x27; </span><span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_PUMP_TEXT&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Pump work by description or location&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and upper(description || &#x27;&#x27; &#x27;&#x27; || location) like &#x27;&#x27;%PUMP%&#x27;&#x27;&#x27; </span><span style="color:#ff7b72;">from </span>dual <span style="color:#ff7b72;">union all
+  select </span><span style="color:#a5d6ff;">&#x27;CVT_BLANK_LEAD&#x27;</span>, <span style="color:#a5d6ff;">&#x27;Lead left blank&#x27;</span>,
+         <span style="color:#a5d6ff;">&#x27;woclass = &#x27;&#x27;WORKORDER&#x27;&#x27; and lead = &#x27;&#x27;&#x27;&#x27;&#x27; </span><span style="color:#ff7b72;">from </span>dual
+);
+<span style="color:#ff7b72;">commit</span>;
+<span style="color:#ff7b72;">select </span>clausename, clause <span style="color:#ff7b72;">from </span>query <span style="color:#ff7b72;">where </span>app = <span style="color:#a5d6ff;">&#x27;WOTRACK&#x27; </span><span style="color:#ff7b72;">and </span>clausename <span style="color:#ff7b72;">like </span><span style="color:#a5d6ff;">&#x27;CVT_%&#x27; </span><span style="color:#ff7b72;">order by </span><span style="color:#79c0ff;">1</span>;
+exit</pre></section><section class="s" id="s19"><div class="h"><div><b>Shell</b> <small>59 lines</small></div><div class="a"><button data-c="c19">Copy</button><a class="btn" href="https://github.com/2Mohamed2/maximo-guides/blob/main/code/moving-maximo-from-oracle-to-db2-tested-end-to-end/19-shell.sh" target="_blank" rel="noopener">GitHub</a></div></div><pre id="c19"><span style="color:#8b949e;">#!/bin/bash
+# Runs each Oracle construct against DB2 and prints OK / the SQL error code.
+</span>. ~/sqllib/db2profile
+db2 connect to MAXDB &gt;/dev/null
+db2 <span style="color:#a5d6ff;">&quot;create table t_dialect (id int, s varchar(20), d timestamp)&quot; </span>&gt;/dev/null <span style="color:#79c0ff;">2</span>&gt;&amp;<span style="color:#79c0ff;">1
+</span>db2 <span style="color:#a5d6ff;">&quot;delete from t_dialect&quot; </span>&gt;/dev/null
+db2 <span style="color:#a5d6ff;">&quot;insert into t_dialect values (1,&#x27;a&#x27;,current timestamp),(2,null,current timestamp)&quot; </span>&gt;/dev/null
+<span style="color:#8b949e;"># the CLP back end is tied to this shell: run db2 here, never inside $( )
+</span>t(){ db2 -x <span style="color:#a5d6ff;">&quot;</span>$2<span style="color:#a5d6ff;">&quot; </span>&gt; /tmp/_o <span style="color:#79c0ff;">2</span>&gt;&amp;<span style="color:#79c0ff;">1</span>; code=<span style="color:#ff7b72;">$(</span>grep -oE <span style="color:#a5d6ff;">&quot;SQL[0-9]+N&quot; </span>/tmp/_o | head -1<span style="color:#ff7b72;">)</span>; <span style="color:#d2a8ff;">printf </span><span style="color:#a5d6ff;">&#x27;%-22s %-8s %s\n&#x27; &quot;</span>$1<span style="color:#a5d6ff;">&quot; &quot;${</span>code<span style="color:#ff7b72;">:-</span>OK<span style="color:#a5d6ff;">}&quot; &quot;</span><span style="color:#ff7b72;">$(</span>head -1 /tmp/_o | tr -s <span style="color:#a5d6ff;">&#x27; &#x27; </span>| cut -c1-60<span style="color:#ff7b72;">)</span><span style="color:#a5d6ff;">&quot;</span>; }
+t <span style="color:#a5d6ff;">&quot;NVL&quot;            &quot;select nvl(s,&#x27;x&#x27;) from t_dialect where id=2&quot;
+</span>t <span style="color:#a5d6ff;">&quot;NVL2&quot;           &quot;select nvl2(s,&#x27;y&#x27;,&#x27;n&#x27;) from t_dialect where id=2&quot;
+</span>t <span style="color:#a5d6ff;">&quot;DECODE&quot;         &quot;select decode(id,1,&#x27;one&#x27;,&#x27;other&#x27;) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;SYSDATE&quot;        &quot;select sysdate from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;FROM DUAL&quot;      &quot;select 1 from dual&quot;
+</span>t <span style="color:#a5d6ff;">&quot;ROWNUM&quot;         &quot;select id from t_dialect where rownum &lt;= 1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;(+) outer join&quot; &quot;select a.id from t_dialect a, t_dialect b where a.id = b.id(+)&quot;
+</span>t <span style="color:#a5d6ff;">&quot;TO_CHAR(date)&quot;  &quot;select to_char(d,&#x27;YYYY-MM-DD&#x27;) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;TO_DATE&quot;        &quot;select to_date(&#x27;2026-11-26&#x27;,&#x27;YYYY-MM-DD&#x27;) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;TRUNC(date)&quot;    &quot;select trunc(d) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;ADD_MONTHS&quot;     &quot;select add_months(d,1) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;MONTHS_BETWEEN&quot; &quot;select months_between(d,d) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;date - number&quot;  &quot;select d - 1 from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;INSTR&quot;          &quot;select instr(s,&#x27;a&#x27;) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;MINUS&quot;          &quot;select id from t_dialect minus select id from t_dialect where id=2&quot;
+</span>t <span style="color:#a5d6ff;">&quot;CONNECT BY&quot;     &quot;select id from t_dialect start with id=1 connect by prior id = id+1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;LISTAGG&quot;        &quot;select listagg(s, &#x27;,&#x27;) within group (order by id) from t_dialect&quot;
+</span>t <span style="color:#a5d6ff;">&quot;SUBSTR&quot;         &quot;select substr(s,1,1) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;LENGTH(&#x27;&#x27;)&quot;     &quot;select length(&#x27;&#x27;) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;&#x27;&#x27;=NULL rows&quot;   &quot;select count(*) from t_dialect where s = &#x27;&#x27;&quot;
+</span>t <span style="color:#a5d6ff;">&quot;&#x27;&#x27; IS NULL&quot;     &quot;select case when &#x27;&#x27; is null then &#x27;NULL&#x27; else &#x27;NOT NULL&#x27; end from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;NULL||&#x27;x&#x27;&quot;      &quot;select coalesce(s||&#x27;x&#x27;,&#x27;&lt;null&gt;&#x27;) from t_dialect where id=2&quot;
+
+</span>t <span style="color:#a5d6ff;">&quot;TO_NUMBER&quot;      &quot;select to_number(&#x27;42&#x27;) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;REGEXP_LIKE&quot;    &quot;select count(*) from t_dialect where regexp_like(s,&#x27;^a&#x27;)&quot;
+</span>t <span style="color:#a5d6ff;">&quot;ROWID&quot;          &quot;select rowid from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;CAST VARCHAR2&quot;  &quot;select cast(s as varchar2(5)) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;NUMBER type&quot;    &quot;select cast(id as number(10)) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;LPAD&quot;           &quot;select lpad(id,4,&#x27;0&#x27;) from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;SUBSTR(s,-1)&quot;   &quot;select substr(&#x27;abc&#x27;,-1) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;GREATEST&quot;       &quot;select greatest(1,2) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;SYSTIMESTAMP&quot;   &quot;select systimestamp from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;INTERVAL&quot;       &quot;select d - interval &#x27;1&#x27; day from t_dialect where id=1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;DATE literal&quot;   &quot;select count(*) from t_dialect where d &gt; date &#x27;2020-01-01&#x27;&quot;
+</span>t <span style="color:#a5d6ff;">&quot;TRUNC(sysdate)-7&quot; &quot;select count(*) from t_dialect where d &gt; trunc(sysdate) - 7&quot;
+</span>t <span style="color:#a5d6ff;">&quot;NVL(s,&#x27;&#x27;)&quot;      &quot;select count(*) from t_dialect where nvl(s,&#x27;&#x27;) = &#x27;&#x27;&quot;
+</span>t <span style="color:#a5d6ff;">&quot;MOD&quot;            &quot;select mod(7,3) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;INSTR 4 args&quot;   &quot;select instr(&#x27;a,b,c&#x27;, &#x27;,&#x27;, 1, 2) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;TO_CHAR(num)&quot;   &quot;select to_char(1234.5,&#x27;9999.99&#x27;) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;FETCH FIRST&quot;    &quot;select id from t_dialect fetch first 1 rows only&quot;
+</span>t <span style="color:#a5d6ff;">&quot;WM_CONCAT&quot;      &quot;select wm_concat(s) from t_dialect&quot;
+</span>t <span style="color:#a5d6ff;">&quot;SYS_GUID&quot;       &quot;select sys_guid() from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;USER pseudo&quot;    &quot;select user from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;date - date&quot;     &quot;select (current timestamp - (current timestamp - 400 days)) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;days(d)-days(d)&quot;  &quot;select days(current timestamp) - days(current timestamp - 400 days) from sysibm.sysdummy1&quot;
+</span>t <span style="color:#a5d6ff;">&quot;(a,b)=(select)&quot;   &quot;select count(*) from t_dialect where (id, s) = (select id, s from t_dialect where id = 1)&quot;
+</span>t <span style="color:#a5d6ff;">&quot;rownum subquery&quot;  &quot;select id from (select id from t_dialect order by d desc) where rownum &lt;= 1&quot;
+</span>db2set -all <span style="color:#79c0ff;">2</span>&gt;/dev/null | grep -i COMPAT | sed <span style="color:#a5d6ff;">&#x27;s/^/registry: /&#x27;
+</span>db2 get db cfg <span style="color:#ff7b72;">for </span>MAXDB | grep -iE <span style="color:#a5d6ff;">&quot;varchar2|date_compat|number_compat&quot; </span>| sed <span style="color:#a5d6ff;">&#x27;s/^/dbcfg: /&#x27;
+</span>db2 <span style="color:#a5d6ff;">&quot;drop table t_dialect&quot; </span>&gt;/dev/null</pre></section><p><a href="https://2mohamed2.github.io/maximo-guides/">All guides</a></p></main><script>document.querySelectorAll('button[data-c]').forEach(b=>b.onclick=async()=>{const t=document.getElementById(b.dataset.c).innerText;try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById(b.dataset.c));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();}b.textContent='Copied';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},1600);});</script></body></html>

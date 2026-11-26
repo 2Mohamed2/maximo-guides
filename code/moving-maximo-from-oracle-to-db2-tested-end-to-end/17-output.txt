@@ -1,0 +1,10 @@
+app,clausename,owner,db2_clause,why
+WOTRACK,CVT_TOP10_WAPPR,MAXADMIN,"woclass = 'WORKORDER' and workorderid in (select workorderid from workorder where woclass = 'WORKORDER' and status = 'WAPPR' fetch first 10 rows only)",ROWNUM does not exist on DB2; limit the key list in a sub-select instead
+WOTRACK,CVT_LAST30,MAXADMIN,"woclass = 'WORKORDER' and reportdate > current timestamp - 30 days",SYSTIMESTAMP and INTERVAL literals become CURRENT TIMESTAMP and a labelled duration
+WOTRACK,CVT_UNDER_11430,MAXADMIN,"assetnum in (select assetnum from assetancestor where ancestor = '11430' and siteid = 'BEDFORD')","CONNECT BY replaced by Maximo's own ASSETANCESTOR table, which works on every database"
+WOTRACK,CVT_NOCREW_NVL,MAXADMIN,"woclass = 'WORKORDER' and crewid is null","The Oracle clause never matched anything (NVL(x,'') is NULL on Oracle); the intent was 'no crew'"
+WOTRACK,CVT_PUMP_TEXT,MAXADMIN,"woclass = 'WORKORDER' and upper(coalesce(description, '') || ' ' || coalesce(location, '')) like '%PUMP%'","Oracle skips NULL inside ||, DB2 turns the whole string NULL; COALESCE each nullable part"
+WOTRACK,CVT_BLANK_LEAD,MAXADMIN,"woclass = 'WORKORDER' and lead is null","On Oracle = '' is never true; the intent was 'no lead'"
+KPI,WO,WILSON,"( regexp_like(description, '(^|[^a-z0-9])work([^a-z0-9]|$)', 'i') )","CONTAINS() needs Oracle Text; its index was stale on the source (13 of 14 matches). Whole-word match, or set up Db2 Text Search"
+KPI,WO_KPI,WILSON,"( regexp_like(description, '(^|[^a-z0-9])work([^a-z0-9]|$)', 'i') )","Same Oracle Text clause, second saved query"
+PLUSGPTW,RANGE STALE READING,MAXADMIN,"secrgstatus = 'WITHIN' and secrgwhen < (current timestamp - 12 hours)","sysdate - 0.5 (half a day) has no Db2 meaning; use a labelled duration"
