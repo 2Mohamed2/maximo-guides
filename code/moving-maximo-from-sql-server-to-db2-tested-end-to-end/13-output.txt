@@ -1,0 +1,11 @@
+app,clausename,owner,db2_clause,why
+WOTRACK,SSQ_OVERDUE7,MAXADMIN,"woclass = 'WORKORDER' and status in ('APPR','INPRG') and targcompdate < current timestamp - 7 days","DATEADD(day, -7, GETDATE()) becomes a labelled duration on CURRENT TIMESTAMP"
+WOTRACK,SSQ_TOP10_WAPPR,MAXADMIN,"woclass = 'WORKORDER' and workorderid in (select workorderid from workorder where woclass = 'WORKORDER' and status = 'WAPPR' order by workorderid fetch first 10 rows only)","TOP n becomes FETCH FIRST n ROWS ONLY. Without ORDER BY both databases return any 10 rows: here Db2 first returned 10 work orders, two days later 10 activities (0 after the outer filter). Put the filter and an ORDER BY inside"
+WOTRACK,SSQ_LAST30,MAXADMIN,"woclass = 'WORKORDER' and days(current date) - days(reportdate) < 30","DATEDIFF(day, a, b) counts midnights crossed, not 24-hour periods; DAYS(b) - DAYS(a) counts the same way"
+WOTRACK,SSQ_LONG_DESC,MAXADMIN,"woclass = 'WORKORDER' and length(rtrim(description)) > 40",LEN ignores trailing blanks; LENGTH counts them
+WOTRACK,SSQ_PUMP_TEXT,MAXADMIN,"woclass = 'WORKORDER' and upper(description || ' ' || location) like '%PUMP%'","+ on strings becomes ||; both return NULL when a part is NULL, so the result does not change"
+WOTRACK,SSQ_WAITING_LOWER,MAXADMIN,"woclass = 'WORKORDER' and status = 'WAPPR'","SQL Server compared without case (collation CI); Db2 compares exactly: use the stored value"
+WOTRACK,SSQ_BR_RANGE,MAXADMIN,"woclass = 'WORKORDER' and (location like 'BR1%' or location like 'BR2%' or location like 'BR3%' or location like 'BR4%')","[1-4] is a character range in SQL Server LIKE, plain text in Db2"
+WOSUMMARY,OVERDUE_WORKORDERS,MAXADMIN,"status in ('APPR','INPROG') and historyflag = 0 and istask = 0 and targcompdate is not null and targcompdate < current date",CAST(GETDATE() AS DATE) is CURRENT DATE on Db2
+WOSUMMARY,WORKORDERS_COMPLETED_WEEK,MAXADMIN,"status in ('COMP','CLOSE') and istask = 0 and actfinish >= current date - (dayofweek_iso(current date) - 1) days","DATEADD(wk, DATEDIFF(wk, 0, GETDATE()), 0) is the Monday of this week: CURRENT DATE minus (DAYOFWEEK_ISO - 1) days"
+INSPECTION,INSPECTIONS_COMPLETED_WEEK,MAXADMIN,"status = 'COMPLETED' and statusdate >= current date - (dayofweek_iso(current date) - 1) days","Same start-of-week idiom"

@@ -1,2 +1,4 @@
-python ibm_db2_text_fix.py ibm_platform_diff.csv ibm_db2_text_fix.sql
-db2 connect to MAXDB; db2 set schema MAXIMO; db2 -tvf ibm_db2_text_fix.sql
+java -cp $L/oraclethin.jar:$L/db2jcc.jar CvtTool.java restore restore.csv MAXINTOBJTOOL,MAXINTOBJTOOLPARAM,MAXAICFGRAG
+# MAXINTOBJTOOL: Db2 had 6, source 6, restored 6
+# MAXINTOBJTOOLPARAM: Db2 had 1, source 1, restored 1
+# MAXAICFGRAG: Db2 had 121, source 121, restored 121
